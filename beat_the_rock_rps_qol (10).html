@@ -268,13 +268,13 @@
     </details>
 
     <div class="footer">
-      With Adaptive Rock off, Dwayne uses a fixed but non obvious sequence, with it on he starts trying to beat your last move.<br />
-      Note the seed for a run you like, then enter it and reset to replay the same adaptive decisions.
+      With Adaptive Rock off, Dwayne uses a seeded scripted sequence, with it on he starts trying to beat your last move.<br />
+      Every seed builds a different script, so players can share a seed and get the same baseline run.
     </div>
   </div>
 
   <script>
-    const rockSequenceBase = ["R","R","S","R","S","P","R","S","P","R","S","R","P","S","R","P","S","R","P","S"];
+    const ROCK_MOVES = ["R", "P", "S"];
     const SCRIPT_SEQUENCE_REGEX = /^[RPS]{20}$/i;
     const beats = { R: "P", P: "S", S: "R" };
     const names = { R: "Rock", P: "Paper", S: "Scissors" };
@@ -392,11 +392,38 @@
       };
     }
 
+    function generateSeededScriptSequence(seed) {
+      const scriptRng = mulberry32((seed ^ 0xA5A5A5A5) >>> 0);
+      const sequence = [];
+      let streakMove = null;
+      let streakLength = 0;
+
+      for (let i = 0; i < 20; i += 1) {
+        let move = ROCK_MOVES[Math.floor(scriptRng() * ROCK_MOVES.length)];
+
+        if (streakLength >= 2 && move === streakMove) {
+          const options = ROCK_MOVES.filter(candidate => candidate !== streakMove);
+          move = options[Math.floor(scriptRng() * options.length)];
+        }
+
+        if (move === streakMove) streakLength += 1;
+        else {
+          streakMove = move;
+          streakLength = 1;
+        }
+
+        sequence.push(move);
+      }
+
+      return sequence;
+    }
+
     let rngGame = null;
     let rngFlavor = null;
     let runSeed = 0;
     let seedWasManual = false;
     let scriptedSequenceOverride = null;
+    let seededScriptSequence = [];
 
     let currentRound = 0;
     let youScore = 0;
@@ -821,7 +848,7 @@
       const adaptive = adaptiveToggle.checked;
       if (!adaptive || currentRound === 0 || !lastYourMove) {
         lastDecisionAdaptive = false;
-        return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : rockSequenceBase[currentRound];
+        return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : seededScriptSequence[currentRound];
       }
       const r = rngGame ? rngGame() : Math.random();
       if (r < moodAdaptChance()) {
@@ -830,7 +857,7 @@
         return beats[lastYourMove];
       }
       lastDecisionAdaptive = false;
-      return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : rockSequenceBase[currentRound];
+      return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : seededScriptSequence[currentRound];
     }
 
     function isGameActive() { return currentRound < 20 && !moveButtons[0].disabled; }
@@ -974,6 +1001,7 @@
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
       scriptedSequenceOverride = scriptOverride || null;
+      seededScriptSequence = generateSeededScriptSequence(runSeed);
 
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
