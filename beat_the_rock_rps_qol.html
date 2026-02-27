@@ -788,7 +788,7 @@
 
     function getAchievements() {
       const achievements = [];
-      if (historyLog.length === 0) return achievements;
+      if (historyLog.length < 20) return achievements;
 
       if (historyLog[0].outcome === "win") achievements.push({ name: "Opening Pop", text: "You won round 1.", rare: false });
 
@@ -808,7 +808,7 @@
 
       if (maxWinStreak >= 4) achievements.push({ name: "Hot Streak", text: `You reached a win streak of ${maxWinStreak}.`, rare: false });
       if (maxRockStreak >= 3) achievements.push({ name: "Cold Shower", text: `The Rock reached a win streak of ${maxRockStreak}.`, rare: false });
-      if (Math.abs(youScore - rockScore) <= 1 && youScore >= rockScore) achievements.push({ name: "Edge Of Your Seat", text: "You won a very close run.", rare: false });
+      if (Math.abs(youScore - rockScore) === 1 && youScore > rockScore) achievements.push({ name: "Edge Of Your Seat", text: "You won a very close run.", rare: false });
       if (paranoidCount >= 5) achievements.push({ name: "Paranoid Era", text: "You kept The Rock in Paranoid state for a long stretch.", rare: false });
       if (perfectHits >= 10) achievements.push({ name: "Perfect Counter Enjoyer", text: `You played ${perfectHits} perfect counters.`, rare: false });
       if (perfectHits === historyLog.length) achievements.push({ name: "Theoretical Maximum", text: "You played a perfect counter every single round.", rare: true });
@@ -819,7 +819,7 @@
         if (rate >= 0.6 && youScore > rockScore) achievements.push({ name: "Adaptive Bully", text: "You beat him even though his adaptive reads were strong.", rare: false });
       }
 
-      if (youScore === 0 && rockScore === 0 && draws > 0) achievements.push({ name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", rare: true });
+      if (youScore === 0 && rockScore === 0 && draws === 20) achievements.push({ name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", rare: true });
       return achievements;
     }
 
