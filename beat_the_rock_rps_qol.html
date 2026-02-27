@@ -73,7 +73,8 @@
     .result-win { color: #6ee7b7; }
     .result-lose { color: #f97373; }
     .result-draw { color: #facc15; }
-    .commentary { margin-top: 12px; font-size: 0.94rem; color: #e5e7eb; min-height: 3.4rem; line-height: 1.4; }
+    .commentary { margin-top: 12px; padding: 16px 14px 14px; border-radius: 14px; border: 1px solid rgba(250,204,21,0.45); background: linear-gradient(90deg, rgba(38,38,31,0.9), rgba(60,46,4,0.45), rgba(31,41,55,0.9)); font-size: 1rem; font-weight: 650; color: #f8fafc; min-height: 3.4rem; line-height: 1.45; }
+    .commentary::before { content: "THE ROCK SAYS"; display: block; margin-bottom: 8px; font-size: 0.78rem; letter-spacing: 0.08em; color: #fde68a; font-weight: 800; }
 
     .scoreboard { margin-top: 18px; padding: 12px 10px; border-radius: 12px; background: #020617; border: 1px solid rgba(148,163,184,0.35); }
     .score-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #9ca3af; margin-bottom: 8px; flex-wrap: wrap; gap: 4px; }
@@ -85,24 +86,36 @@
     .score-cell.draw { background: #78350f; color: #fef3c7; }
     .score-cell.current { border-color: rgba(248,250,252,0.7); }
 
-    .timeline { margin-top: 12px; padding: 10px 10px 8px; border-radius: 10px; background: #020617; border: 1px solid rgba(30,64,175,0.45); font-size: 0.8rem; color: #9ca3af; }
-    .timeline-header { margin-bottom: 6px; color: #e5e7eb; font-weight: 600; }
-    .timeline-track { display: grid; grid-template-columns: repeat(20, minmax(10px, 1fr)); gap: 4px; margin-bottom: 6px; }
-    .timeline-cell { height: 26px; border-radius: 6px; background: #020617; border: 1px solid #1f2937; display: flex; align-items: center; justify-content: center; cursor: default; position: relative; transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease; overflow: hidden; }
-    .timeline-cell-inner { display: flex; flex-direction: column; line-height: 1; font-size: 0.7rem; }
-    .timeline-cell-inner span { display: block; text-align: center; }
-    .timeline-cell.empty { color: #4b5563; font-size: 0.75rem; }
+    .rock-reaction { margin-top: 8px; text-align: center; color: #cbd5e1; font-size: 0.95rem; min-height: 1.3rem; }
+    .rock-reaction strong { color: #facc15; }
+
+    .timeline { margin-top: 12px; padding: 14px 14px 10px; border-radius: 16px; background: linear-gradient(90deg, rgba(2,6,23,0.95), rgba(2,6,23,0.85) 60%, rgba(0,24,66,0.85)); border: 1px solid rgba(56,189,248,0.45); font-size: 0.82rem; color: #9ca3af; }
+    .timeline-header { margin-bottom: 10px; color: #e5e7eb; font-weight: 600; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .timeline-track { display: grid; grid-template-columns: repeat(20, minmax(26px, 1fr)); gap: 5px; margin-bottom: 8px; }
+    .timeline-cell { min-height: 54px; border-radius: 10px; background: #071229; border: 1px solid #1e3a5f; display: flex; align-items: center; justify-content: center; cursor: default; position: relative; transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease; overflow: hidden; }
+    .timeline-cell-inner { display: flex; flex-direction: column; align-items: center; line-height: 1.05; font-size: 0.68rem; gap: 2px; }
+    .timeline-cell-round { color: #bfdbfe; font-size: 0.68rem; }
+    .timeline-cell-hands { font-size: 0.82rem; }
+    .timeline-cell-outcome { font-size: 0.88rem; font-weight: 700; }
+    .timeline-cell.empty .timeline-cell-hands,
+    .timeline-cell.empty .timeline-cell-outcome { color: #64748b; }
     .timeline-cell.played { cursor: pointer; }
-    .timeline-cell.played:hover { border-color: #4ade80; background: #022c22; transform: translateY(-1px); }
-    .timeline-cell.played.active { border-color: #facc15; background: #1e293b; }
-    .timeline-preview { min-height: 1.2rem; font-size: 0.78rem; color: #9ca3af; }
+    .timeline-cell.played.win { background: #064e3b; border-color: #10b981; }
+    .timeline-cell.played.lose { background: #4c0519; border-color: #e11d48; }
+    .timeline-cell.played.draw { background: #713f12; border-color: #f59e0b; }
+    .timeline-cell.played:hover { border-color: #93c5fd; transform: translateY(-1px); }
+    .timeline-cell.played.active, .timeline-cell.current { border-color: #e9d5ff; box-shadow: 0 0 0 1px rgba(233,213,255,0.45) inset; }
+    .timeline-preview { min-height: 1.2rem; font-size: 1.05rem; color: #dbeafe; }
     .timeline-preview strong { color: #e5e7eb; }
 
-    .achievements { margin-top: 14px; padding: 10px 10px 8px; border-radius: 10px; background: #020617; border: 1px solid rgba(148,163,184,0.35); font-size: 0.8rem; color: #9ca3af; }
-    .achievements-header { margin-bottom: 6px; color: #e5e7eb; font-weight: 600; }
+    .achievements { margin-top: 14px; padding: 14px 12px 12px; border-radius: 14px; background: linear-gradient(90deg, rgba(17,24,39,0.95), rgba(31,10,64,0.62), rgba(15,23,42,0.95)); border: 1px solid rgba(167,139,250,0.42); font-size: 0.86rem; color: #cbd5e1; }
+    .achievements-header { margin-bottom: 8px; color: #f8fafc; font-weight: 700; font-size: 1rem; }
     .achievements-list { display: flex; flex-wrap: wrap; gap: 6px; }
-    .achievement-badge { padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.6); background: #0b1120; color: #d1d5db; line-height: 1.3; white-space: nowrap; }
-    .achievement-badge.rare { border-color: #facc15; color: #fef9c3; background: #422006; }
+    .achievement-badge { padding: 6px 11px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.6); background: #0b1120; color: #d1d5db; line-height: 1.3; white-space: nowrap; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+    .achievement-badge.rank-bronze { border-color: #f59e0b; background: #3f1d07; color: #ffedd5; }
+    .achievement-badge.rank-silver { border-color: #cbd5e1; background: #1f2937; color: #f8fafc; }
+    .achievement-badge.rank-gold { border-color: #facc15; background: #422006; color: #fef9c3; }
+    .achievement-badge.rank-mythic { border-color: #c084fc; background: #2e1065; color: #f3e8ff; }
 
     .help-box { margin-top: 14px; font-size: 0.8rem; color: #9ca3af; border-radius: 10px; border: 1px solid rgba(148,163,184,0.4); background: #020617; padding: 8px 10px; }
     .help-box summary { cursor: pointer; list-style: none; color: #e5e7eb; font-weight: 600; }
@@ -118,13 +131,19 @@
     .debug-panel summary span { text-decoration: underline; }
     .debug-log { margin-top: 8px; max-height: 260px; overflow-y: auto; border-top: 1px solid rgba(148,163,184,0.3); padding-top: 6px; }
     .debug-log-entry { margin-bottom: 4px; line-height: 1.3; }
+    .history-controls { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: 0.76rem; color: #9ca3af; }
+    .btn-clear-history { background: #1f2937; color: #e5e7eb; font-size: 0.76rem; padding: 6px 12px; }
+    .recent-runs { margin-top: 10px; display: grid; gap: 6px; }
+    .recent-runs-header { font-size: 0.78rem; color: #9ca3af; }
+    .recent-runs-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.76rem; color: #cbd5e1; }
+    .recent-runs-empty { font-size: 0.76rem; color: #6b7280; }
 
     .footer { margin-top: 18px; font-size: 0.8rem; color: #6b7280; text-align: center; line-height: 1.3; }
 
     @media (max-width: 640px) {
       .arena { grid-template-columns: 1fr; text-align: center; }
       .vs { justify-self: center; }
-      .timeline-track { grid-template-columns: repeat(10, minmax(14px, 1fr)); }
+      .timeline-track { grid-template-columns: repeat(5, minmax(54px, 1fr)); }
       button { padding: 12px 20px; }
     }
   </style>
@@ -197,17 +216,11 @@
 
     <div id="resultLine" class="result-line"></div>
     <div id="commentary" class="commentary"></div>
+    <div id="rockReaction" class="rock-reaction"></div>
 
-    <div class="scoreboard">
-      <div class="score-header">
-        <span>Round timeline, W win, L loss, D draw</span>
-        <span><strong>Perfect counters</strong> use the actual move Dwayne played each round.</span>
-      </div>
-      <div id="scoreTrack" class="score-track"></div>
-    </div>
 
     <div class="timeline">
-      <div class="timeline-header">Round hand timeline</div>
+      <div class="timeline-header"><span>20-round unified board (result + hands + order)</span><span id="timelineStatus">Round 1 is live</span></div>
       <div id="timelineTrack" class="timeline-track"></div>
       <div id="timelinePreview" class="timeline-preview">Hover a played round to preview the exact hands and outcome.</div>
     </div>
@@ -224,7 +237,6 @@
           <li>The Rock has a fixed script of 20 planned moves, his base pattern.</li>
           <li>In Adaptive mode he sometimes ignores the script and tries to counter your last move.</li>
           <li>His mood changes when he loses and draws, Calm, Suspicious, Paranoid, and this changes his adapt chance.</li>
-          <li>Perfect counters are moves that would beat the exact hand he played that round, shown in the summary.</li>
           <li>Use different seeds and toggles to create repeatable runs and shared challenges.</li>
         </ul>
       </div>
@@ -233,6 +245,11 @@
     <details class="debug-panel">
       <summary><span>Round log and debug info</span></summary>
       <div id="debugLog" class="debug-log"></div>
+      <div class="history-controls">
+        <span>Recent runs are stored locally for continuity.</span>
+        <button id="clearHistoryBtn" type="button" class="btn-clear-history">Clear history</button>
+      </div>
+      <div id="recentRuns" class="recent-runs"></div>
     </details>
 
     <div class="footer">
@@ -291,6 +308,7 @@
     const scoreLabelEl = document.getElementById("scoreLabel");
     const resultLineEl = document.getElementById("resultLine");
     const commentaryEl = document.getElementById("commentary");
+    const rockReactionEl = document.getElementById("rockReaction");
     const scoreTrackEl = document.getElementById("scoreTrack");
     const resetBtn = document.getElementById("resetBtn");
     const moveButtons = Array.from(document.querySelectorAll("button[data-move]"));
@@ -308,7 +326,18 @@
     const runSummarySeedEl = document.getElementById("runSummarySeed");
     const timelineTrackEl = document.getElementById("timelineTrack");
     const timelinePreviewEl = document.getElementById("timelinePreview");
+    const timelineStatusEl = document.getElementById("timelineStatus");
     const sfxToggle = document.getElementById("sfxToggle");
+    const recentRunsEl = document.getElementById("recentRuns");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+
+    const storageKeys = {
+      adaptive: "rps.adaptiveToggle",
+      sfx: "rps.sfxToggle",
+      lastSeed: "rps.lastSeed",
+      recentRuns: "rps.recentRuns"
+    };
+    const recentRunsLimit = 8;
 
     function mulberry32(a) {
       return function() {
@@ -339,6 +368,7 @@
     let adaptiveAttempts = 0;
     let adaptiveCorrectReads = 0;
     let adaptiveEverOnThisRun = false;
+    let runAdaptiveSetting = false;
     let lastDecisionAdaptive = false;
 
     let audioCtx = null;
@@ -347,6 +377,140 @@
     let historyLog = [];
     let timelineCells = [];
     let activeTimelineIndex = null;
+    let storageEnabled = false;
+    let recentRuns = [];
+    let initialSeedFromStorage = null;
+
+    function detectStorage() {
+      try {
+        const probe = "rps.storageProbe";
+        window.localStorage.setItem(probe, "1");
+        window.localStorage.removeItem(probe);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function storageGet(key) {
+      if (!storageEnabled) return null;
+      try {
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function storageSet(key, value) {
+      if (!storageEnabled) return;
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (e) {}
+    }
+
+    function storageRemove(key) {
+      if (!storageEnabled) return;
+      try {
+        window.localStorage.removeItem(key);
+      } catch (e) {}
+    }
+
+    function parseStoredBoolean(value, fallback) {
+      if (value === "true") return true;
+      if (value === "false") return false;
+      return fallback;
+    }
+
+    function loadPersistedSettings() {
+      storageEnabled = detectStorage();
+      if (!storageEnabled) {
+        renderRecentRuns();
+        return;
+      }
+
+      adaptiveToggle.checked = parseStoredBoolean(storageGet(storageKeys.adaptive), adaptiveToggle.checked);
+      sfxToggle.checked = parseStoredBoolean(storageGet(storageKeys.sfx), sfxToggle.checked);
+      sfxEnabled = sfxToggle.checked;
+
+      const lastSeed = storageGet(storageKeys.lastSeed);
+      if (lastSeed && !seedInputEl.value.trim()) seedInputEl.value = lastSeed;
+      if (lastSeed) {
+        const parsedSeed = parseInt(lastSeed, 10);
+        if (!Number.isNaN(parsedSeed)) initialSeedFromStorage = parsedSeed;
+      }
+
+      try {
+        const parsed = JSON.parse(storageGet(storageKeys.recentRuns) || "[]");
+        if (Array.isArray(parsed)) recentRuns = parsed.slice(0, recentRunsLimit);
+      } catch (e) {
+        recentRuns = [];
+      }
+      renderRecentRuns();
+    }
+
+    function renderRecentRuns() {
+      if (!recentRunsEl) return;
+      recentRunsEl.innerHTML = "";
+
+      const header = document.createElement("div");
+      header.className = "recent-runs-header";
+      header.textContent = `Recent runs (last ${recentRunsLimit})`;
+      recentRunsEl.appendChild(header);
+
+      if (!storageEnabled) {
+        const note = document.createElement("div");
+        note.className = "recent-runs-empty";
+        note.textContent = "Local storage unavailable in this environment.";
+        recentRunsEl.appendChild(note);
+        return;
+      }
+
+      if (!recentRuns.length) {
+        const empty = document.createElement("div");
+        empty.className = "recent-runs-empty";
+        empty.textContent = "No completed runs saved yet.";
+        recentRunsEl.appendChild(empty);
+        return;
+      }
+
+      const list = document.createElement("ol");
+      list.className = "recent-runs-list";
+      recentRuns.forEach(run => {
+        const item = document.createElement("li");
+        const runRecord = `record ${run.youScore}-${run.rockScore}-${run.draws}`;
+        const achieved = Array.isArray(run.achievements) && run.achievements.length
+          ? ` achievements ${run.achievements.join(", ")}`
+          : "";
+        item.textContent = `Seed ${run.seed}, ${runRecord}, adaptive ${run.adaptive ? "on" : "off"}, perfect ${run.perfectHits ?? "-"}/20.${achieved}`;
+        list.appendChild(item);
+      });
+      recentRunsEl.appendChild(list);
+    }
+
+    function persistRunSummary() {
+      if (!storageEnabled) return;
+      const achievementNames = getAchievements().map(a => a.name);
+      const runSummary = {
+        seed: runSeed,
+        youScore,
+        rockScore,
+        draws,
+        adaptive: runAdaptiveSetting,
+        perfectHits,
+        achievements: achievementNames,
+        ts: Date.now()
+      };
+      recentRuns.unshift(runSummary);
+      recentRuns = recentRuns.slice(0, recentRunsLimit);
+      storageSet(storageKeys.recentRuns, JSON.stringify(recentRuns));
+      renderRecentRuns();
+    }
+
+    function clearRecentRuns() {
+      recentRuns = [];
+      storageRemove(storageKeys.recentRuns);
+      renderRecentRuns();
+    }
 
     function ensureAudioContext() {
       if (audioCtx) return;
@@ -385,20 +549,14 @@
       return arr[Math.floor(r * arr.length)];
     }
 
-    function describeRound(outcome, isPerfect) {
-      let base;
-      if (outcome === "win") base = randomFromFlavor(rockLosingQuips);
-      else if (outcome === "lose") base = randomFromFlavor(rockWinningQuips);
-      else base = randomFromFlavor(drawQuips);
-
-      let extra = "";
-      if (isPerfect && outcome === "win") extra = " " + randomFromFlavor(perfectQuips);
-      else if (!isPerfect && outcome === "win") extra = " " + randomFromFlavor(imperfectQuips);
-
-      return base + extra;
+    function describeRound(outcome) {
+      if (outcome === "win") return randomFromFlavor(rockLosingQuips);
+      if (outcome === "lose") return randomFromFlavor(rockWinningQuips);
+      return randomFromFlavor(drawQuips);
     }
 
     function createScoreCells() {
+      if (!scoreTrackEl) return;
       scoreTrackEl.innerHTML = "";
       for (let i = 0; i < 20; i++) {
         const cell = document.createElement("div");
@@ -409,6 +567,7 @@
     }
 
     function updateScoreboard() {
+      if (!scoreTrackEl) return;
       const cells = Array.from(scoreTrackEl.children);
       cells.forEach((cell, idx) => {
         cell.className = "score-cell";
@@ -442,7 +601,7 @@
       for (let i = 0; i < 20; i++) {
         const cell = document.createElement("div");
         cell.className = "timeline-cell empty";
-        cell.innerHTML = '<div class="timeline-cell-inner"><span>·</span></div>';
+        cell.innerHTML = `<div class="timeline-cell-inner"><span class="timeline-cell-round">R${i + 1}</span><span class="timeline-cell-hands">·</span><span class="timeline-cell-outcome">·</span></div>`;
         cell.addEventListener("mouseenter", () => handleTimelineHover(i));
         cell.addEventListener("mouseleave", () => clearTimelineHover(i));
         timelineTrackEl.appendChild(cell);
@@ -453,12 +612,15 @@
     function renderTimeline() {
       timelineCells.forEach((cell, i) => {
         cell.className = "timeline-cell empty";
-        cell.innerHTML = '<div class="timeline-cell-inner"><span>·</span></div>';
+        cell.innerHTML = `<div class="timeline-cell-inner"><span class="timeline-cell-round">R${i + 1}</span><span class="timeline-cell-hands">·</span><span class="timeline-cell-outcome">·</span></div>`;
         if (i < historyLog.length) {
           const entry = historyLog[i];
-          cell.className = "timeline-cell played";
+          const outcomeChar = entry.outcome === "win" ? "W" : entry.outcome === "lose" ? "L" : "D";
+          cell.className = `timeline-cell played ${entry.outcome}`;
           cell.innerHTML =
-            `<div class="timeline-cell-inner"><span>${glyph[entry.rockMove]}</span><span>${glyph[entry.yourMove]}</span></div>`;
+            `<div class="timeline-cell-inner"><span class="timeline-cell-round">R${entry.round}</span><span class="timeline-cell-hands">${glyph[entry.rockMove]} ${glyph[entry.yourMove]}</span><span class="timeline-cell-outcome">${outcomeChar}</span></div>`;
+        } else if (i === currentRound && currentRound < 20) {
+          cell.classList.add("current");
         }
       });
       if (activeTimelineIndex !== null && timelineCells[activeTimelineIndex]) {
@@ -492,11 +654,12 @@
         activeTimelineIndex = null;
       }
       if (historyLog.length === 0) {
-        timelinePreviewEl.textContent = "Hover a played round to preview the exact hands and outcome.";
+        timelinePreviewEl.textContent = "Hover a played round to preview exact hands and outcome.";
+      if (timelineStatusEl) timelineStatusEl.textContent = "Round 1 is live";
       } else {
         const last = historyLog[historyLog.length - 1];
         const outcomeText = last.outcome === "win" ? "you win" : last.outcome === "lose" ? "The Rock wins" : "draw";
-        timelinePreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}. Hover any round for detail.`;
+        timelinePreviewEl.innerHTML = `<strong>Last round was ${last.round}</strong>, outcome ${outcomeText}. Hover any played round for detail.`;
       }
     }
 
@@ -553,7 +716,7 @@
         div.className = "debug-log-entry";
         const adaptiveText = entry.adaptiveUsed ? `adaptive yes, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "adaptive no";
         div.textContent =
-          `Round ${entry.round}, state ${entry.mood}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${entry.outcome}, perfect counter ${names[entry.perfectMove]}, ${adaptiveText}.`;
+          `Round ${entry.round}, state ${entry.mood}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${entry.outcome}, ${adaptiveText}.`;
         debugLogEl.appendChild(div);
       });
     }
@@ -627,7 +790,8 @@
       updateRockMood(outcome);
       updateMoodDisplay();
 
-      commentaryEl.textContent = describeRound(outcome, isPerfect) + ` Perfect counter to ${names[rockMove]} this round is ${names[perfect]}.`;
+      commentaryEl.textContent = describeRound(outcome, isPerfect);
+      if (rockReactionEl) rockReactionEl.innerHTML = `<strong>Rock state</strong> ${outcome === "win" ? "He looks rattled and starts second-guessing the script." : outcome === "lose" ? "He smirks and gestures to the crowd like he called it." : "He nods, neither side giving an inch."}`;
 
       historyLog.push({
         round: currentRound + 1,
@@ -648,6 +812,8 @@
       updateProgressBar();
       updateAdaptiveStats();
       updateRunSummary();
+      if (timelineStatusEl) timelineStatusEl.textContent = currentRound >= 20 ? "Run complete" : `Round ${currentRound + 1} is live`;
+      renderAchievements();
 
       if (currentRound >= 20) {
         setButtonsEnabled(false);
@@ -659,7 +825,7 @@
       const achievements = [];
       if (historyLog.length === 0) return achievements;
 
-      if (historyLog[0].outcome === "win") achievements.push({ name: "Opening Pop", text: "You won round 1.", rare: false });
+      if (historyLog[0].outcome === "win") achievements.push({ name: "Opening Pop", text: "You won round 1.", emoji: "🎬", rank: "bronze" });
 
       let maxWinStreak = 0, curW = 0;
       let maxRockStreak = 0, curL = 0;
@@ -675,20 +841,20 @@
         if (entry.mood === "Paranoid") paranoidCount += 1;
       });
 
-      if (maxWinStreak >= 4) achievements.push({ name: "Hot Streak", text: `You reached a win streak of ${maxWinStreak}.`, rare: false });
-      if (maxRockStreak >= 3) achievements.push({ name: "Cold Shower", text: `The Rock reached a win streak of ${maxRockStreak}.`, rare: false });
-      if (Math.abs(youScore - rockScore) <= 1 && youScore >= rockScore) achievements.push({ name: "Edge Of Your Seat", text: "You won a very close run.", rare: false });
-      if (paranoidCount >= 5) achievements.push({ name: "Paranoid Era", text: "You kept The Rock in Paranoid state for a long stretch.", rare: false });
-      if (perfectHits >= 10) achievements.push({ name: "Perfect Counter Enjoyer", text: `You played ${perfectHits} perfect counters.`, rare: false });
-      if (perfectHits === historyLog.length) achievements.push({ name: "Theoretical Maximum", text: "You played a perfect counter every single round.", rare: true });
-      if (seedWasManual && youScore > rockScore) achievements.push({ name: "Seeded Legend", text: "You chose the seed and still beat The Rock.", rare: false });
+      if (maxWinStreak >= 4) achievements.push({ name: "Hot Streak", text: `You reached a win streak of ${maxWinStreak}.`, emoji: "🔥", rank: "silver" });
+      if (maxRockStreak >= 3) achievements.push({ name: "Cold Shower", text: `The Rock reached a win streak of ${maxRockStreak}.`, emoji: "🧊", rank: "bronze" });
+      if (Math.abs(youScore - rockScore) <= 1 && youScore >= rockScore) achievements.push({ name: "Edge Of Your Seat", text: "You won a very close run.", emoji: "🎢", rank: "silver" });
+      if (paranoidCount >= 5) achievements.push({ name: "Paranoid Era", text: "You kept The Rock in Paranoid state for a long stretch.", emoji: "👀", rank: "gold" });
+      if (perfectHits >= 10) achievements.push({ name: "Perfect Counter Enjoyer", text: `You played ${perfectHits} perfect counters.`, emoji: "🧠", rank: "gold" });
+      if (perfectHits === historyLog.length) achievements.push({ name: "Theoretical Maximum", text: "You played a perfect counter every single round.", emoji: "♾️", rank: "mythic" });
+      if (seedWasManual && youScore > rockScore) achievements.push({ name: "Seeded Legend", text: "You chose the seed and still beat The Rock.", emoji: "🌱", rank: "silver" });
 
       if (adaptiveEverOnThisRun && adaptiveAttempts >= 5) {
         const rate = adaptiveCorrectReads / adaptiveAttempts;
-        if (rate >= 0.6 && youScore > rockScore) achievements.push({ name: "Adaptive Bully", text: "You beat him even though his adaptive reads were strong.", rare: false });
+        if (rate >= 0.6 && youScore > rockScore) achievements.push({ name: "Adaptive Bully", text: "You beat him even though his adaptive reads were strong.", emoji: "🦾", rank: "gold" });
       }
 
-      if (youScore === 0 && rockScore === 0 && draws > 0) achievements.push({ name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", rare: true });
+      if (youScore === 0 && rockScore === 0 && draws > 0) achievements.push({ name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", emoji: "🕊️", rank: "mythic" });
       return achievements;
     }
 
@@ -696,13 +862,15 @@
       const achievements = getAchievements();
       achievementsListEl.innerHTML = "";
       if (achievements.length === 0) {
-        achievementsListEl.textContent = "No achievements unlocked this run. Try new seeds or adaptive mode.";
+        achievementsListEl.textContent = historyLog.length === 0
+          ? "Play a round to start unlocking achievements."
+          : "No achievements unlocked yet this run. Keep going.";
         return;
       }
       achievements.forEach(a => {
         const div = document.createElement("div");
-        div.className = "achievement-badge" + (a.rare ? " rare" : "");
-        div.textContent = `${a.name}: ${a.text}`;
+        div.className = `achievement-badge rank-${a.rank || "bronze"}`;
+        div.textContent = `${a.emoji || "🏅"} ${a.name}: ${a.text}`;
         achievementsListEl.appendChild(div);
       });
     }
@@ -710,8 +878,7 @@
     function showFinalSummary() {
       const summaryLines = [];
       summaryLines.push(`Final score after 20 rounds, Dwayne ${rockScore}, you ${youScore}, draws ${draws}.`);
-      summaryLines.push(`You hit the mathematically perfect counter ${perfectHits} out of 20 times.`);
-      summaryLines.push(`Perfect counter sequence for this run, ${perfectAbbrevs.join(" ")}.`);
+      summaryLines.push(`You won ${youScore}, lost ${rockScore}, drew ${draws}; keep pressing for cleaner reads and streak control.`);
       summaryLines.push(`Legend R Rock, P Paper, S Scissors.`);
 
       if (adaptiveEverOnThisRun && adaptiveAttempts > 0) {
@@ -727,14 +894,16 @@
       commentaryEl.textContent = summaryLines.join(" ");
 
       renderAchievements();
+      persistRunSummary();
       if (historyLog.length > 0) handleTimelineHover(historyLog.length - 1);
       resetBtn.style.display = "inline-flex";
     }
 
-    function initFromSeed(seed, manualFlag) {
+    function initFromSeed(seed, manualFlag, persistSeed = true) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
       seedDisplayEl.textContent = `Run seed, ${runSeed}`;
+      if (persistSeed) storageSet(storageKeys.lastSeed, String(runSeed));
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
 
@@ -750,6 +919,7 @@
       adaptiveAttempts = 0;
       adaptiveCorrectReads = 0;
       adaptiveEverOnThisRun = false;
+      runAdaptiveSetting = adaptiveToggle.checked;
       lastDecisionAdaptive = false;
 
       rockMood = "Calm";
@@ -757,7 +927,7 @@
 
       historyLog = [];
       debugLogEl.innerHTML = "";
-      achievementsListEl.innerHTML = "Complete a run to unlock achievements.";
+      achievementsListEl.innerHTML = "Play a round to start unlocking achievements.";
 
       rockHandEl.textContent = "❔";
       yourHandEl.textContent = "❔";
@@ -766,11 +936,13 @@
       resultLineEl.textContent = "";
       resultLineEl.className = "result-line";
       commentaryEl.textContent = "";
+      if (rockReactionEl) rockReactionEl.innerHTML = "<strong>Rock state</strong> Pre-round scout, suspicious energy, script lane likely this beat.";
 
       createScoreCells();
       createTimelineCells();
       renderTimeline();
-      timelinePreviewEl.textContent = "Hover a played round to preview the exact hands and outcome.";
+      timelinePreviewEl.textContent = "Hover a played round to preview exact hands and outcome.";
+      if (timelineStatusEl) timelineStatusEl.textContent = "Round 1 is live";
 
       updateScoreLabel();
       updateRoundLabel();
@@ -792,7 +964,7 @@
         if (Number.isNaN(parsed)) newSeed = Math.floor(Math.random() * 1e9);
         else { newSeed = parsed; manual = true; }
       }
-      initFromSeed(newSeed, manual);
+      initFromSeed(newSeed, manual, true);
     }
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
@@ -801,8 +973,16 @@
     }));
 
     resetBtn.addEventListener("click", resetGame);
-    adaptiveToggle.addEventListener("change", () => { updateAdaptiveStats(); updateMoodDisplay(); });
-    sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
+    adaptiveToggle.addEventListener("change", () => {
+      storageSet(storageKeys.adaptive, String(adaptiveToggle.checked));
+      updateAdaptiveStats();
+      updateMoodDisplay();
+    });
+    sfxToggle.addEventListener("change", () => {
+      sfxEnabled = sfxToggle.checked;
+      storageSet(storageKeys.sfx, String(sfxToggle.checked));
+    });
+    if (clearHistoryBtn) clearHistoryBtn.addEventListener("click", clearRecentRuns);
 
     document.addEventListener("keydown", e => {
       if (!isGameActive()) return;
@@ -813,7 +993,10 @@
       else if (key === "s") playRound("S");
     });
 
-    initFromSeed(Math.floor(Math.random() * 1e9), false);
+    loadPersistedSettings();
+    const startupSeed = initialSeedFromStorage ?? Math.floor(Math.random() * 1e9);
+    const shouldPersistStartupSeed = initialSeedFromStorage === null;
+    initFromSeed(startupSeed, false, shouldPersistStartupSeed);
   </script>
 </body>
 </html>
