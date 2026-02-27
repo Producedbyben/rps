@@ -991,10 +991,17 @@
 
     function renderAchievements() {
       achievementsListEl.innerHTML = "";
-      achievementCatalog.forEach(a => {
+      const earned = achievementCatalog.filter(a => (achievementUnlockCounts[a.id] || 0) > 0);
+
+      if (earned.length === 0) {
+        achievementsListEl.textContent = "No achievements earned yet. Start a run and unlock one to reveal it here.";
+        return;
+      }
+
+      earned.forEach(a => {
         const count = achievementUnlockCounts[a.id] || 0;
         const div = document.createElement("div");
-        div.className = "achievement-badge rank-" + a.rank + (count === 0 ? " locked" : "");
+        div.className = "achievement-badge rank-" + a.rank;
         div.innerHTML = `<span class="achievement-multiplier">x${count}</span><strong>${a.name}</strong><br />${a.text}`;
         achievementsListEl.appendChild(div);
       });
