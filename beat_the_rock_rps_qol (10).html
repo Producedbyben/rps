@@ -42,8 +42,41 @@
 
     .adaptive-stats { text-align: center; font-size: 0.78rem; color: #6b7280; margin-bottom: 4px; margin-top: 2px; }
     .adaptive-stats strong { color: #e5e7eb; }
-    .mood-display { text-align: center; font-size: 0.78rem; color: #9ca3af; margin-bottom: 18px; }
-    .mood-display strong { color: #fbbf24; }
+    .mood-display {
+      margin: 6px auto 16px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,0.45);
+      background: linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .mood-emoji { font-size: 1.3rem; line-height: 1; }
+    .mood-text { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .mood-label { text-transform: uppercase; letter-spacing: 0.06em; color: rgba(226,232,240,0.9); font-size: 0.7rem; }
+    .mood-state { font-size: 0.95rem; color: #f8fafc; }
+    .mood-risk { font-size: 0.76rem; color: rgba(226,232,240,0.95); }
+    .mood-display.severity-low {
+      background: linear-gradient(135deg, rgba(20,83,45,0.75), rgba(15,23,42,0.95));
+      border-color: rgba(74,222,128,0.55);
+      box-shadow: 0 0 0 1px rgba(74,222,128,0.18) inset;
+    }
+    .mood-display.severity-mid {
+      background: linear-gradient(135deg, rgba(146,64,14,0.75), rgba(15,23,42,0.95));
+      border-color: rgba(251,191,36,0.58);
+      box-shadow: 0 0 0 1px rgba(251,191,36,0.22) inset;
+    }
+    .mood-display.severity-high {
+      background: linear-gradient(135deg, rgba(127,29,29,0.78), rgba(15,23,42,0.95));
+      border-color: rgba(248,113,113,0.62);
+      box-shadow: 0 0 0 1px rgba(248,113,113,0.2) inset;
+    }
     .pre-round-hint { text-align: center; font-size: 0.8rem; color: #c3c7d1; margin-bottom: 14px; min-height: 1.2rem; }
 
     .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: #11141f; border-radius: 16px; padding: 18px 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); transform-origin: center; }
@@ -176,7 +209,7 @@
     </div>
 
     <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
-    <div id="moodDisplay" class="mood-display"><strong>Rock state</strong> Calm, mostly following his base pattern.</div>
+    <div id="moodDisplay" class="mood-display severity-low">🧊 Rock is calm · Read risk 30%</div>
     <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
 
     <div class="arena-wrap">
@@ -842,15 +875,23 @@
 
     function updateMoodDisplay() {
       const adaptPct = Math.round(moodAdaptChance() * 100);
-      let text;
-      if (!adaptiveToggle.checked) {
-        text = `<strong>Rock state</strong> ${rockMood}, adaptive mode is off so the ${adaptPct} percent read chance is just locker-room chatter.`;
-      } else {
-        if (rockMood === "Calm") text = `<strong>Rock state</strong> Calm, cool entrance music, ${adaptPct} percent chance he throws out script and reads your last move.`;
-        else if (rockMood === "Suspicious") text = `<strong>Rock state</strong> Suspicious, eyebrow up, ${adaptPct} percent chance he calls an audible to counter.`;
-        else text = `<strong>Rock state</strong> Paranoid, full main-event intensity, ${adaptPct} percent chance he tries to hard read you.`;
-      }
-      moodDisplayEl.innerHTML = text;
+      const moodMeta = {
+        Calm: { emoji: "😌", severity: "severity-low", label: "CALM" },
+        Suspicious: { emoji: "🤨", severity: "severity-mid", label: "SUSPICIOUS" },
+        Paranoid: { emoji: "😤", severity: "severity-high", label: "PARANOID" }
+      };
+      const activeMeta = moodMeta[rockMood] || moodMeta.Calm;
+      moodDisplayEl.classList.remove("severity-low", "severity-mid", "severity-high");
+      moodDisplayEl.classList.add(activeMeta.severity);
+      const riskText = adaptiveToggle.checked ? `Read risk ${adaptPct}%` : "Adaptive off";
+      moodDisplayEl.innerHTML = `
+        <span class="mood-emoji" aria-hidden="true">${activeMeta.emoji}</span>
+        <span class="mood-text">
+          <span class="mood-label">Rock state</span>
+          <span class="mood-state">${activeMeta.label}</span>
+          <span class="mood-risk">${riskText}</span>
+        </span>
+      `;
     }
 
     function updatePreRoundHint() {
