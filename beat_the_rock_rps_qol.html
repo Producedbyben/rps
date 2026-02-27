@@ -627,9 +627,9 @@
       });
     }
 
-    function createRoundBoardCells() {
-      roundBoardEl.innerHTML = "";
-      roundBoardCells = [];
+    function createTimelineCells() {
+      timelineTrackEl.innerHTML = "";
+      timelineCells = [];
       for (let i = 0; i < 20; i++) {
         const cell = document.createElement("div");
         cell.className = "timeline-cell empty";
@@ -655,41 +655,41 @@
           cell.classList.add("current");
         }
 
-        const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
-        const resultMark = entry.outcome === "win" ? "W" : entry.outcome === "lose" ? "L" : "D";
-
-        cell.classList.add("played", entry.outcome);
-        cell.innerHTML =
-          `<span class="round-num">R${entry.round}</span>` +
-          `<span class="round-hands">${glyph[entry.rockMove]}${glyph[entry.yourMove]}</span>` +
-          `<span class="round-outcome">${resultMark}</span>`;
-        cell.setAttribute("aria-label", `Round ${entry.round}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${outcomeText}.`);
+        if (i < historyLog.length) {
+          const entry = historyLog[i];
+          const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
+          cell.setAttribute("aria-label", `Round ${entry.round}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${outcomeText}.`);
+        } else {
+          cell.removeAttribute("aria-label");
+        }
       });
 
-      if (currentRound >= 20) roundBoardStatusEl.textContent = "All 20 rounds complete";
-      else roundBoardStatusEl.textContent = `Round ${currentRound + 1} is live`;
+      if (currentRound >= 20) timelineStatusEl.textContent = "All 20 rounds complete";
+      else timelineStatusEl.textContent = `Round ${currentRound + 1} is live`;
 
-      if (activeRoundBoardIndex !== null && roundBoardCells[activeRoundBoardIndex]) {
-        roundBoardCells[activeRoundBoardIndex].classList.add("current");
+      if (activeTimelineIndex !== null && timelineCells[activeTimelineIndex]) {
+        timelineCells[activeTimelineIndex].classList.add("current");
       }
     }
 
-    function handleRoundBoardHover(index) {
+    function renderRoundBoard() { renderTimeline(); }
+
+    function handleTimelineHover(index) {
       if (index >= historyLog.length) {
-        roundBoardPreviewEl.innerHTML = `<strong>Round ${index + 1}</strong> not played yet in this run.`;
+        timelinePreviewEl.innerHTML = `<strong>Round ${index + 1}</strong> not played yet in this run.`;
         return;
       }
       const entry = historyLog[index];
-      activeRoundBoardIndex = index;
+      activeTimelineIndex = index;
       const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
       const pathText = entry.adaptiveUsed ? `adaptive read path, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "base script path";
-      roundBoardPreviewEl.innerHTML =
+      timelinePreviewEl.innerHTML =
         `<strong>Round ${entry.round}</strong>, Dwayne ${names[entry.rockMove]} (${glyph[entry.rockMove]}) vs you ` +
         `${names[entry.yourMove]} (${glyph[entry.yourMove]}), outcome ${outcomeText}, state ${entry.mood}, ${pathText}.`;
     }
 
-    function clearRoundBoardHover(index) {
-      if (activeRoundBoardIndex === index) activeRoundBoardIndex = null;
+    function clearTimelineHover(index) {
+      if (activeTimelineIndex === index) activeTimelineIndex = null;
       if (historyLog.length === 0) {
         timelinePreviewEl.textContent = "Hover a played round to preview exact hands and outcome.";
       if (timelineStatusEl) timelineStatusEl.textContent = "Round 1 is live";
@@ -981,8 +981,6 @@
         maxRockStreak = Math.max(maxRockStreak, curL);
         if (entry.mood === "Paranoid") paranoidCount += 1;
       });
-      renderAchievements();
-    }
 
       if (maxWinStreak >= 4) achievements.push({ name: "Hot Streak", text: `You reached a win streak of ${maxWinStreak}.`, emoji: "🔥", rank: "silver" });
       if (maxRockStreak >= 3) achievements.push({ name: "Cold Shower", text: `The Rock reached a win streak of ${maxRockStreak}.`, emoji: "🧊", rank: "bronze" });
@@ -1002,8 +1000,9 @@
     }
 
     function renderAchievements() {
+      const unlocked = getAchievements();
       achievementsListEl.innerHTML = "";
-      if (achievements.length === 0) {
+      if (unlocked.length === 0) {
         achievementsListEl.textContent = historyLog.length === 0
           ? "Play a round to start unlocking achievements."
           : "No achievements unlocked yet this run. Keep going.";
@@ -1029,7 +1028,7 @@
         summaryLines.push(`Adaptive Rock made ${adaptiveAttempts} read attempts, with ${adaptiveCorrectReads} correct, accuracy ${acc} percent.`);
       }
 
-      const runAchievements = getUnlockedAchievementDefs();
+      const runAchievements = getAchievements();
       if (runAchievements.length > 0) summaryLines.push(`Achievements unlocked this run, ${runAchievements.map(a => a.name).join(", ")}.`);
       else summaryLines.push("No achievements this time, try different seeds or adaptive settings.");
 
