@@ -198,6 +198,18 @@
       <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
     </div>
 
+    <div class="settings-row" aria-label="Game settings">
+      <label>
+        <input id="adaptiveToggle" type="checkbox" />
+        Adaptive Rock
+      </label>
+      <label>
+        <input id="sfxToggle" type="checkbox" checked />
+        Sound effects
+      </label>
+      <span class="settings-hint">Adaptive mode lets Rock try to read your recent patterns.</span>
+    </div>
+
     <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
     <div id="moodDisplay" class="mood-display"><strong>Rock state</strong> Calm, mostly following his base pattern.</div>
     <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
@@ -222,6 +234,8 @@
       <span id="roundLabel">Round 1 of 20</span>
       <span id="scoreLabel">Dwayne 0  |  You 0  |  Draws 0</span>
     </div>
+
+    <div id="scoreTrack" class="score-track" aria-label="Per-round score markers"></div>
 
     <div class="progress-wrap">
       <div class="progress-labels">
