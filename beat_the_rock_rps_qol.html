@@ -40,6 +40,7 @@
     .adaptive-stats strong { color: #e5e7eb; }
     .mood-display { text-align: center; font-size: 0.78rem; color: #9ca3af; margin-bottom: 18px; }
     .mood-display strong { color: #fbbf24; }
+    .pre-round-hint { text-align: center; font-size: 0.8rem; color: #c3c7d1; margin-bottom: 14px; min-height: 1.2rem; }
 
     .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: #11141f; border-radius: 16px; padding: 18px 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); transform-origin: center; }
     @keyframes shake { 0%{transform:translate(0,0)} 20%{transform:translate(-4px,2px)} 40%{transform:translate(4px,-2px)} 60%{transform:translate(-3px,1px)} 80%{transform:translate(3px,0)} 100%{transform:translate(0,0)} }
@@ -110,6 +111,8 @@
     .help-box summary::-webkit-details-marker { display: none; }
     .help-box-content { margin-top: 6px; line-height: 1.4; }
     .help-box-content ul { padding-left: 18px; margin: 4px 0 0; }
+    .help-legend { margin-top: 10px; font-size: 0.78rem; color: #c3c7d1; display: flex; flex-wrap: wrap; gap: 8px 10px; }
+    .help-legend span { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.75); }
 
     .debug-panel { margin-top: 16px; font-size: 0.8rem; color: #9ca3af; }
     .debug-panel summary { cursor: pointer; list-style: none; }
@@ -158,6 +161,7 @@
 
     <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
     <div id="moodDisplay" class="mood-display"><strong>Rock state</strong> Calm, mostly following his base pattern.</div>
+    <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
 
     <div class="arena-wrap">
       <div id="arena" class="arena">
@@ -227,6 +231,11 @@
           <li>Perfect counters are moves that would beat the exact hand he played that round, shown in the summary.</li>
           <li>Use different seeds and toggles to create repeatable runs and shared challenges.</li>
         </ul>
+        <div class="help-legend">
+          <span><strong>Calm</strong> 30% adapt chance</span>
+          <span><strong>Suspicious</strong> 60% adapt chance</span>
+          <span><strong>Paranoid</strong> 90% adapt chance</span>
+        </div>
       </div>
     </details>
 
@@ -309,6 +318,7 @@
     const timelineTrackEl = document.getElementById("timelineTrack");
     const timelinePreviewEl = document.getElementById("timelinePreview");
     const sfxToggle = document.getElementById("sfxToggle");
+    const preRoundHintEl = document.getElementById("preRoundHint");
 
     function mulberry32(a) {
       return function() {
@@ -479,11 +489,11 @@
       timelineCells[index].classList.add("active");
 
       const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
-      const adaptiveText = entry.adaptiveUsed ? `adaptive yes, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "adaptive no";
+      const pathText = entry.adaptiveUsed ? `adaptive read path, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "base script path";
 
       timelinePreviewEl.innerHTML =
         `<strong>Round ${entry.round}</strong>, Dwayne ${names[entry.rockMove]} (${glyph[entry.rockMove]}) vs you ` +
-        `${names[entry.yourMove]} (${glyph[entry.yourMove]}), outcome ${outcomeText}, state ${entry.mood}, ${adaptiveText}.`;
+        `${names[entry.yourMove]} (${glyph[entry.yourMove]}), outcome ${outcomeText}, state ${entry.mood}, ${pathText}.`;
     }
 
     function clearTimelineHover(index) {
@@ -496,7 +506,8 @@
       } else {
         const last = historyLog[historyLog.length - 1];
         const outcomeText = last.outcome === "win" ? "you win" : last.outcome === "lose" ? "The Rock wins" : "draw";
-        timelinePreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}. Hover any round for detail.`;
+        const pathText = last.adaptiveUsed ? "adaptive read path" : "base script path";
+        timelinePreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}, ${pathText}. Hover any round for detail.`;
       }
     }
 
@@ -522,28 +533,45 @@
     }
 
     function updateAdaptiveStats() {
+      const adaptPct = Math.round(moodAdaptChance() * 100);
       if (!adaptiveToggle.checked) {
-        adaptiveStatsEl.innerHTML = "<strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.";
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> is off. If he flipped it on in a promo, ${rockMood} would be a ${adaptPct} percent adapt chance.`;
         return;
       }
       if (adaptiveAttempts === 0) {
-        adaptiveStatsEl.innerHTML = "<strong>Adaptive Rock</strong> attempts will show here as you play rounds.";
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> current mood says ${adaptPct} percent adapt chance this round. Attempts will show once he starts taking swings.`;
         return;
       }
       const acc = Math.round((adaptiveCorrectReads / adaptiveAttempts) * 100);
-      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> attempts ${adaptiveAttempts}, correct reads ${adaptiveCorrectReads}, accuracy ${acc} percent.`;
+      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> chance this round ${adaptPct} percent, attempts ${adaptiveAttempts}, correct reads ${adaptiveCorrectReads}, accuracy ${acc} percent.`;
     }
 
     function updateMoodDisplay() {
+      const adaptPct = Math.round(moodAdaptChance() * 100);
       let text;
       if (!adaptiveToggle.checked) {
-        text = `<strong>Rock state</strong> ${rockMood}, adaptive mode is off so this does not affect the moves.`;
+        text = `<strong>Rock state</strong> ${rockMood}, adaptive mode is off so the ${adaptPct} percent read chance is just locker-room chatter.`;
       } else {
-        if (rockMood === "Calm") text = "<strong>Rock state</strong> Calm, he is mostly following his base pattern with a low adapt chance.";
-        else if (rockMood === "Suspicious") text = "<strong>Rock state</strong> Suspicious, he is noticeably more likely to adapt to your last move.";
-        else text = "<strong>Rock state</strong> Paranoid, he is almost always trying to counter you.";
+        if (rockMood === "Calm") text = `<strong>Rock state</strong> Calm, cool entrance music, ${adaptPct} percent chance he throws out script and reads your last move.`;
+        else if (rockMood === "Suspicious") text = `<strong>Rock state</strong> Suspicious, eyebrow up, ${adaptPct} percent chance he calls an audible to counter.`;
+        else text = `<strong>Rock state</strong> Paranoid, full main-event intensity, ${adaptPct} percent chance he tries to hard read you.`;
       }
       moodDisplayEl.innerHTML = text;
+    }
+
+    function updatePreRoundHint() {
+      if (currentRound >= 20) {
+        preRoundHintEl.textContent = "Pre-round scout, full match complete. Check the timeline for the receipts.";
+        return;
+      }
+      const adaptPct = Math.round(moodAdaptChance() * 100);
+      if (!adaptiveToggle.checked || currentRound === 0 || !lastYourMove) {
+        preRoundHintEl.textContent = `Pre-round scout, ${rockMood.toLowerCase()} energy, script lane likely this beat.`;
+        return;
+      }
+      if (rockMood === "Calm") preRoundHintEl.textContent = `Pre-round scout, he's calm but alert, ${adaptPct} percent read chance right now.`;
+      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Pre-round scout, he's reading aggressively right now, ${adaptPct} percent chance he hunts your last hand.`;
+      else preRoundHintEl.textContent = `Pre-round scout, paranoid mode is blazing, ${adaptPct} percent chance he hard-counters your last hand.`;
     }
 
     function renderDebugLog() {
@@ -551,9 +579,9 @@
       historyLog.forEach(entry => {
         const div = document.createElement("div");
         div.className = "debug-log-entry";
-        const adaptiveText = entry.adaptiveUsed ? `adaptive yes, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "adaptive no";
+        const pathText = entry.adaptiveUsed ? `adaptive read path, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "base script path";
         div.textContent =
-          `Round ${entry.round}, state ${entry.mood}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${entry.outcome}, perfect counter ${names[entry.perfectMove]}, ${adaptiveText}.`;
+          `Round ${entry.round}, state ${entry.mood}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${entry.outcome}, perfect counter ${names[entry.perfectMove]}, ${pathText}.`;
         debugLogEl.appendChild(div);
       });
     }
@@ -648,6 +676,7 @@
       updateProgressBar();
       updateAdaptiveStats();
       updateRunSummary();
+      updatePreRoundHint();
 
       if (currentRound >= 20) {
         setButtonsEnabled(false);
@@ -777,6 +806,7 @@
       updateProgressBar();
       updateAdaptiveStats();
       updateMoodDisplay();
+      updatePreRoundHint();
       updateRunSummary();
 
       setButtonsEnabled(true);
@@ -801,7 +831,7 @@
     }));
 
     resetBtn.addEventListener("click", resetGame);
-    adaptiveToggle.addEventListener("change", () => { updateAdaptiveStats(); updateMoodDisplay(); });
+    adaptiveToggle.addEventListener("change", () => { updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); });
     sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
 
     document.addEventListener("keydown", e => {
