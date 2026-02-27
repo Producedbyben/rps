@@ -22,10 +22,12 @@
     .run-summary-pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.9); }
     .run-summary-pill strong { color: #e5e7eb; }
 
-    .seed-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; }
-    .seed-row span { white-space: nowrap; }
+    .seed-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; justify-content: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; }
     .seed-row label { display: inline-flex; align-items: center; gap: 6px; }
-    .seed-row input { background: #020617; border-radius: 999px; border: 1px solid rgba(148,163,184,0.7); padding: 4px 8px; color: #e5e7eb; font-size: 0.8rem; width: 120px; }
+    .seed-row input { background: #020617; border-radius: 999px; border: 1px solid rgba(148,163,184,0.7); padding: 5px 10px; color: #e5e7eb; font-size: 0.8rem; width: 165px; }
+    .seed-feedback { width: 100%; text-align: center; font-size: 0.78rem; min-height: 1.1rem; }
+    .seed-feedback.error { color: #fca5a5; }
+    .seed-feedback.info { color: #93c5fd; }
 
     .settings-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; font-size: 0.78rem; color: #9ca3af; margin-bottom: 6px; }
     .settings-row label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
@@ -40,6 +42,7 @@
     .adaptive-stats strong { color: #e5e7eb; }
     .mood-display { text-align: center; font-size: 0.78rem; color: #9ca3af; margin-bottom: 18px; }
     .mood-display strong { color: #fbbf24; }
+    .pre-round-hint { text-align: center; font-size: 0.8rem; color: #c3c7d1; margin-bottom: 14px; min-height: 1.2rem; }
 
     .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: #11141f; border-radius: 16px; padding: 18px 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); transform-origin: center; }
     @keyframes shake { 0%{transform:translate(0,0)} 20%{transform:translate(-4px,2px)} 40%{transform:translate(4px,-2px)} 60%{transform:translate(-3px,1px)} 80%{transform:translate(3px,0)} 100%{transform:translate(0,0)} }
@@ -58,6 +61,29 @@
     .progress-bar { position: relative; width: 100%; height: 6px; border-radius: 999px; background: #020617; overflow: hidden; border: 1px solid rgba(30,64,175,0.8); }
     .progress-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a); transition: width 0.25s ease; }
 
+    .round-board { margin-top: 14px; padding: 12px 10px 10px; border-radius: 12px; background: radial-gradient(circle at top, rgba(56,189,248,0.12), rgba(2,6,23,0.94)); border: 1px solid rgba(56,189,248,0.35); }
+    .round-board-header { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: #bae6fd; font-size: 0.8rem; margin-bottom: 8px; }
+    .round-board-grid { display: grid; grid-template-columns: repeat(20, minmax(16px, 1fr)); gap: 4px; }
+    .round-box { min-height: 44px; border-radius: 8px; border: 1px solid rgba(100,116,139,0.5); background: #111827; color: #64748b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1; cursor: default; padding: 3px 1px; }
+    .round-box .round-num { font-size: 0.55rem; color: #94a3b8; }
+    .round-box .round-hands { font-size: 0.68rem; color: #cbd5e1; min-height: 0.72rem; }
+    .round-box .round-outcome { font-size: 0.66rem; min-height: 0.66rem; }
+    .round-box.played { cursor: pointer; }
+    .round-box.played.win { border-color: rgba(52,211,153,0.9); background: #064e3b; }
+    .round-box.played.lose { border-color: rgba(248,113,113,0.9); background: #7f1d1d; }
+    .round-box.played.draw { border-color: rgba(250,204,21,0.9); background: #713f12; }
+    .round-box.current { border-color: rgba(216,180,254,1); box-shadow: inset 0 0 0 1px rgba(216,180,254,0.8); }
+    .round-box.played:hover,
+    .round-box.played:focus-visible { transform: translateY(-1px); border-color: #38bdf8; }
+    .round-box:focus-visible { outline: 3px solid #93c5fd; outline-offset: 1px; }
+    .round-board-preview { margin-top: 8px; min-height: 1.2rem; font-size: 0.78rem; color: #cbd5e1; }
+    .round-board-preview strong { color: #e5e7eb; }
+
+    .challenge-row { margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn-share { background: #2563eb; color: #eff6ff; box-shadow: 0 4px 10px rgba(0,0,0,0.55); }
+    .copy-status { font-size: 0.78rem; color: #93c5fd; min-height: 1.1rem; }
+    .copy-status.error { color: #fca5a5; }
+
     .controls { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
     button { border: none; border-radius: 999px; padding: 10px 18px; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease; }
     button span.hand-icon { font-size: 1.3rem; }
@@ -68,48 +94,43 @@
     button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.6); }
     button:active { transform: translateY(0); box-shadow: 0 3px 6px rgba(0,0,0,0.5); }
     button:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+    button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
 
     .result-line { margin-top: 14px; font-size: 1.02rem; text-align: center; min-height: 1.4rem; }
     .result-win { color: #6ee7b7; }
     .result-lose { color: #f97373; }
     .result-draw { color: #facc15; }
-    .commentary { margin-top: 12px; font-size: 0.94rem; color: #e5e7eb; min-height: 3.4rem; line-height: 1.4; }
+    .commentary-wrap { margin-top: 12px; padding: 12px 12px 10px; border-radius: 12px; background: radial-gradient(circle at top, rgba(250,204,21,0.16), rgba(30,41,59,0.95)); border: 1px solid rgba(250,204,21,0.45); }
+    .commentary-title { font-size: 0.76rem; letter-spacing: 0.08em; text-transform: uppercase; color: #fde68a; margin-bottom: 6px; font-weight: 700; }
+    .commentary { margin-top: 0; font-size: 1.14rem; color: #f8fafc; min-height: 4.1rem; line-height: 1.45; font-weight: 700; }
 
-    .scoreboard { margin-top: 18px; padding: 12px 10px; border-radius: 12px; background: #020617; border: 1px solid rgba(148,163,184,0.35); }
-    .score-header { display: flex; justify-content: space-between; font-size: 0.9rem; color: #9ca3af; margin-bottom: 8px; flex-wrap: wrap; gap: 4px; }
-    .score-header strong { color: #f9fafb; }
-    .score-track { display: grid; grid-template-columns: repeat(20, minmax(10px, 1fr)); gap: 4px; font-size: 0.7rem; }
-    .score-cell { height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #111827; color: #6b7280; border: 1px solid transparent; }
-    .score-cell.win { background: #065f46; color: #bbf7d0; }
-    .score-cell.lose { background: #7f1d1d; color: #fecaca; }
-    .score-cell.draw { background: #78350f; color: #fef3c7; }
-    .score-cell.current { border-color: rgba(248,250,252,0.7); }
+    .achievements { margin-top: 14px; padding: 12px 12px 10px; border-radius: 12px; background: radial-gradient(circle at top, rgba(168,85,247,0.14), rgba(2,6,23,0.95)); border: 1px solid rgba(192,132,252,0.5); font-size: 0.84rem; color: #d1d5db; }
+    .achievements-header { margin-bottom: 8px; color: #f5f3ff; font-weight: 700; letter-spacing: 0.03em; }
+    .achievements-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+    .achievement-badge { padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(167,139,250,0.55); background: linear-gradient(140deg, rgba(91,33,182,0.65), rgba(30,41,59,0.9)); color: #ede9fe; line-height: 1.35; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+    .achievement-badge::before { content: "🏆 "; }
+    .achievement-badge.rank-bronze { border-color: rgba(180,83,9,0.85); background: linear-gradient(140deg, rgba(120,53,15,0.88), rgba(41,37,36,0.95)); color: #ffedd5; }
+    .achievement-badge.rank-silver { border-color: rgba(148,163,184,0.9); background: linear-gradient(140deg, rgba(71,85,105,0.9), rgba(15,23,42,0.96)); color: #f1f5f9; }
+    .achievement-badge.rank-gold { border-color: rgba(250,204,21,0.95); background: linear-gradient(140deg, rgba(133,77,14,0.93), rgba(69,26,3,0.98)); color: #fef9c3; }
+    .achievement-badge.rank-platinum { border-color: rgba(125,211,252,0.95); background: linear-gradient(140deg, rgba(186,230,253,0.32), rgba(14,116,144,0.72)); color: #ecfeff; }
 
-    .timeline { margin-top: 12px; padding: 10px 10px 8px; border-radius: 10px; background: #020617; border: 1px solid rgba(30,64,175,0.45); font-size: 0.8rem; color: #9ca3af; }
-    .timeline-header { margin-bottom: 6px; color: #e5e7eb; font-weight: 600; }
-    .timeline-track { display: grid; grid-template-columns: repeat(20, minmax(10px, 1fr)); gap: 4px; margin-bottom: 6px; }
-    .timeline-cell { height: 26px; border-radius: 6px; background: #020617; border: 1px solid #1f2937; display: flex; align-items: center; justify-content: center; cursor: default; position: relative; transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease; overflow: hidden; }
-    .timeline-cell-inner { display: flex; flex-direction: column; line-height: 1; font-size: 0.7rem; }
-    .timeline-cell-inner span { display: block; text-align: center; }
-    .timeline-cell.empty { color: #4b5563; font-size: 0.75rem; }
-    .timeline-cell.played { cursor: pointer; }
-    .timeline-cell.played:hover { border-color: #4ade80; background: #022c22; transform: translateY(-1px); }
-    .timeline-cell.played.active { border-color: #facc15; background: #1e293b; }
-    .timeline-preview { min-height: 1.2rem; font-size: 0.78rem; color: #9ca3af; }
-    .timeline-preview strong { color: #e5e7eb; }
+    .achievement-toast-stack { position: fixed; top: 14px; right: 14px; width: min(360px, calc(100vw - 28px)); display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; }
+    .achievement-toast { background: linear-gradient(140deg, rgba(30,58,138,0.95), rgba(15,23,42,0.98)); border: 1px solid rgba(125,211,252,0.8); border-radius: 10px; padding: 10px 12px; color: #e0f2fe; font-size: 0.82rem; line-height: 1.35; box-shadow: 0 12px 26px rgba(0,0,0,0.45); animation: toastIn 0.28s ease; }
+    .achievement-toast.rank-gold { border-color: rgba(250,204,21,0.9); background: linear-gradient(140deg, rgba(120,53,15,0.95), rgba(69,26,3,0.98)); color: #fef9c3; }
+    .achievement-toast.rank-platinum { border-color: rgba(125,211,252,0.95); background: linear-gradient(140deg, rgba(186,230,253,0.35), rgba(14,116,144,0.82)); color: #ecfeff; }
+    .achievement-toast strong { color: #f8fafc; }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(14px) scale(0.98); } to { opacity: 1; transform: translateX(0) scale(1); } }
 
-    .achievements { margin-top: 14px; padding: 10px 10px 8px; border-radius: 10px; background: #020617; border: 1px solid rgba(148,163,184,0.35); font-size: 0.8rem; color: #9ca3af; }
-    .achievements-header { margin-bottom: 6px; color: #e5e7eb; font-weight: 600; }
-    .achievements-list { display: flex; flex-wrap: wrap; gap: 6px; }
-    .achievement-badge { padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.6); background: #0b1120; color: #d1d5db; line-height: 1.3; white-space: nowrap; }
-    .achievement-badge.rare { border-color: #facc15; color: #fef9c3; background: #422006; }
-
-    .help-box { margin-top: 14px; font-size: 0.8rem; color: #9ca3af; border-radius: 10px; border: 1px solid rgba(148,163,184,0.4); background: #020617; padding: 8px 10px; }
+    .help-box { margin-top: 10px; margin-bottom: 10px; font-size: 0.82rem; color: #cbd5e1; border-radius: 12px; border: 1px solid rgba(125,211,252,0.4); background: radial-gradient(circle at top, rgba(14,116,144,0.17), rgba(2,6,23,0.96)); padding: 10px 12px; }
     .help-box summary { cursor: pointer; list-style: none; color: #e5e7eb; font-weight: 600; }
+    .help-box summary:focus-visible,
+    .debug-panel summary:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; border-radius: 4px; }
     .help-box summary::marker { display: none; }
     .help-box summary::-webkit-details-marker { display: none; }
     .help-box-content { margin-top: 6px; line-height: 1.4; }
     .help-box-content ul { padding-left: 18px; margin: 4px 0 0; }
+    .help-legend { margin-top: 10px; font-size: 0.78rem; color: #c3c7d1; display: flex; flex-wrap: wrap; gap: 8px 10px; }
+    .help-legend span { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.75); }
 
     .debug-panel { margin-top: 16px; font-size: 0.8rem; color: #9ca3af; }
     .debug-panel summary { cursor: pointer; list-style: none; }
@@ -130,12 +151,12 @@
     @media (max-width: 640px) {
       .arena { grid-template-columns: 1fr; text-align: center; }
       .vs { justify-self: center; }
-      .timeline-track { grid-template-columns: repeat(10, minmax(14px, 1fr)); }
       button { padding: 12px 20px; }
     }
   </style>
 </head>
 <body>
+  <div id="achievementToasts" class="achievement-toast-stack" aria-live="polite" aria-atomic="false"></div>
   <div class="app">
     <h1>Beat The Rock</h1>
     <div class="subtitle">20 rounds of modelled Dwayne Johnson in progressive Rock Paper Scissors, you try to read the script.</div>
@@ -149,21 +170,13 @@
     </div>
 
     <div class="seed-row">
-      <span id="seedDisplay">Run seed, pending</span>
-      <label>Seed for next run <input id="seedInput" type="text" placeholder="leave blank for random" /></label>
-    </div>
-
-    <div class="mode-toggle">
-      <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he starts trying to read your last move after round 1.</label>
-    </div>
-
-    <div class="settings-row">
-      <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
-      <span class="settings-hint">Keyboard, R P S to play moves.</span>
+      <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
+      <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
     </div>
 
     <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
     <div id="moodDisplay" class="mood-display"><strong>Rock state</strong> Calm, mostly following his base pattern.</div>
+    <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
 
     <div class="arena-wrap">
       <div id="arena" class="arena">
@@ -195,27 +208,40 @@
     </div>
 
     <div class="controls">
-      <button class="btn-rock" data-move="R"><span class="hand-icon">✊</span> Rock</button>
-      <button class="btn-paper" data-move="P"><span class="hand-icon">✋</span> Paper</button>
-      <button class="btn-scissors" data-move="S"><span class="hand-icon">✌️</span> Scissors</button>
+      <button class="btn-rock" data-move="R" aria-label="Play Rock hand"><span class="hand-icon">✊</span> Rock</button>
+      <button class="btn-paper" data-move="P" aria-label="Play Paper hand"><span class="hand-icon">✋</span> Paper</button>
+      <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
       <button id="resetBtn" class="btn-reset" style="display:none;">Reset match</button>
     </div>
 
-    <div id="resultLine" class="result-line"></div>
-    <div id="commentary" class="commentary"></div>
-
-    <div class="scoreboard">
-      <div class="score-header">
-        <span>Round timeline, W win, L loss, D draw</span>
-        <span><strong>Perfect counters</strong> use the actual move Dwayne played each round.</span>
-      </div>
-      <div id="scoreTrack" class="score-track"></div>
+    <div class="mode-toggle">
+      <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he starts trying to read your last move after round 1.</label>
     </div>
 
-    <div class="timeline">
-      <div class="timeline-header">Round hand timeline</div>
-      <div id="timelineTrack" class="timeline-track"></div>
-      <div id="timelinePreview" class="timeline-preview">Hover a played round to preview the exact hands and outcome.</div>
+    <div class="settings-row">
+      <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
+      <span class="settings-hint">Keyboard, R P S to play moves.</span>
+    </div>
+
+    <div id="resultLine" class="result-line" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div class="commentary-wrap">
+      <div class="commentary-title">The Rock reaction</div>
+      <div id="commentary" class="commentary" role="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
+
+    <div class="round-board">
+      <div class="round-board-header">
+        <span>20-round unified board (result + hands + order)</span>
+        <span>Outcome uses W/L/D</span>
+        <span id="roundBoardStatus">Round 1 is live</span>
+      </div>
+      <div id="roundBoard" class="round-board-grid"></div>
+      <div id="roundBoardPreview" class="round-board-preview">Hover, focus, or tap a played round to preview exact hands, outcome, and mood.</div>
+    </div>
+
+    <div class="challenge-row">
+      <button id="copyLinkBtn" class="btn-share" type="button">Copy challenge link</button>
+      <div id="copyStatus" class="copy-status" aria-live="polite"></div>
     </div>
 
     <div class="achievements">
@@ -227,12 +253,18 @@
       <summary>How this works</summary>
       <div class="help-box-content">
         <ul>
-          <li>The Rock has a fixed script of 20 planned moves, his base pattern.</li>
-          <li>In Adaptive mode he sometimes ignores the script and tries to counter your last move.</li>
-          <li>His mood changes when he loses and draws, Calm, Suspicious, Paranoid, and this changes his adapt chance.</li>
-          <li>Perfect counters are moves that would beat the exact hand he played that round, shown in the summary.</li>
-          <li>Use different seeds and toggles to create repeatable runs and shared challenges.</li>
+          <li>Every run is 20 rounds, and each round is logged in the unified board with hands plus W/L/D outcome.</li>
+          <li>Dwayne starts from a fixed base script; in Adaptive mode he may try to counter your last move after round 1.</li>
+          <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and mood changes adapt chance.</li>
+          <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
+          <li>Set a seed in the field above to replay exact runs, or leave it blank to randomize next reset.</li>
+          <li>Achievements unlock immediately when earned, stay unlocked for this browser profile, and use color tiers by difficulty.</li>
         </ul>
+        <div class="help-legend">
+          <span><strong>Calm</strong> 30% adapt chance</span>
+          <span><strong>Suspicious</strong> 60% adapt chance</span>
+          <span><strong>Paranoid</strong> 90% adapt chance</span>
+        </div>
       </div>
     </details>
 
@@ -254,6 +286,7 @@
 
   <script>
     const rockSequenceBase = ["R","R","S","R","S","P","R","S","P","R","S","R","P","S","R","P","S","R","P","S"];
+    const SCRIPT_SEQUENCE_REGEX = /^[RPS]{20}$/i;
     const beats = { R: "P", P: "S", S: "R" };
     const names = { R: "Rock", P: "Paper", S: "Scissors" };
     const glyph = { R: "✊", P: "✋", S: "✌️" };
@@ -302,7 +335,6 @@
     const scoreLabelEl = document.getElementById("scoreLabel");
     const resultLineEl = document.getElementById("resultLine");
     const commentaryEl = document.getElementById("commentary");
-    const scoreTrackEl = document.getElementById("scoreTrack");
     const resetBtn = document.getElementById("resetBtn");
     const moveButtons = Array.from(document.querySelectorAll("button[data-move]"));
     const adaptiveToggle = document.getElementById("adaptiveToggle");
@@ -311,14 +343,11 @@
     const progressTextEl = document.getElementById("progressText");
     const adaptiveStatsEl = document.getElementById("adaptiveStats");
     const moodDisplayEl = document.getElementById("moodDisplay");
-    const seedDisplayEl = document.getElementById("seedDisplay");
     const seedInputEl = document.getElementById("seedInput");
     const debugLogEl = document.getElementById("debugLog");
     const achievementsListEl = document.getElementById("achievementsList");
     const runSummaryScoresEl = document.getElementById("runSummaryScores");
     const runSummarySeedEl = document.getElementById("runSummarySeed");
-    const timelineTrackEl = document.getElementById("timelineTrack");
-    const timelinePreviewEl = document.getElementById("timelinePreview");
     const sfxToggle = document.getElementById("sfxToggle");
     const recentRunsEl = document.getElementById("recentRuns");
     const clearHistoryBtn = document.getElementById("clearHistoryBtn");
@@ -344,13 +373,13 @@
     let rngFlavor = null;
     let runSeed = 0;
     let seedWasManual = false;
+    let scriptedSequenceOverride = null;
 
     let currentRound = 0;
     let youScore = 0;
     let rockScore = 0;
     let draws = 0;
     let perfectHits = 0;
-    let track = [];
     let perfectAbbrevs = [];
     let lastYourMove = null;
 
@@ -547,105 +576,101 @@
       return base + extra;
     }
 
-    function createScoreCells() {
-      scoreTrackEl.innerHTML = "";
+    function moveRoundBoardFocus(index) {
+      if (index < 0 || index >= roundBoardCells.length) return;
+      roundBoardCells[index].focus();
+    }
+
+    function createRoundBoardCells() {
+      roundBoardEl.innerHTML = "";
+      roundBoardCells = [];
       for (let i = 0; i < 20; i++) {
         const cell = document.createElement("div");
-        cell.className = "score-cell";
-        cell.textContent = "·";
-        scoreTrackEl.appendChild(cell);
+        cell.className = "round-box";
+        cell.tabIndex = 0;
+        cell.setAttribute("role", "button");
+        cell.setAttribute("aria-label", `Round ${i + 1}, not played yet.`);
+        cell.addEventListener("mouseenter", () => handleRoundBoardHover(i));
+        cell.addEventListener("mouseleave", () => clearRoundBoardHover(i));
+        cell.addEventListener("focus", () => handleRoundBoardHover(i));
+        cell.addEventListener("blur", () => clearRoundBoardHover(i));
+        cell.addEventListener("click", () => handleRoundBoardHover(i));
+        cell.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+            event.preventDefault();
+            moveRoundBoardFocus(i + 1);
+          } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+            event.preventDefault();
+            moveRoundBoardFocus(i - 1);
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            moveRoundBoardFocus(0);
+          } else if (event.key === "End") {
+            event.preventDefault();
+            moveRoundBoardFocus(roundBoardCells.length - 1);
+          } else if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleRoundBoardHover(i);
+          }
+        });
+        roundBoardEl.appendChild(cell);
+        roundBoardCells.push(cell);
       }
     }
 
-    function updateScoreboard() {
-      const cells = Array.from(scoreTrackEl.children);
-      cells.forEach((cell, idx) => {
-        cell.className = "score-cell";
-        cell.textContent = "·";
-        cell.removeAttribute("aria-label");
+    function renderRoundBoard() {
+      roundBoardCells.forEach((cell, i) => {
+        const entry = historyLog[i];
+        cell.className = "round-box";
+        if (i === currentRound && currentRound < 20) cell.classList.add("current");
 
-        if (idx === currentRound && currentRound < 20) cell.classList.add("current");
-
-        const mark = track[idx];
-        if (!mark) return;
-
-        if (mark === "W") {
-          cell.classList.add("win");
-          cell.textContent = "W";
-          cell.setAttribute("aria-label", `Round ${idx + 1} result, win.`);
-        } else if (mark === "L") {
-          cell.classList.add("lose");
-          cell.textContent = "L";
-          cell.setAttribute("aria-label", `Round ${idx + 1} result, loss.`);
-        } else {
-          cell.classList.add("draw");
-          cell.textContent = "D";
-          cell.setAttribute("aria-label", `Round ${idx + 1} result, draw.`);
+        if (!entry) {
+          cell.innerHTML = `<span class="round-num">R${i + 1}</span><span class="round-hands">·</span><span class="round-outcome">·</span>`;
+          cell.setAttribute("aria-label", `Round ${i + 1}, not played yet.`);
+          return;
         }
-      });
-    }
 
-    function createTimelineCells() {
-      timelineTrackEl.innerHTML = "";
-      timelineCells = [];
-      for (let i = 0; i < 20; i++) {
-        const cell = document.createElement("div");
-        cell.className = "timeline-cell empty";
-        cell.innerHTML = '<div class="timeline-cell-inner"><span>·</span></div>';
-        cell.addEventListener("mouseenter", () => handleTimelineHover(i));
-        cell.addEventListener("mouseleave", () => clearTimelineHover(i));
-        timelineTrackEl.appendChild(cell);
-        timelineCells.push(cell);
+        const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
+        const resultMark = entry.outcome === "win" ? "W" : entry.outcome === "lose" ? "L" : "D";
+
+        cell.classList.add("played", entry.outcome);
+        cell.innerHTML =
+          `<span class="round-num">R${entry.round}</span>` +
+          `<span class="round-hands">${glyph[entry.rockMove]}${glyph[entry.yourMove]}</span>` +
+          `<span class="round-outcome">${resultMark}</span>`;
+        cell.setAttribute("aria-label", `Round ${entry.round}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${outcomeText}.`);
+      });
+
+      if (currentRound >= 20) roundBoardStatusEl.textContent = "All 20 rounds complete";
+      else roundBoardStatusEl.textContent = `Round ${currentRound + 1} is live`;
+
+      if (activeRoundBoardIndex !== null && roundBoardCells[activeRoundBoardIndex]) {
+        roundBoardCells[activeRoundBoardIndex].classList.add("current");
       }
     }
 
-    function renderTimeline() {
-      timelineCells.forEach((cell, i) => {
-        cell.className = "timeline-cell empty";
-        cell.innerHTML = '<div class="timeline-cell-inner"><span>·</span></div>';
-        if (i < historyLog.length) {
-          const entry = historyLog[i];
-          cell.className = "timeline-cell played";
-          cell.innerHTML =
-            `<div class="timeline-cell-inner"><span>${glyph[entry.rockMove]}</span><span>${glyph[entry.yourMove]}</span></div>`;
-        }
-      });
-      if (activeTimelineIndex !== null && timelineCells[activeTimelineIndex]) {
-        timelineCells[activeTimelineIndex].classList.add("active");
-      }
-    }
-
-    function handleTimelineHover(index) {
+    function handleRoundBoardHover(index) {
       if (index >= historyLog.length) {
-        timelinePreviewEl.innerHTML = `<strong>Round ${index + 1}</strong> not played yet in this run.`;
+        roundBoardPreviewEl.innerHTML = `<strong>Round ${index + 1}</strong> not played yet in this run.`;
         return;
       }
-      if (activeTimelineIndex !== null && timelineCells[activeTimelineIndex]) {
-        timelineCells[activeTimelineIndex].classList.remove("active");
-      }
       const entry = historyLog[index];
-      activeTimelineIndex = index;
-      timelineCells[index].classList.add("active");
-
+      activeRoundBoardIndex = index;
       const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
-      const adaptiveText = entry.adaptiveUsed ? `adaptive yes, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "adaptive no";
-
-      timelinePreviewEl.innerHTML =
+      const pathText = entry.adaptiveUsed ? `adaptive read path, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "base script path";
+      roundBoardPreviewEl.innerHTML =
         `<strong>Round ${entry.round}</strong>, Dwayne ${names[entry.rockMove]} (${glyph[entry.rockMove]}) vs you ` +
-        `${names[entry.yourMove]} (${glyph[entry.yourMove]}), outcome ${outcomeText}, state ${entry.mood}, ${adaptiveText}.`;
+        `${names[entry.yourMove]} (${glyph[entry.yourMove]}), outcome ${outcomeText}, state ${entry.mood}, ${pathText}.`;
     }
 
-    function clearTimelineHover(index) {
-      if (activeTimelineIndex === index && timelineCells[index]) {
-        timelineCells[index].classList.remove("active");
-        activeTimelineIndex = null;
-      }
+    function clearRoundBoardHover(index) {
+      if (activeRoundBoardIndex === index) activeRoundBoardIndex = null;
       if (historyLog.length === 0) {
-        timelinePreviewEl.textContent = "Hover a played round to preview the exact hands and outcome.";
+        roundBoardPreviewEl.textContent = "Hover, focus, or tap a played round to preview exact hands, outcome, and mood.";
       } else {
         const last = historyLog[historyLog.length - 1];
         const outcomeText = last.outcome === "win" ? "you win" : last.outcome === "lose" ? "The Rock wins" : "draw";
-        timelinePreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}. Hover any round for detail.`;
+        roundBoardPreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}. Hover any played round for detail.`;
       }
     }
 
@@ -663,6 +688,93 @@
       runSummarySeedEl.textContent = `Seed ${runSeed}`;
     }
 
+    function showCopyStatus(message, isError) {
+      copyStatusEl.textContent = message;
+      copyStatusEl.classList.toggle("error", !!isError);
+      if (showCopyStatus.timer) clearTimeout(showCopyStatus.timer);
+      showCopyStatus.timer = setTimeout(() => {
+        copyStatusEl.textContent = "";
+        copyStatusEl.classList.remove("error");
+      }, 2400);
+    }
+
+    function buildChallengeLink() {
+      const url = new URL(window.location.href);
+      const adaptiveRunSequence = historyLog.length === 20 && historyLog.some(entry => entry.adaptiveUsed)
+        ? historyLog.map(entry => entry.rockMove).join("")
+        : null;
+
+      url.searchParams.set("seed", String(runSeed));
+      if (adaptiveRunSequence) {
+        url.searchParams.set("script", adaptiveRunSequence);
+        url.searchParams.set("adaptive", "0");
+      } else {
+        url.searchParams.delete("script");
+        url.searchParams.set("adaptive", adaptiveToggle.checked ? "1" : "0");
+      }
+      url.searchParams.set("sfx", sfxToggle.checked ? "1" : "0");
+      return url.toString();
+    }
+
+    function fallbackCopyText(text) {
+      const tempInput = document.createElement("input");
+      tempInput.type = "text";
+      tempInput.value = text;
+      tempInput.setAttribute("readonly", "readonly");
+      tempInput.style.position = "fixed";
+      tempInput.style.opacity = "0";
+      document.body.appendChild(tempInput);
+      tempInput.focus();
+      tempInput.select();
+      tempInput.setSelectionRange(0, tempInput.value.length);
+      const copied = document.execCommand("copy");
+      document.body.removeChild(tempInput);
+      return copied;
+    }
+
+    async function copyChallengeLink() {
+      const challengeLink = buildChallengeLink();
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(challengeLink);
+          showCopyStatus("Challenge link copied.", false);
+          return;
+        }
+      } catch (err) {}
+
+      const copied = fallbackCopyText(challengeLink);
+      if (copied) showCopyStatus("Challenge link copied.", false);
+      else showCopyStatus("Could not copy. Please copy manually.", true);
+    }
+
+    function readInitialSettingsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const seedParam = params.get("seed");
+      const scriptParam = params.get("script");
+      const adaptiveParam = params.get("adaptive");
+      const sfxParam = params.get("sfx");
+
+      let scriptOverride = null;
+      if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
+        scriptOverride = scriptParam.toUpperCase().split("");
+      }
+
+      if (scriptOverride) {
+        adaptiveToggle.checked = false;
+      } else if (adaptiveParam === "1" || adaptiveParam === "0") {
+        adaptiveToggle.checked = adaptiveParam === "1";
+      }
+      if (sfxParam === "1" || sfxParam === "0") {
+        sfxToggle.checked = sfxParam === "1";
+      }
+      sfxEnabled = sfxToggle.checked;
+
+      if (seedParam === null) return { seed: null, manual: false, scriptOverride };
+      const normalizedSeed = normalizeSeed(seedParam);
+      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride };
+      return { seed: normalizedSeed.seed, manual: true, scriptOverride };
+    }
+
     function shakeArena() {
       arenaEl.classList.remove("shake");
       void arenaEl.offsetWidth;
@@ -671,28 +783,45 @@
     }
 
     function updateAdaptiveStats() {
+      const adaptPct = Math.round(moodAdaptChance() * 100);
       if (!adaptiveToggle.checked) {
-        adaptiveStatsEl.innerHTML = "<strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.";
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> is off. If he flipped it on in a promo, ${rockMood} would be a ${adaptPct} percent adapt chance.`;
         return;
       }
       if (adaptiveAttempts === 0) {
-        adaptiveStatsEl.innerHTML = "<strong>Adaptive Rock</strong> attempts will show here as you play rounds.";
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> current mood says ${adaptPct} percent adapt chance this round. Attempts will show once he starts taking swings.`;
         return;
       }
       const acc = Math.round((adaptiveCorrectReads / adaptiveAttempts) * 100);
-      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> attempts ${adaptiveAttempts}, correct reads ${adaptiveCorrectReads}, accuracy ${acc} percent.`;
+      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> chance this round ${adaptPct} percent, attempts ${adaptiveAttempts}, correct reads ${adaptiveCorrectReads}, accuracy ${acc} percent.`;
     }
 
     function updateMoodDisplay() {
+      const adaptPct = Math.round(moodAdaptChance() * 100);
       let text;
       if (!adaptiveToggle.checked) {
-        text = `<strong>Rock state</strong> ${rockMood}, adaptive mode is off so this does not affect the moves.`;
+        text = `<strong>Rock state</strong> ${rockMood}, adaptive mode is off so the ${adaptPct} percent read chance is just locker-room chatter.`;
       } else {
-        if (rockMood === "Calm") text = "<strong>Rock state</strong> Calm, he is mostly following his base pattern with a low adapt chance.";
-        else if (rockMood === "Suspicious") text = "<strong>Rock state</strong> Suspicious, he is noticeably more likely to adapt to your last move.";
-        else text = "<strong>Rock state</strong> Paranoid, he is almost always trying to counter you.";
+        if (rockMood === "Calm") text = `<strong>Rock state</strong> Calm, cool entrance music, ${adaptPct} percent chance he throws out script and reads your last move.`;
+        else if (rockMood === "Suspicious") text = `<strong>Rock state</strong> Suspicious, eyebrow up, ${adaptPct} percent chance he calls an audible to counter.`;
+        else text = `<strong>Rock state</strong> Paranoid, full main-event intensity, ${adaptPct} percent chance he tries to hard read you.`;
       }
       moodDisplayEl.innerHTML = text;
+    }
+
+    function updatePreRoundHint() {
+      if (currentRound >= 20) {
+        preRoundHintEl.textContent = "Pre-round scout, full match complete. Check the unified round board for the receipts.";
+        return;
+      }
+      const adaptPct = Math.round(moodAdaptChance() * 100);
+      if (!adaptiveToggle.checked || currentRound === 0 || !lastYourMove) {
+        preRoundHintEl.textContent = `Pre-round scout, ${rockMood.toLowerCase()} energy, script lane likely this beat.`;
+        return;
+      }
+      if (rockMood === "Calm") preRoundHintEl.textContent = `Pre-round scout, he's calm but alert, ${adaptPct} percent read chance right now.`;
+      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Pre-round scout, he's reading aggressively right now, ${adaptPct} percent chance he hunts your last hand.`;
+      else preRoundHintEl.textContent = `Pre-round scout, paranoid mode is blazing, ${adaptPct} percent chance he hard-counters your last hand.`;
     }
 
     function renderDebugLog() {
@@ -700,9 +829,9 @@
       historyLog.forEach(entry => {
         const div = document.createElement("div");
         div.className = "debug-log-entry";
-        const adaptiveText = entry.adaptiveUsed ? `adaptive yes, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "adaptive no";
+        const pathText = entry.adaptiveUsed ? `adaptive read path, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "base script path";
         div.textContent =
-          `Round ${entry.round}, state ${entry.mood}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${entry.outcome}, perfect counter ${names[entry.perfectMove]}, ${adaptiveText}.`;
+          `Round ${entry.round}, state ${entry.mood}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${entry.outcome}, perfect counter ${names[entry.perfectMove]}, ${pathText}.`;
         debugLogEl.appendChild(div);
       });
     }
@@ -723,7 +852,7 @@
       const adaptive = adaptiveToggle.checked;
       if (!adaptive || currentRound === 0 || !lastYourMove) {
         lastDecisionAdaptive = false;
-        return rockSequenceBase[currentRound];
+        return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : rockSequenceBase[currentRound];
       }
       const r = rngGame ? rngGame() : Math.random();
       if (r < moodAdaptChance()) {
@@ -732,7 +861,7 @@
         return beats[lastYourMove];
       }
       lastDecisionAdaptive = false;
-      return rockSequenceBase[currentRound];
+      return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : rockSequenceBase[currentRound];
     }
 
     function isGameActive() { return currentRound < 20 && !moveButtons[0].disabled; }
@@ -755,15 +884,15 @@
 
       let outcome;
       if (yourMove === rockMove) {
-        outcome = "draw"; draws += 1; track.push("D");
+        outcome = "draw"; draws += 1;
         resultLineEl.textContent = "Result, draw."; resultLineEl.className = "result-line result-draw";
         playBeep("draw");
       } else if (beats[rockMove] === yourMove) {
-        outcome = "win"; youScore += 1; track.push("W");
+        outcome = "win"; youScore += 1;
         resultLineEl.textContent = "Result, you win this round."; resultLineEl.className = "result-line result-win";
         playBeep("win"); shakeArena();
       } else {
-        outcome = "lose"; rockScore += 1; track.push("L");
+        outcome = "lose"; rockScore += 1;
         resultLineEl.textContent = "Result, The Rock wins this round."; resultLineEl.className = "result-line result-lose";
         playBeep("lose");
       }
@@ -776,7 +905,7 @@
       updateRockMood(outcome);
       updateMoodDisplay();
 
-      commentaryEl.textContent = describeRound(outcome, isPerfect) + ` Perfect counter to ${names[rockMove]} this round is ${names[perfect]}.`;
+      commentaryEl.textContent = describeRound(outcome, isPerfect);
 
       historyLog.push({
         round: currentRound + 1,
@@ -784,19 +913,21 @@
         outcome,
         adaptiveUsed: lastDecisionAdaptive,
         adaptiveCorrect: lastDecisionAdaptive && (beats[yourMove] === rockMove),
-        mood: moodBefore
+        mood: moodBefore,
+        isPerfect
       });
 
       renderDebugLog();
-      renderTimeline();
 
       currentRound += 1;
-      updateScoreboard();
+      renderRoundBoard();
       updateScoreLabel();
       updateRoundLabel();
       updateProgressBar();
       updateAdaptiveStats();
       updateRunSummary();
+      updatePreRoundHint();
+      evaluateAchievements();
 
       if (currentRound >= 20) {
         setButtonsEnabled(false);
@@ -804,54 +935,44 @@
       }
     }
 
-    function getAchievements() {
-      const achievements = [];
-      if (historyLog.length === 0) return achievements;
-
-      if (historyLog[0].outcome === "win") achievements.push({ name: "Opening Pop", text: "You won round 1.", rare: false });
-
-      let maxWinStreak = 0, curW = 0;
-      let maxRockStreak = 0, curL = 0;
-      let paranoidCount = 0;
-
-      historyLog.forEach(entry => {
-        if (entry.outcome === "win") { curW += 1; curL = 0; }
-        else if (entry.outcome === "lose") { curL += 1; curW = 0; }
-        else { curW = 0; curL = 0; }
-
-        maxWinStreak = Math.max(maxWinStreak, curW);
-        maxRockStreak = Math.max(maxRockStreak, curL);
-        if (entry.mood === "Paranoid") paranoidCount += 1;
+    function evaluateAchievements() {
+      const newlyUnlocked = getUnlockedAchievementDefs();
+      newlyUnlocked.forEach(achievement => {
+        if (announcedAchievements.has(achievement.id)) return;
+        announcedAchievements.add(achievement.id);
+        if (!unlockedAchievementIds.has(achievement.id)) {
+          unlockedAchievementIds.add(achievement.id);
+          savePersistentAchievements();
+          showAchievementToast(achievement);
+        }
       });
+      renderAchievements();
+    }
 
-      if (maxWinStreak >= 4) achievements.push({ name: "Hot Streak", text: `You reached a win streak of ${maxWinStreak}.`, rare: false });
-      if (maxRockStreak >= 3) achievements.push({ name: "Cold Shower", text: `The Rock reached a win streak of ${maxRockStreak}.`, rare: false });
-      if (Math.abs(youScore - rockScore) <= 1 && youScore >= rockScore) achievements.push({ name: "Edge Of Your Seat", text: "You won a very close run.", rare: false });
-      if (paranoidCount >= 5) achievements.push({ name: "Paranoid Era", text: "You kept The Rock in Paranoid state for a long stretch.", rare: false });
-      if (perfectHits >= 10) achievements.push({ name: "Perfect Counter Enjoyer", text: `You played ${perfectHits} perfect counters.`, rare: false });
-      if (perfectHits === historyLog.length) achievements.push({ name: "Theoretical Maximum", text: "You played a perfect counter every single round.", rare: true });
-      if (seedWasManual && youScore > rockScore) achievements.push({ name: "Seeded Legend", text: "You chose the seed and still beat The Rock.", rare: false });
-
-      if (adaptiveEverOnThisRun && adaptiveAttempts >= 5) {
-        const rate = adaptiveCorrectReads / adaptiveAttempts;
-        if (rate >= 0.6 && youScore > rockScore) achievements.push({ name: "Adaptive Bully", text: "You beat him even though his adaptive reads were strong.", rare: false });
-      }
-
-      if (youScore === 0 && rockScore === 0 && draws > 0) achievements.push({ name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", rare: true });
-      return achievements;
+    function showAchievementToast(achievement) {
+      const toast = document.createElement("div");
+      toast.className = "achievement-toast rank-" + achievement.rank;
+      toast.innerHTML = `<strong>Achievement unlocked:</strong> ${achievement.name}<br />${achievement.text}`;
+      achievementToastsEl.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(10px)";
+        setTimeout(() => toast.remove(), 260);
+      }, 2600);
     }
 
     function renderAchievements() {
-      const achievements = getAchievements();
       achievementsListEl.innerHTML = "";
-      if (achievements.length === 0) {
-        achievementsListEl.textContent = "No achievements unlocked this run. Try new seeds or adaptive mode.";
+      const unlocked = achievementCatalog.filter(a => unlockedAchievementIds.has(a.id));
+      if (unlocked.length === 0) {
+        achievementsListEl.textContent = "No achievements unlocked yet. Keep playing rounds to start collecting them.";
         return;
       }
-      achievements.forEach(a => {
+
+      unlocked.forEach(a => {
         const div = document.createElement("div");
-        div.className = "achievement-badge" + (a.rare ? " rare" : "");
-        div.textContent = `${a.name}: ${a.text}`;
+        div.className = "achievement-badge rank-" + a.rank;
+        div.innerHTML = `<strong>${a.name}</strong><br />${a.text}`;
         achievementsListEl.appendChild(div);
       });
     }
@@ -868,11 +989,11 @@
         summaryLines.push(`Adaptive Rock made ${adaptiveAttempts} read attempts, with ${adaptiveCorrectReads} correct, accuracy ${acc} percent.`);
       }
 
-      const achievements = getAchievements();
-      if (achievements.length > 0) summaryLines.push(`Achievements unlocked this run, ${achievements.map(a => a.name).join(", ")}.`);
+      const runAchievements = getUnlockedAchievementDefs();
+      if (runAchievements.length > 0) summaryLines.push(`Achievements unlocked this run, ${runAchievements.map(a => a.name).join(", ")}.`);
       else summaryLines.push("No achievements this time, try different seeds or adaptive settings.");
 
-      summaryLines.push("Use the hand timeline or round log to review every move and state.");
+      summaryLines.push("Use the unified round board or round log to review every move and state.");
       commentaryEl.textContent = summaryLines.join(" ");
 
       renderAchievements();
@@ -889,12 +1010,18 @@
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
 
+      if (scriptedSequenceOverride) {
+        adaptiveToggle.checked = false;
+        adaptiveToggle.disabled = true;
+      } else {
+        adaptiveToggle.disabled = false;
+      }
+
       currentRound = 0;
       youScore = 0;
       rockScore = 0;
       draws = 0;
       perfectHits = 0;
-      track = [];
       perfectAbbrevs = [];
       lastYourMove = null;
 
@@ -909,7 +1036,9 @@
 
       historyLog = [];
       debugLogEl.innerHTML = "";
-      achievementsListEl.innerHTML = "Complete a run to unlock achievements.";
+      announcedAchievements = new Set();
+      achievementToastsEl.innerHTML = "";
+      renderAchievements();
 
       rockHandEl.textContent = "❔";
       yourHandEl.textContent = "❔";
@@ -919,17 +1048,22 @@
       resultLineEl.className = "result-line";
       commentaryEl.textContent = "";
 
-      createScoreCells();
-      createTimelineCells();
-      renderTimeline();
-      timelinePreviewEl.textContent = "Hover a played round to preview the exact hands and outcome.";
+      createRoundBoardCells();
+      renderRoundBoard();
+      roundBoardPreviewEl.textContent = "Hover, focus, or tap a played round to preview exact hands, outcome, and mood.";
 
       updateScoreLabel();
       updateRoundLabel();
       updateProgressBar();
       updateAdaptiveStats();
       updateMoodDisplay();
+      updatePreRoundHint();
       updateRunSummary();
+
+      if (scriptedSequenceOverride) {
+        seedFeedbackEl.className = "seed-feedback info";
+        seedFeedbackEl.textContent = "Scripted challenge loaded from shared adaptive run. Adaptive mode is locked off for exact replay.";
+      }
 
       setButtonsEnabled(true);
       resetBtn.style.display = "none";
@@ -937,12 +1071,27 @@
 
     function resetGame() {
       const value = seedInputEl.value.trim();
-      let newSeed, manual = false;
-      if (value === "") newSeed = Math.floor(Math.random() * 1e9);
-      else {
-        const parsed = parseInt(value, 10);
-        if (Number.isNaN(parsed)) newSeed = Math.floor(Math.random() * 1e9);
-        else { newSeed = parsed; manual = true; }
+      let newSeed;
+      let manual = false;
+
+      if (value === "") {
+        newSeed = Math.floor(Math.random() * (U32_MAX + 1));
+        seedFeedbackEl.className = "seed-feedback info";
+        seedFeedbackEl.textContent = `Randomized seed for this run: ${newSeed}.`;
+      } else {
+        const normalizedSeed = normalizeSeed(value);
+        if (!normalizedSeed.valid) {
+          seedFeedbackEl.className = "seed-feedback error";
+          seedFeedbackEl.textContent = "Invalid seed. Use digits only (0–4294967295).";
+          return;
+        }
+
+        newSeed = normalizedSeed.seed;
+        manual = true;
+
+        seedFeedbackEl.className = "seed-feedback info";
+        if (normalizedSeed.clamped) seedFeedbackEl.textContent = `Seed clamped to unsigned 32-bit range. Starting run with normalized seed ${newSeed}.`;
+        else seedFeedbackEl.textContent = `Starting run with normalized seed ${newSeed}.`;
       }
       initFromSeed(newSeed, manual, true);
     }
