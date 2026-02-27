@@ -344,10 +344,18 @@
     const adaptiveStatsEl = document.getElementById("adaptiveStats");
     const moodDisplayEl = document.getElementById("moodDisplay");
     const seedInputEl = document.getElementById("seedInput");
+    const seedFeedbackEl = document.getElementById("seedFeedback");
+    const preRoundHintEl = document.getElementById("preRoundHint");
     const debugLogEl = document.getElementById("debugLog");
     const achievementsListEl = document.getElementById("achievementsList");
+    const achievementToastsEl = document.getElementById("achievementToasts");
     const runSummaryScoresEl = document.getElementById("runSummaryScores");
     const runSummarySeedEl = document.getElementById("runSummarySeed");
+    const roundBoardEl = document.getElementById("roundBoard");
+    const roundBoardStatusEl = document.getElementById("roundBoardStatus");
+    const roundBoardPreviewEl = document.getElementById("roundBoardPreview");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const copyStatusEl = document.getElementById("copyStatus");
     const sfxToggle = document.getElementById("sfxToggle");
     const recentRunsEl = document.getElementById("recentRuns");
     const clearHistoryBtn = document.getElementById("clearHistoryBtn");
@@ -1005,7 +1013,7 @@
     function initFromSeed(seed, manualFlag, persistSeed = true) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
-      seedDisplayEl.textContent = `Run seed, ${runSeed}`;
+      runSummarySeedEl.textContent = `Seed ${runSeed}`;
       if (persistSeed) storageSet(storageKeys.lastSeed, String(runSeed));
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
@@ -1111,6 +1119,7 @@
       sfxEnabled = sfxToggle.checked;
       storageSet(storageKeys.sfx, String(sfxToggle.checked));
     });
+    if (copyLinkBtn) copyLinkBtn.addEventListener("click", copyChallengeLink);
     if (clearHistoryBtn) clearHistoryBtn.addEventListener("click", clearRecentRuns);
 
     document.addEventListener("keydown", e => {
