@@ -118,6 +118,12 @@
     .debug-panel summary span { text-decoration: underline; }
     .debug-log { margin-top: 8px; max-height: 260px; overflow-y: auto; border-top: 1px solid rgba(148,163,184,0.3); padding-top: 6px; }
     .debug-log-entry { margin-bottom: 4px; line-height: 1.3; }
+    .history-controls { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: 0.76rem; color: #9ca3af; }
+    .btn-clear-history { background: #1f2937; color: #e5e7eb; font-size: 0.76rem; padding: 6px 12px; }
+    .recent-runs { margin-top: 10px; display: grid; gap: 6px; }
+    .recent-runs-header { font-size: 0.78rem; color: #9ca3af; }
+    .recent-runs-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.76rem; color: #cbd5e1; }
+    .recent-runs-empty { font-size: 0.76rem; color: #6b7280; }
 
     .footer { margin-top: 18px; font-size: 0.8rem; color: #6b7280; text-align: center; line-height: 1.3; }
 
@@ -233,6 +239,11 @@
     <details class="debug-panel">
       <summary><span>Round log and debug info</span></summary>
       <div id="debugLog" class="debug-log"></div>
+      <div class="history-controls">
+        <span>Recent runs are stored locally for continuity.</span>
+        <button id="clearHistoryBtn" type="button" class="btn-clear-history">Clear history</button>
+      </div>
+      <div id="recentRuns" class="recent-runs"></div>
     </details>
 
     <div class="footer">
@@ -309,6 +320,16 @@
     const timelineTrackEl = document.getElementById("timelineTrack");
     const timelinePreviewEl = document.getElementById("timelinePreview");
     const sfxToggle = document.getElementById("sfxToggle");
+    const recentRunsEl = document.getElementById("recentRuns");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+
+    const storageKeys = {
+      adaptive: "rps.adaptiveToggle",
+      sfx: "rps.sfxToggle",
+      lastSeed: "rps.lastSeed",
+      recentRuns: "rps.recentRuns"
+    };
+    const recentRunsLimit = 8;
 
     function mulberry32(a) {
       return function() {
@@ -339,6 +360,7 @@
     let adaptiveAttempts = 0;
     let adaptiveCorrectReads = 0;
     let adaptiveEverOnThisRun = false;
+    let runAdaptiveSetting = false;
     let lastDecisionAdaptive = false;
 
     let audioCtx = null;
@@ -347,6 +369,140 @@
     let historyLog = [];
     let timelineCells = [];
     let activeTimelineIndex = null;
+    let storageEnabled = false;
+    let recentRuns = [];
+    let initialSeedFromStorage = null;
+
+    function detectStorage() {
+      try {
+        const probe = "rps.storageProbe";
+        window.localStorage.setItem(probe, "1");
+        window.localStorage.removeItem(probe);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function storageGet(key) {
+      if (!storageEnabled) return null;
+      try {
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function storageSet(key, value) {
+      if (!storageEnabled) return;
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (e) {}
+    }
+
+    function storageRemove(key) {
+      if (!storageEnabled) return;
+      try {
+        window.localStorage.removeItem(key);
+      } catch (e) {}
+    }
+
+    function parseStoredBoolean(value, fallback) {
+      if (value === "true") return true;
+      if (value === "false") return false;
+      return fallback;
+    }
+
+    function loadPersistedSettings() {
+      storageEnabled = detectStorage();
+      if (!storageEnabled) {
+        renderRecentRuns();
+        return;
+      }
+
+      adaptiveToggle.checked = parseStoredBoolean(storageGet(storageKeys.adaptive), adaptiveToggle.checked);
+      sfxToggle.checked = parseStoredBoolean(storageGet(storageKeys.sfx), sfxToggle.checked);
+      sfxEnabled = sfxToggle.checked;
+
+      const lastSeed = storageGet(storageKeys.lastSeed);
+      if (lastSeed && !seedInputEl.value.trim()) seedInputEl.value = lastSeed;
+      if (lastSeed) {
+        const parsedSeed = parseInt(lastSeed, 10);
+        if (!Number.isNaN(parsedSeed)) initialSeedFromStorage = parsedSeed;
+      }
+
+      try {
+        const parsed = JSON.parse(storageGet(storageKeys.recentRuns) || "[]");
+        if (Array.isArray(parsed)) recentRuns = parsed.slice(0, recentRunsLimit);
+      } catch (e) {
+        recentRuns = [];
+      }
+      renderRecentRuns();
+    }
+
+    function renderRecentRuns() {
+      if (!recentRunsEl) return;
+      recentRunsEl.innerHTML = "";
+
+      const header = document.createElement("div");
+      header.className = "recent-runs-header";
+      header.textContent = `Recent runs (last ${recentRunsLimit})`;
+      recentRunsEl.appendChild(header);
+
+      if (!storageEnabled) {
+        const note = document.createElement("div");
+        note.className = "recent-runs-empty";
+        note.textContent = "Local storage unavailable in this environment.";
+        recentRunsEl.appendChild(note);
+        return;
+      }
+
+      if (!recentRuns.length) {
+        const empty = document.createElement("div");
+        empty.className = "recent-runs-empty";
+        empty.textContent = "No completed runs saved yet.";
+        recentRunsEl.appendChild(empty);
+        return;
+      }
+
+      const list = document.createElement("ol");
+      list.className = "recent-runs-list";
+      recentRuns.forEach(run => {
+        const item = document.createElement("li");
+        const runRecord = `record ${run.youScore}-${run.rockScore}-${run.draws}`;
+        const achieved = Array.isArray(run.achievements) && run.achievements.length
+          ? ` achievements ${run.achievements.join(", ")}`
+          : "";
+        item.textContent = `Seed ${run.seed}, ${runRecord}, adaptive ${run.adaptive ? "on" : "off"}, perfect ${run.perfectHits ?? "-"}/20.${achieved}`;
+        list.appendChild(item);
+      });
+      recentRunsEl.appendChild(list);
+    }
+
+    function persistRunSummary() {
+      if (!storageEnabled) return;
+      const achievementNames = getAchievements().map(a => a.name);
+      const runSummary = {
+        seed: runSeed,
+        youScore,
+        rockScore,
+        draws,
+        adaptive: runAdaptiveSetting,
+        perfectHits,
+        achievements: achievementNames,
+        ts: Date.now()
+      };
+      recentRuns.unshift(runSummary);
+      recentRuns = recentRuns.slice(0, recentRunsLimit);
+      storageSet(storageKeys.recentRuns, JSON.stringify(recentRuns));
+      renderRecentRuns();
+    }
+
+    function clearRecentRuns() {
+      recentRuns = [];
+      storageRemove(storageKeys.recentRuns);
+      renderRecentRuns();
+    }
 
     function ensureAudioContext() {
       if (audioCtx) return;
@@ -727,14 +883,16 @@
       commentaryEl.textContent = summaryLines.join(" ");
 
       renderAchievements();
+      persistRunSummary();
       if (historyLog.length > 0) handleTimelineHover(historyLog.length - 1);
       resetBtn.style.display = "inline-flex";
     }
 
-    function initFromSeed(seed, manualFlag) {
+    function initFromSeed(seed, manualFlag, persistSeed = true) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
       seedDisplayEl.textContent = `Run seed, ${runSeed}`;
+      if (persistSeed) storageSet(storageKeys.lastSeed, String(runSeed));
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
 
@@ -750,6 +908,7 @@
       adaptiveAttempts = 0;
       adaptiveCorrectReads = 0;
       adaptiveEverOnThisRun = false;
+      runAdaptiveSetting = adaptiveToggle.checked;
       lastDecisionAdaptive = false;
 
       rockMood = "Calm";
@@ -792,7 +951,7 @@
         if (Number.isNaN(parsed)) newSeed = Math.floor(Math.random() * 1e9);
         else { newSeed = parsed; manual = true; }
       }
-      initFromSeed(newSeed, manual);
+      initFromSeed(newSeed, manual, true);
     }
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
@@ -801,8 +960,16 @@
     }));
 
     resetBtn.addEventListener("click", resetGame);
-    adaptiveToggle.addEventListener("change", () => { updateAdaptiveStats(); updateMoodDisplay(); });
-    sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
+    adaptiveToggle.addEventListener("change", () => {
+      storageSet(storageKeys.adaptive, String(adaptiveToggle.checked));
+      updateAdaptiveStats();
+      updateMoodDisplay();
+    });
+    sfxToggle.addEventListener("change", () => {
+      sfxEnabled = sfxToggle.checked;
+      storageSet(storageKeys.sfx, String(sfxToggle.checked));
+    });
+    if (clearHistoryBtn) clearHistoryBtn.addEventListener("click", clearRecentRuns);
 
     document.addEventListener("keydown", e => {
       if (!isGameActive()) return;
@@ -813,7 +980,10 @@
       else if (key === "s") playRound("S");
     });
 
-    initFromSeed(Math.floor(Math.random() * 1e9), false);
+    loadPersistedSettings();
+    const startupSeed = initialSeedFromStorage ?? Math.floor(Math.random() * 1e9);
+    const shouldPersistStartupSeed = initialSeedFromStorage === null;
+    initFromSeed(startupSeed, false, shouldPersistStartupSeed);
   </script>
 </body>
 </html>
