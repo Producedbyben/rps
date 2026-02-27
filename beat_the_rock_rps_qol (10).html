@@ -295,7 +295,7 @@
           <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and mood changes adapt chance.</li>
           <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
           <li>Set a seed in the field above to replay exact runs, or leave it blank to randomize next reset.</li>
-          <li>Achievements include clutch, chaos, and consolation badges; unlocks are immediate and each one raises its multiplier for this browser profile.</li>
+          <li>Achievements include clutch, chaos, status, sequence, and consolation badges; unlocks are immediate and each one raises its multiplier for this browser profile.</li>
         </ul>
         <div class="help-legend">
           <span><strong>Calm</strong> 30% adapt chance</span>
@@ -408,9 +408,12 @@
       { id: "unshaken-opener", name: "Unshaken Opener", text: "No losses in the first 5 rounds.", rank: "bronze", unlocked: s => s.historyLog.length >= 5 && s.noLossesFirstFive },
       { id: "hot-streak", name: "Hot Streak", text: "You reached a win streak of 4+.", rank: "silver", unlocked: s => s.maxWinStreak >= 4 },
       { id: "cold-shower", name: "Cold Shower", text: "The Rock reached a win streak of 3+.", rank: "bronze", unlocked: s => s.maxRockStreak >= 3 },
+      { id: "slippery-slope", name: "Slippery Slope", text: "Consolation badge, you hit a 5+ loss streak.", rank: "bronze", unlocked: s => s.maxLoseStreak >= 5 },
       { id: "draw-artist", name: "Draw Artist", text: "You reached 8+ draws in one run.", rank: "silver", unlocked: s => s.draws >= 8 },
       { id: "draw-buffet", name: "Draw Buffet", text: "You stacked 12+ draws. Nobody ate, everyone watched.", rank: "gold", unlocked: s => s.draws >= 12 },
+      { id: "truce-train", name: "Truce Train", text: "You chained 4+ draws in a row.", rank: "silver", unlocked: s => s.maxDrawStreak >= 4 },
       { id: "paranoid-era", name: "Paranoid Era", text: "You kept The Rock in Paranoid state for a long stretch.", rank: "silver", unlocked: s => s.paranoidCount >= 5 },
+      { id: "status-slayer", name: "Status Slayer", text: "You won 4+ rounds while he was Paranoid.", rank: "gold", unlocked: s => s.paranoidWins >= 4 },
       { id: "beat-the-rock-enjoyer", name: "Beat The Rock Enjoyer", text: "You beat The Rock in 10+ rounds.", rank: "silver", unlocked: s => s.beatRockHits >= 10 },
       { id: "boulder-puncher", name: "Boulder Puncher", text: "You beat The Rock in 14+ rounds.", rank: "gold", unlocked: s => s.beatRockHits >= 14 },
       { id: "mood-breaker", name: "Mood Breaker", text: "You forced Calm, Suspicious, and Paranoid in one run.", rank: "gold", unlocked: s => s.seenMoods.size === 3 },
@@ -419,13 +422,18 @@
       { id: "adaptive-bully", name: "Adaptive Bully", text: "You beat him even though his adaptive reads were strong.", rank: "gold", unlocked: s => s.matchFinished && s.adaptiveEverOnThisRun && s.adaptiveAttempts >= 5 && (s.adaptiveCorrectReads / s.adaptiveAttempts) >= 0.6 && s.youScore > s.rockScore },
       { id: "comeback-kid", name: "Comeback Kid", text: "You won after trailing by 3+ at some point.", rank: "gold", unlocked: s => s.matchFinished && s.maxRockLead >= 3 && s.youScore > s.rockScore },
       { id: "clean-finish", name: "Clean Finish", text: "You won the final 3 rounds and took the run.", rank: "gold", unlocked: s => s.matchFinished && s.youScore > s.rockScore && s.lastThreeAreWins },
+      { id: "mirror-maestro", name: "Mirror Maestro", text: "Complex palindrome run, your 20 moves mirror perfectly.", rank: "platinum", unlocked: s => s.matchFinished && s.complexPalindromeMoves },
+      { id: "rock-marathon", name: "Rock Marathon", text: "You threw Rock all 20 rounds.", rank: "gold", unlocked: s => s.matchFinished && s.onlyRock },
+      { id: "paper-marathon", name: "Paper Marathon", text: "You threw Paper all 20 rounds.", rank: "gold", unlocked: s => s.matchFinished && s.onlyPaper },
+      { id: "scissors-marathon", name: "Scissors Marathon", text: "You threw Scissors all 20 rounds.", rank: "gold", unlocked: s => s.matchFinished && s.onlyScissors },
+      { id: "balanced-arsenal", name: "Balanced Arsenal", text: "At least 5 of each hand across the run.", rank: "gold", unlocked: s => s.matchFinished && s.minMoveCount >= 5 },
+      { id: "no-repeat-discipline", name: "No Repeat Discipline", text: "20 rounds without repeating your last hand.", rank: "gold", unlocked: s => s.matchFinished && s.noConsecutiveSameMove },
       { id: "theoretical-maximum", name: "Theoretical Maximum", text: "You beat The Rock in every single round.", rank: "platinum", unlocked: s => s.matchFinished && s.beatRockHits === s.historyLog.length },
       { id: "reverse-sweep", name: "Reverse Sweep", text: "You lost the first 3 rounds but still won the run.", rank: "platinum", unlocked: s => s.matchFinished && s.youScore > s.rockScore && s.lostFirstThree },
       { id: "tough-crowd", name: "Tough Crowd", text: "Consolation badge, you lost by 8+ but still finished the run.", rank: "bronze", unlocked: s => s.matchFinished && s.lossMargin >= 8 },
       { id: "main-event-survivor", name: "Main Event Survivor", text: "Consolation badge, you lost but stayed for all 20 rounds.", rank: "bronze", unlocked: s => s.matchFinished && s.rockScore > s.youScore },
       { id: "pacifist-match", name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", rank: "platinum", unlocked: s => s.matchFinished && s.youScore === 0 && s.rockScore === 0 && s.draws === 20 }
     ];
-
     function normalizeSeed(value) {
       const trimmed = String(value ?? "").trim();
       if (!DIGITS_ONLY_REGEX.test(trimmed)) return { valid: false, seed: null, clamped: false };
@@ -559,21 +567,30 @@
     function buildAchievementState() {
       let maxWinStreak = 0, curW = 0;
       let maxRockStreak = 0, curL = 0;
+      let maxDrawStreak = 0, curD = 0;
       let paranoidCount = 0;
+      let paranoidWins = 0;
       let rollingYou = 0;
       let rollingRock = 0;
       let maxRockLead = 0;
       const seenMoods = new Set();
+      const yourMoves = historyLog.map(entry => entry.yourMove);
+      const moveCounts = { R: 0, P: 0, S: 0 };
 
       historyLog.forEach(entry => {
-        if (entry.outcome === "win") { curW += 1; curL = 0; rollingYou += 1; }
-        else if (entry.outcome === "lose") { curL += 1; curW = 0; rollingRock += 1; }
-        else { curW = 0; curL = 0; }
+        if (entry.outcome === "win") { curW += 1; curL = 0; curD = 0; rollingYou += 1; }
+        else if (entry.outcome === "lose") { curL += 1; curW = 0; curD = 0; rollingRock += 1; }
+        else { curD += 1; curW = 0; curL = 0; }
 
         maxWinStreak = Math.max(maxWinStreak, curW);
         maxRockStreak = Math.max(maxRockStreak, curL);
-        if (entry.mood === "Paranoid") paranoidCount += 1;
+        maxDrawStreak = Math.max(maxDrawStreak, curD);
+        if (entry.mood === "Paranoid") {
+          paranoidCount += 1;
+          if (entry.outcome === "win") paranoidWins += 1;
+        }
         seenMoods.add(entry.mood);
+        if (moveCounts[entry.yourMove] !== undefined) moveCounts[entry.yourMove] += 1;
 
         maxRockLead = Math.max(maxRockLead, rollingRock - rollingYou);
       });
@@ -584,18 +601,35 @@
       const firstThreeUnique = historyLog.length >= 3 && new Set(historyLog.slice(0, 3).map(entry => entry.yourMove)).size === 3;
       const openedNonPaper = historyLog.length >= 1 && historyLog[0].yourMove !== "P";
       const lossMargin = Math.max(0, rockScore - youScore);
+      const onlyRock = historyLog.length === 20 && yourMoves.every(move => move === "R");
+      const onlyPaper = historyLog.length === 20 && yourMoves.every(move => move === "P");
+      const onlyScissors = historyLog.length === 20 && yourMoves.every(move => move === "S");
+      const noConsecutiveSameMove = historyLog.length === 20 && yourMoves.every((move, idx) => idx === 0 || move !== yourMoves[idx - 1]);
+      const minMoveCount = Math.min(moveCounts.R, moveCounts.P, moveCounts.S);
+      const palindromeShape = historyLog.length === 20 && yourMoves.every((move, idx) => move === yourMoves[yourMoves.length - 1 - idx]);
+      const firstHalfTransitions = historyLog.length >= 10 ? yourMoves.slice(0, 10).reduce((count, move, idx, arr) => idx === 0 ? 0 : count + (move !== arr[idx - 1] ? 1 : 0), 0) : 0;
+      const complexPalindromeMoves = palindromeShape && firstHalfTransitions >= 4;
 
       return {
         historyLog,
         maxWinStreak,
         maxRockStreak,
+        maxLoseStreak: maxRockStreak,
+        maxDrawStreak,
         paranoidCount,
+        paranoidWins,
         noLossesFirstFive,
         lastThreeAreWins,
         lostFirstThree,
         firstThreeUnique,
         openedNonPaper,
         lossMargin,
+        onlyRock,
+        onlyPaper,
+        onlyScissors,
+        noConsecutiveSameMove,
+        minMoveCount,
+        complexPalindromeMoves,
         maxRockLead,
         seenMoods,
         youScore,
