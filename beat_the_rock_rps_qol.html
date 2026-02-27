@@ -139,6 +139,12 @@
     .debug-panel summary span { text-decoration: underline; }
     .debug-log { margin-top: 8px; max-height: 260px; overflow-y: auto; border-top: 1px solid rgba(148,163,184,0.3); padding-top: 6px; }
     .debug-log-entry { margin-bottom: 4px; line-height: 1.3; }
+    .history-controls { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: 0.76rem; color: #9ca3af; }
+    .btn-clear-history { background: #1f2937; color: #e5e7eb; font-size: 0.76rem; padding: 6px 12px; }
+    .recent-runs { margin-top: 10px; display: grid; gap: 6px; }
+    .recent-runs-header { font-size: 0.78rem; color: #9ca3af; }
+    .recent-runs-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.76rem; color: #cbd5e1; }
+    .recent-runs-empty { font-size: 0.76rem; color: #6b7280; }
 
     .footer { margin-top: 18px; font-size: 0.8rem; color: #6b7280; text-align: center; line-height: 1.3; }
 
@@ -265,6 +271,11 @@
     <details class="debug-panel">
       <summary><span>Round log and debug info</span></summary>
       <div id="debugLog" class="debug-log"></div>
+      <div class="history-controls">
+        <span>Recent runs are stored locally for continuity.</span>
+        <button id="clearHistoryBtn" type="button" class="btn-clear-history">Clear history</button>
+      </div>
+      <div id="recentRuns" class="recent-runs"></div>
     </details>
 
     <div class="footer">
@@ -338,50 +349,16 @@
     const runSummaryScoresEl = document.getElementById("runSummaryScores");
     const runSummarySeedEl = document.getElementById("runSummarySeed");
     const sfxToggle = document.getElementById("sfxToggle");
-    const seedFeedbackEl = document.getElementById("seedFeedback");
-    const preRoundHintEl = document.getElementById("preRoundHint");
-    const roundBoardEl = document.getElementById("roundBoard");
-    const roundBoardStatusEl = document.getElementById("roundBoardStatus");
-    const roundBoardPreviewEl = document.getElementById("roundBoardPreview");
-    const copyLinkBtn = document.getElementById("copyLinkBtn");
-    const copyStatusEl = document.getElementById("copyStatus");
-    const achievementToastsEl = document.getElementById("achievementToasts");
+    const recentRunsEl = document.getElementById("recentRuns");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
 
-    const U32_MIN = 0;
-    const U32_MAX = 0xFFFFFFFF;
-    const U32_MAX_BIGINT = BigInt(U32_MAX);
-    const DIGITS_ONLY_REGEX = /^\d+$/;
-    const ACHIEVEMENTS_STORAGE_KEY = "beatTheRockUnlockedAchievements.v1";
-
-    const achievementCatalog = [
-      { id: "opening-pop", name: "Opening Pop", text: "You won round 1.", rank: "bronze", unlocked: s => s.historyLog[0]?.outcome === "win" },
-      { id: "unshaken-opener", name: "Unshaken Opener", text: "No losses in the first 5 rounds.", rank: "bronze", unlocked: s => s.historyLog.length >= 5 && s.noLossesFirstFive },
-      { id: "hot-streak", name: "Hot Streak", text: "You reached a win streak of 4+.", rank: "silver", unlocked: s => s.maxWinStreak >= 4 },
-      { id: "cold-shower", name: "Cold Shower", text: "The Rock reached a win streak of 3+.", rank: "bronze", unlocked: s => s.maxRockStreak >= 3 },
-      { id: "draw-artist", name: "Draw Artist", text: "You reached 8+ draws in one run.", rank: "silver", unlocked: s => s.draws >= 8 },
-      { id: "paranoid-era", name: "Paranoid Era", text: "You kept The Rock in Paranoid state for a long stretch.", rank: "silver", unlocked: s => s.paranoidCount >= 5 },
-      { id: "perfect-counter-enjoyer", name: "Perfect Counter Enjoyer", text: "You played 10+ perfect counters.", rank: "silver", unlocked: s => s.perfectHits >= 10 },
-      { id: "mood-breaker", name: "Mood Breaker", text: "You forced Calm, Suspicious, and Paranoid in one run.", rank: "gold", unlocked: s => s.seenMoods.size === 3 },
-      { id: "edge-of-your-seat", name: "Edge Of Your Seat", text: "You won a very close run.", rank: "bronze", unlocked: s => s.matchFinished && Math.abs(s.youScore - s.rockScore) === 1 && s.youScore > s.rockScore },
-      { id: "seeded-legend", name: "Seeded Legend", text: "You chose the seed and still beat The Rock.", rank: "gold", unlocked: s => s.matchFinished && s.seedWasManual && s.youScore > s.rockScore },
-      { id: "adaptive-bully", name: "Adaptive Bully", text: "You beat him even though his adaptive reads were strong.", rank: "gold", unlocked: s => s.matchFinished && s.adaptiveEverOnThisRun && s.adaptiveAttempts >= 5 && (s.adaptiveCorrectReads / s.adaptiveAttempts) >= 0.6 && s.youScore > s.rockScore },
-      { id: "comeback-kid", name: "Comeback Kid", text: "You won after trailing by 3+ at some point.", rank: "gold", unlocked: s => s.matchFinished && s.maxRockLead >= 3 && s.youScore > s.rockScore },
-      { id: "clean-finish", name: "Clean Finish", text: "You won the final 3 rounds and took the run.", rank: "gold", unlocked: s => s.matchFinished && s.youScore > s.rockScore && s.lastThreeAreWins },
-      { id: "theoretical-maximum", name: "Theoretical Maximum", text: "You played a perfect counter every single round.", rank: "platinum", unlocked: s => s.matchFinished && s.perfectHits === s.historyLog.length },
-      { id: "reverse-sweep", name: "Reverse Sweep", text: "You lost the first 3 rounds but still won the run.", rank: "platinum", unlocked: s => s.matchFinished && s.youScore > s.rockScore && s.lostFirstThree },
-      { id: "pacifist-match", name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", rank: "platinum", unlocked: s => s.matchFinished && s.youScore === 0 && s.rockScore === 0 && s.draws === 20 }
-    ];
-
-    function normalizeSeed(value) {
-      const trimmed = String(value ?? "").trim();
-      if (!DIGITS_ONLY_REGEX.test(trimmed)) return { valid: false, seed: null, clamped: false };
-
-      const parsed = BigInt(trimmed);
-      if (parsed < BigInt(U32_MIN)) return { valid: false, seed: null, clamped: false };
-
-      const normalized = parsed > U32_MAX_BIGINT ? U32_MAX_BIGINT : parsed;
-      return { valid: true, seed: Number(normalized), clamped: parsed !== normalized };
-    }
+    const storageKeys = {
+      adaptive: "rps.adaptiveToggle",
+      sfx: "rps.sfxToggle",
+      lastSeed: "rps.lastSeed",
+      recentRuns: "rps.recentRuns"
+    };
+    const recentRunsLimit = 8;
 
     function mulberry32(a) {
       return function() {
@@ -412,87 +389,141 @@
     let adaptiveAttempts = 0;
     let adaptiveCorrectReads = 0;
     let adaptiveEverOnThisRun = false;
+    let runAdaptiveSetting = false;
     let lastDecisionAdaptive = false;
 
     let audioCtx = null;
     let sfxEnabled = true;
 
     let historyLog = [];
-    let roundBoardCells = [];
-    let activeRoundBoardIndex = null;
-    let announcedAchievements = new Set();
-    let unlockedAchievementIds = new Set();
+    let timelineCells = [];
+    let activeTimelineIndex = null;
+    let storageEnabled = false;
+    let recentRuns = [];
+    let initialSeedFromStorage = null;
 
-    function loadPersistentAchievements() {
+    function detectStorage() {
       try {
-        const raw = localStorage.getItem(ACHIEVEMENTS_STORAGE_KEY);
-        if (!raw) return new Set();
-        const ids = JSON.parse(raw);
-        if (!Array.isArray(ids)) return new Set();
-        const validIds = ids.filter(id => achievementCatalog.some(a => a.id === id));
-        return new Set(validIds);
-      } catch (err) {
-        return new Set();
+        const probe = "rps.storageProbe";
+        window.localStorage.setItem(probe, "1");
+        window.localStorage.removeItem(probe);
+        return true;
+      } catch (e) {
+        return false;
       }
     }
 
-    function savePersistentAchievements() {
+    function storageGet(key) {
+      if (!storageEnabled) return null;
       try {
-        localStorage.setItem(ACHIEVEMENTS_STORAGE_KEY, JSON.stringify(Array.from(unlockedAchievementIds)));
-      } catch (err) {}
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
     }
 
-    function buildAchievementState() {
-      let maxWinStreak = 0, curW = 0;
-      let maxRockStreak = 0, curL = 0;
-      let paranoidCount = 0;
-      let rollingYou = 0;
-      let rollingRock = 0;
-      let maxRockLead = 0;
-      const seenMoods = new Set();
+    function storageSet(key, value) {
+      if (!storageEnabled) return;
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (e) {}
+    }
 
-      historyLog.forEach(entry => {
-        if (entry.outcome === "win") { curW += 1; curL = 0; rollingYou += 1; }
-        else if (entry.outcome === "lose") { curL += 1; curW = 0; rollingRock += 1; }
-        else { curW = 0; curL = 0; }
+    function storageRemove(key) {
+      if (!storageEnabled) return;
+      try {
+        window.localStorage.removeItem(key);
+      } catch (e) {}
+    }
 
-        maxWinStreak = Math.max(maxWinStreak, curW);
-        maxRockStreak = Math.max(maxRockStreak, curL);
-        if (entry.mood === "Paranoid") paranoidCount += 1;
-        seenMoods.add(entry.mood);
+    function parseStoredBoolean(value, fallback) {
+      if (value === "true") return true;
+      if (value === "false") return false;
+      return fallback;
+    }
 
-        maxRockLead = Math.max(maxRockLead, rollingRock - rollingYou);
+    function loadPersistedSettings() {
+      storageEnabled = detectStorage();
+      if (!storageEnabled) {
+        renderRecentRuns();
+        return;
+      }
+
+      adaptiveToggle.checked = parseStoredBoolean(storageGet(storageKeys.adaptive), adaptiveToggle.checked);
+      sfxToggle.checked = parseStoredBoolean(storageGet(storageKeys.sfx), sfxToggle.checked);
+      sfxEnabled = sfxToggle.checked;
+
+      const lastSeed = storageGet(storageKeys.lastSeed);
+      if (lastSeed && !seedInputEl.value.trim()) seedInputEl.value = lastSeed;
+      if (lastSeed) {
+        const parsedSeed = parseInt(lastSeed, 10);
+        if (!Number.isNaN(parsedSeed)) initialSeedFromStorage = parsedSeed;
+      }
+
+      try {
+        const parsed = JSON.parse(storageGet(storageKeys.recentRuns) || "[]");
+        if (Array.isArray(parsed)) recentRuns = parsed.slice(0, recentRunsLimit);
+      } catch (e) {
+        recentRuns = [];
+      }
+      renderRecentRuns();
+    }
+
+    function renderRecentRuns() {
+      if (!recentRunsEl) return;
+      recentRunsEl.innerHTML = "";
+
+      const header = document.createElement("div");
+      header.className = "recent-runs-header";
+      header.textContent = `Recent runs (last ${recentRunsLimit})`;
+      recentRunsEl.appendChild(header);
+
+      if (!storageEnabled) {
+        const note = document.createElement("div");
+        note.className = "recent-runs-empty";
+        note.textContent = "Local storage unavailable in this environment.";
+        recentRunsEl.appendChild(note);
+        return;
+      }
+
+      if (!recentRuns.length) {
+        const empty = document.createElement("div");
+        empty.className = "recent-runs-empty";
+        empty.textContent = "No completed runs saved yet.";
+        recentRunsEl.appendChild(empty);
+        return;
+      }
+
+      const list = document.createElement("ol");
+      list.className = "recent-runs-list";
+      recentRuns.forEach(run => {
+        const item = document.createElement("li");
+        item.textContent = `Seed ${run.seed}, score You ${run.youScore} - Rock ${run.rockScore} (${run.draws} draws), adaptive ${run.adaptive ? "on" : "off"}.`;
+        list.appendChild(item);
       });
+      recentRunsEl.appendChild(list);
+    }
 
-      const noLossesFirstFive = historyLog.slice(0, 5).every(entry => entry.outcome !== "lose");
-      const lastThreeAreWins = historyLog.length >= 3 && historyLog.slice(-3).every(entry => entry.outcome === "win");
-      const lostFirstThree = historyLog.length >= 3 && historyLog.slice(0, 3).every(entry => entry.outcome === "lose");
-
-      return {
-        historyLog,
-        maxWinStreak,
-        maxRockStreak,
-        paranoidCount,
-        noLossesFirstFive,
-        lastThreeAreWins,
-        lostFirstThree,
-        maxRockLead,
-        seenMoods,
+    function persistRunSummary() {
+      if (!storageEnabled) return;
+      const runSummary = {
+        seed: runSeed,
         youScore,
         rockScore,
         draws,
-        perfectHits,
-        seedWasManual,
-        adaptiveEverOnThisRun,
-        adaptiveAttempts,
-        adaptiveCorrectReads,
-        matchFinished: historyLog.length === 20
+        adaptive: runAdaptiveSetting,
+        ts: Date.now()
       };
+      recentRuns.unshift(runSummary);
+      recentRuns = recentRuns.slice(0, recentRunsLimit);
+      storageSet(storageKeys.recentRuns, JSON.stringify(recentRuns));
+      renderRecentRuns();
     }
 
-    function getUnlockedAchievementDefs() {
-      const state = buildAchievementState();
-      return achievementCatalog.filter(achievement => achievement.unlocked(state));
+    function clearRecentRuns() {
+      recentRuns = [];
+      storageRemove(storageKeys.recentRuns);
+      renderRecentRuns();
     }
 
     function ensureAudioContext() {
@@ -966,15 +997,16 @@
       commentaryEl.textContent = summaryLines.join(" ");
 
       renderAchievements();
-      if (historyLog.length > 0) handleRoundBoardHover(historyLog.length - 1);
+      persistRunSummary();
+      if (historyLog.length > 0) handleTimelineHover(historyLog.length - 1);
       resetBtn.style.display = "inline-flex";
     }
 
-    function initFromSeed(seed, manualFlag, scriptOverride) {
+    function initFromSeed(seed, manualFlag, persistSeed = true) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
-      scriptedSequenceOverride = scriptOverride || null;
-
+      seedDisplayEl.textContent = `Run seed, ${runSeed}`;
+      if (persistSeed) storageSet(storageKeys.lastSeed, String(runSeed));
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
 
@@ -996,6 +1028,7 @@
       adaptiveAttempts = 0;
       adaptiveCorrectReads = 0;
       adaptiveEverOnThisRun = false;
+      runAdaptiveSetting = adaptiveToggle.checked;
       lastDecisionAdaptive = false;
 
       rockMood = "Calm";
@@ -1060,8 +1093,7 @@
         if (normalizedSeed.clamped) seedFeedbackEl.textContent = `Seed clamped to unsigned 32-bit range. Starting run with normalized seed ${newSeed}.`;
         else seedFeedbackEl.textContent = `Starting run with normalized seed ${newSeed}.`;
       }
-
-      initFromSeed(newSeed, manual, null);
+      initFromSeed(newSeed, manual, true);
     }
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
@@ -1070,9 +1102,16 @@
     }));
 
     resetBtn.addEventListener("click", resetGame);
-    adaptiveToggle.addEventListener("change", () => { updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); });
-    sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
-    copyLinkBtn.addEventListener("click", copyChallengeLink);
+    adaptiveToggle.addEventListener("change", () => {
+      storageSet(storageKeys.adaptive, String(adaptiveToggle.checked));
+      updateAdaptiveStats();
+      updateMoodDisplay();
+    });
+    sfxToggle.addEventListener("change", () => {
+      sfxEnabled = sfxToggle.checked;
+      storageSet(storageKeys.sfx, String(sfxToggle.checked));
+    });
+    if (clearHistoryBtn) clearHistoryBtn.addEventListener("click", clearRecentRuns);
 
     document.addEventListener("keydown", e => {
       if (!isGameActive()) return;
@@ -1083,11 +1122,9 @@
       else if (key === "s") playRound("S");
     });
 
-    unlockedAchievementIds = loadPersistentAchievements();
-
-    const initialSettings = readInitialSettingsFromUrl();
-    if (initialSettings.seed === null) initFromSeed(Math.floor(Math.random() * 1e9), false, initialSettings.scriptOverride);
-    else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride);
+    loadPersistedSettings();
+    const startupSeed = initialSeedFromStorage ?? Math.floor(Math.random() * 1e9);
+    initFromSeed(startupSeed, false, false);
   </script>
 </body>
 </html>
