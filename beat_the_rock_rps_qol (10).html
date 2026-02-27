@@ -25,6 +25,8 @@
     .seed-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; justify-content: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; }
     .seed-row label { display: inline-flex; align-items: center; gap: 6px; }
     .seed-row input { background: #020617; border-radius: 999px; border: 1px solid rgba(148,163,184,0.7); padding: 5px 10px; color: #e5e7eb; font-size: 0.8rem; width: 165px; }
+    .seed-row button { font-size: 0.76rem; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(56,189,248,0.75); background: rgba(15,23,42,0.92); color: #bae6fd; cursor: pointer; }
+    .seed-row button:hover { filter: brightness(1.1); }
     .seed-feedback { width: 100%; text-align: center; font-size: 0.78rem; min-height: 1.1rem; }
     .seed-feedback.error { color: #fca5a5; }
     .seed-feedback.info { color: #93c5fd; }
@@ -105,7 +107,9 @@
     .commentary { margin-top: 0; font-size: 1.14rem; color: #f8fafc; min-height: 4.1rem; line-height: 1.45; font-weight: 700; }
 
     .achievements { margin-top: 14px; padding: 12px 12px 10px; border-radius: 12px; background: radial-gradient(circle at top, rgba(168,85,247,0.14), rgba(2,6,23,0.95)); border: 1px solid rgba(192,132,252,0.5); font-size: 0.84rem; color: #d1d5db; }
-    .achievements-header { margin-bottom: 8px; color: #f5f3ff; font-weight: 700; letter-spacing: 0.03em; }
+    .achievements-header { margin-bottom: 8px; color: #f5f3ff; font-weight: 700; letter-spacing: 0.03em; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn-achievements-reset { font-size: 0.74rem; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(248,113,113,0.8); background: rgba(69,10,10,0.9); color: #fee2e2; cursor: pointer; }
+    .btn-achievements-reset:hover { filter: brightness(1.08); }
     .achievements-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
     .achievement-badge { padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(167,139,250,0.55); background: linear-gradient(140deg, rgba(91,33,182,0.65), rgba(30,41,59,0.9)); color: #ede9fe; line-height: 1.35; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
     .achievement-badge::before { content: "🏆 "; }
@@ -165,6 +169,7 @@
 
     <div class="seed-row">
       <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
+      <button id="randomSeedBtn" type="button">Generate random seed</button>
       <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
     </div>
 
@@ -239,7 +244,10 @@
     </div>
 
     <div class="achievements">
-      <div class="achievements-header">Run achievements</div>
+      <div class="achievements-header">
+        <span>Run achievements</span>
+        <button id="resetAchievementsBtn" class="btn-achievements-reset" type="button">Reset achievements</button>
+      </div>
       <div id="achievementsList" class="achievements-list"></div>
     </div>
 
@@ -333,6 +341,7 @@
     const adaptiveStatsEl = document.getElementById("adaptiveStats");
     const moodDisplayEl = document.getElementById("moodDisplay");
     const seedInputEl = document.getElementById("seedInput");
+    const randomSeedBtn = document.getElementById("randomSeedBtn");
     const debugLogEl = document.getElementById("debugLog");
     const achievementsListEl = document.getElementById("achievementsList");
     const runSummaryScoresEl = document.getElementById("runSummaryScores");
@@ -346,12 +355,16 @@
     const copyLinkBtn = document.getElementById("copyLinkBtn");
     const copyStatusEl = document.getElementById("copyStatus");
     const achievementToastsEl = document.getElementById("achievementToasts");
+    const resetAchievementsBtn = document.getElementById("resetAchievementsBtn");
 
     const U32_MIN = 0;
     const U32_MAX = 0xFFFFFFFF;
     const U32_MAX_BIGINT = BigInt(U32_MAX);
+    const DEFAULT_SEED = 1;
+    const TERNARY_SPACE = 3486784401;
     const DIGITS_ONLY_REGEX = /^\d+$/;
     const ACHIEVEMENTS_STORAGE_KEY = "beatTheRockUnlockedAchievements.v1";
+    const ORIGINAL_SEED_ONE_SEQUENCE = "PPSSRPPSPRRSPSPRPPRP";
 
     const achievementCatalog = [
       { id: "opening-pop", name: "Opening Pop", text: "You won round 1.", rank: "bronze", unlocked: s => s.historyLog[0]?.outcome === "win" },
@@ -393,25 +406,21 @@
     }
 
     function generateSeededScriptSequence(seed) {
-      const scriptRng = mulberry32((seed ^ 0xA5A5A5A5) >>> 0);
+      if ((seed >>> 0) === DEFAULT_SEED) return ORIGINAL_SEED_ONE_SEQUENCE.split("");
+
+      const normalizedSeed = seed >>> 0;
       const sequence = [];
-      let streakMove = null;
-      let streakLength = 0;
+      let value = normalizedSeed % TERNARY_SPACE;
+      const overflow = Math.floor(normalizedSeed / TERNARY_SPACE);
 
       for (let i = 0; i < 20; i += 1) {
-        let move = ROCK_MOVES[Math.floor(scriptRng() * ROCK_MOVES.length)];
-
-        if (streakLength >= 2 && move === streakMove) {
-          const options = ROCK_MOVES.filter(candidate => candidate !== streakMove);
-          move = options[Math.floor(scriptRng() * options.length)];
+        let digit = value % 3;
+        value = Math.floor(value / 3);
+        if (overflow > 0) {
+          const mix = (Math.imul(overflow, 0x9E3779B1) + Math.imul(i + 1, 0x85EBCA6B)) >>> 0;
+          digit = (digit + (mix % 3)) % 3;
         }
-
-        if (move === streakMove) streakLength += 1;
-        else {
-          streakMove = move;
-          streakLength = 1;
-        }
-
+        const move = ROCK_MOVES[digit];
         sequence.push(move);
       }
 
@@ -467,6 +476,16 @@
       try {
         localStorage.setItem(ACHIEVEMENTS_STORAGE_KEY, JSON.stringify(Array.from(unlockedAchievementIds)));
       } catch (err) {}
+    }
+
+    function resetPersistentAchievements() {
+      unlockedAchievementIds = new Set();
+      savePersistentAchievements();
+      renderAchievements();
+    }
+
+    function generateRandomSeed() {
+      return Math.floor(Math.random() * (U32_MAX + 1));
     }
 
     function buildAchievementState() {
@@ -1070,7 +1089,7 @@
       let manual = false;
 
       if (value === "") {
-        newSeed = Math.floor(Math.random() * (U32_MAX + 1));
+        newSeed = generateRandomSeed();
         seedFeedbackEl.className = "seed-feedback info";
         seedFeedbackEl.textContent = `Randomized seed for this run: ${newSeed}.`;
       } else {
@@ -1098,6 +1117,17 @@
     }));
 
     resetBtn.addEventListener("click", resetGame);
+    randomSeedBtn.addEventListener("click", () => {
+      const generatedSeed = generateRandomSeed();
+      seedInputEl.value = String(generatedSeed);
+      seedFeedbackEl.className = "seed-feedback info";
+      seedFeedbackEl.textContent = `Generated seed ${generatedSeed}. Reset match to start this run.`;
+    });
+    resetAchievementsBtn.addEventListener("click", () => {
+      resetPersistentAchievements();
+      seedFeedbackEl.className = "seed-feedback info";
+      seedFeedbackEl.textContent = "Achievements reset for this browser profile.";
+    });
     adaptiveToggle.addEventListener("change", () => { updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); });
     sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
     copyLinkBtn.addEventListener("click", copyChallengeLink);
@@ -1114,7 +1144,8 @@
     unlockedAchievementIds = loadPersistentAchievements();
 
     const initialSettings = readInitialSettingsFromUrl();
-    if (initialSettings.seed === null) initFromSeed(Math.floor(Math.random() * 1e9), false, initialSettings.scriptOverride);
+    seedInputEl.value = String(DEFAULT_SEED);
+    if (initialSettings.seed === null) initFromSeed(DEFAULT_SEED, false, initialSettings.scriptOverride);
     else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride);
   </script>
 </body>
