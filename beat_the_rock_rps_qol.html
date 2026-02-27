@@ -26,9 +26,10 @@
     .seed-row span { white-space: nowrap; }
     .seed-row label { display: inline-flex; align-items: center; gap: 6px; }
     .seed-row input { background: #020617; border-radius: 999px; border: 1px solid rgba(148,163,184,0.7); padding: 4px 8px; color: #e5e7eb; font-size: 0.8rem; width: 120px; }
-    .seed-row button { padding: 6px 12px; font-size: 0.76rem; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.7); color: #e5e7eb; }
-    .copy-status { min-width: 170px; font-size: 0.74rem; color: #6ee7b7; }
-    .copy-status.error { color: #fca5a5; }
+    .seed-hint { width: 100%; text-align: center; color: #6b7280; font-size: 0.74rem; }
+    .seed-feedback { width: 100%; text-align: center; font-size: 0.78rem; min-height: 1.1rem; }
+    .seed-feedback.error { color: #fca5a5; }
+    .seed-feedback.info { color: #93c5fd; }
 
     .settings-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; font-size: 0.78rem; color: #9ca3af; margin-bottom: 6px; }
     .settings-row label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
@@ -156,8 +157,8 @@
     <div class="seed-row">
       <span id="seedDisplay">Run seed, pending</span>
       <label>Seed for next run <input id="seedInput" type="text" placeholder="leave blank for random" /></label>
-      <button id="copyLinkBtn" type="button">Copy challenge link</button>
-      <span id="copyStatus" class="copy-status" aria-live="polite"></span>
+      <div class="seed-hint">Use 0–4294967295 for deterministic runs, or leave blank for a random seed.</div>
+      <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
     </div>
 
     <div class="mode-toggle">
@@ -328,7 +329,12 @@
     const timelineTrackEl = document.getElementById("timelineTrack");
     const timelinePreviewEl = document.getElementById("timelinePreview");
     const sfxToggle = document.getElementById("sfxToggle");
-    const preRoundHintEl = document.getElementById("preRoundHint");
+    const seedFeedbackEl = document.getElementById("seedFeedback");
+
+    const U32_MIN = 0;
+    const U32_MAX = 0xFFFFFFFF;
+    const U32_MAX_BIGINT = BigInt(U32_MAX);
+    const DIGITS_ONLY_REGEX = /^\d+$/;
 
     function mulberry32(a) {
       return function() {
@@ -926,13 +932,36 @@
 
     function resetGame() {
       const value = seedInputEl.value.trim();
-      let newSeed, manual = false;
-      if (value === "") newSeed = Math.floor(Math.random() * 1e9);
-      else {
-        const parsed = parseInt(value, 10);
-        if (Number.isNaN(parsed)) newSeed = Math.floor(Math.random() * 1e9);
-        else { newSeed = parsed; manual = true; }
+      let newSeed;
+      let manual = false;
+
+      if (value === "") {
+        newSeed = Math.floor(Math.random() * (U32_MAX + 1));
+        seedFeedbackEl.className = "seed-feedback info";
+        seedFeedbackEl.textContent = `Randomized seed for this run: ${newSeed}.`;
+      } else {
+        if (!DIGITS_ONLY_REGEX.test(value)) {
+          seedFeedbackEl.className = "seed-feedback error";
+          seedFeedbackEl.textContent = "Invalid seed. Use digits only (0–4294967295).";
+          return;
+        }
+
+        const parsed = BigInt(value);
+        if (parsed < BigInt(U32_MIN)) {
+          seedFeedbackEl.className = "seed-feedback error";
+          seedFeedbackEl.textContent = "Invalid seed. Use digits only (0–4294967295).";
+          return;
+        }
+
+        const normalized = parsed > U32_MAX_BIGINT ? U32_MAX_BIGINT : parsed;
+        newSeed = Number(normalized);
+        manual = true;
+
+        seedFeedbackEl.className = "seed-feedback info";
+        if (parsed !== normalized) seedFeedbackEl.textContent = `Seed clamped to unsigned 32-bit range. Starting run with normalized seed ${newSeed}.`;
+        else seedFeedbackEl.textContent = `Starting run with normalized seed ${newSeed}.`;
       }
+
       initFromSeed(newSeed, manual);
     }
 
