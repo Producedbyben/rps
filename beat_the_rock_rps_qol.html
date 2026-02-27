@@ -71,6 +71,7 @@
     button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.6); }
     button:active { transform: translateY(0); box-shadow: 0 3px 6px rgba(0,0,0,0.5); }
     button:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+    button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
 
     .result-line { margin-top: 14px; font-size: 1.02rem; text-align: center; min-height: 1.4rem; }
     .result-win { color: #6ee7b7; }
@@ -96,7 +97,9 @@
     .timeline-cell-inner span { display: block; text-align: center; }
     .timeline-cell.empty { color: #4b5563; font-size: 0.75rem; }
     .timeline-cell.played { cursor: pointer; }
-    .timeline-cell.played:hover { border-color: #4ade80; background: #022c22; transform: translateY(-1px); }
+    .timeline-cell.played:hover,
+    .timeline-cell.played:focus-visible { border-color: #4ade80; background: #022c22; transform: translateY(-1px); }
+    .timeline-cell:focus-visible { outline: 3px solid #93c5fd; outline-offset: 1px; }
     .timeline-cell.played.active { border-color: #facc15; background: #1e293b; }
     .timeline-preview { min-height: 1.2rem; font-size: 0.78rem; color: #9ca3af; }
     .timeline-preview strong { color: #e5e7eb; }
@@ -109,6 +112,8 @@
 
     .help-box { margin-top: 14px; font-size: 0.8rem; color: #9ca3af; border-radius: 10px; border: 1px solid rgba(148,163,184,0.4); background: #020617; padding: 8px 10px; }
     .help-box summary { cursor: pointer; list-style: none; color: #e5e7eb; font-weight: 600; }
+    .help-box summary:focus-visible,
+    .debug-panel summary:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; border-radius: 4px; }
     .help-box summary::marker { display: none; }
     .help-box summary::-webkit-details-marker { display: none; }
     .help-box-content { margin-top: 6px; line-height: 1.4; }
@@ -194,14 +199,14 @@
     </div>
 
     <div class="controls">
-      <button class="btn-rock" data-move="R"><span class="hand-icon">✊</span> Rock</button>
-      <button class="btn-paper" data-move="P"><span class="hand-icon">✋</span> Paper</button>
-      <button class="btn-scissors" data-move="S"><span class="hand-icon">✌️</span> Scissors</button>
+      <button class="btn-rock" data-move="R" aria-label="Play Rock hand"><span class="hand-icon">✊</span> Rock</button>
+      <button class="btn-paper" data-move="P" aria-label="Play Paper hand"><span class="hand-icon">✋</span> Paper</button>
+      <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
       <button id="resetBtn" class="btn-reset" style="display:none;">Reset match</button>
     </div>
 
-    <div id="resultLine" class="result-line"></div>
-    <div id="commentary" class="commentary"></div>
+    <div id="resultLine" class="result-line" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div id="commentary" class="commentary" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <div class="scoreboard">
       <div class="score-header">
@@ -214,7 +219,7 @@
     <div class="timeline">
       <div class="timeline-header">Round hand timeline</div>
       <div id="timelineTrack" class="timeline-track"></div>
-      <div id="timelinePreview" class="timeline-preview">Hover a played round to preview the exact hands and outcome.</div>
+      <div id="timelinePreview" class="timeline-preview">Hover, focus, or tap a played round to preview the exact hands and outcome.</div>
     </div>
 
     <div class="achievements">
@@ -443,6 +448,11 @@
       });
     }
 
+    function moveTimelineFocus(index) {
+      if (index < 0 || index >= timelineCells.length) return;
+      timelineCells[index].focus();
+    }
+
     function createTimelineCells() {
       timelineTrackEl.innerHTML = "";
       timelineCells = [];
@@ -450,8 +460,32 @@
         const cell = document.createElement("div");
         cell.className = "timeline-cell empty";
         cell.innerHTML = '<div class="timeline-cell-inner"><span>·</span></div>';
+        cell.tabIndex = 0;
+        cell.setAttribute("role", "button");
+        cell.setAttribute("aria-label", `Round ${i + 1}, not played yet.`);
         cell.addEventListener("mouseenter", () => handleTimelineHover(i));
         cell.addEventListener("mouseleave", () => clearTimelineHover(i));
+        cell.addEventListener("focus", () => handleTimelineHover(i));
+        cell.addEventListener("blur", () => clearTimelineHover(i));
+        cell.addEventListener("click", () => handleTimelineHover(i));
+        cell.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+            event.preventDefault();
+            moveTimelineFocus(i + 1);
+          } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+            event.preventDefault();
+            moveTimelineFocus(i - 1);
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            moveTimelineFocus(0);
+          } else if (event.key === "End") {
+            event.preventDefault();
+            moveTimelineFocus(timelineCells.length - 1);
+          } else if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleTimelineHover(i);
+          }
+        });
         timelineTrackEl.appendChild(cell);
         timelineCells.push(cell);
       }
@@ -461,11 +495,14 @@
       timelineCells.forEach((cell, i) => {
         cell.className = "timeline-cell empty";
         cell.innerHTML = '<div class="timeline-cell-inner"><span>·</span></div>';
+        cell.setAttribute("aria-label", `Round ${i + 1}, not played yet.`);
         if (i < historyLog.length) {
           const entry = historyLog[i];
+          const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
           cell.className = "timeline-cell played";
           cell.innerHTML =
             `<div class="timeline-cell-inner"><span>${glyph[entry.rockMove]}</span><span>${glyph[entry.yourMove]}</span></div>`;
+          cell.setAttribute("aria-label", `Round ${entry.round}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${outcomeText}.`);
         }
       });
       if (activeTimelineIndex !== null && timelineCells[activeTimelineIndex]) {
@@ -499,11 +536,11 @@
         activeTimelineIndex = null;
       }
       if (historyLog.length === 0) {
-        timelinePreviewEl.textContent = "Hover a played round to preview the exact hands and outcome.";
+        timelinePreviewEl.textContent = "Hover, focus, or tap a played round to preview the exact hands and outcome.";
       } else {
         const last = historyLog[historyLog.length - 1];
         const outcomeText = last.outcome === "win" ? "you win" : last.outcome === "lose" ? "The Rock wins" : "draw";
-        timelinePreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}. Hover any round for detail.`;
+        timelinePreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}. Hover, focus, or tap any round for detail.`;
       }
     }
 
@@ -846,7 +883,7 @@
       createScoreCells();
       createTimelineCells();
       renderTimeline();
-      timelinePreviewEl.textContent = "Hover a played round to preview the exact hands and outcome.";
+      timelinePreviewEl.textContent = "Hover, focus, or tap a played round to preview the exact hands and outcome.";
 
       updateScoreLabel();
       updateRoundLabel();
