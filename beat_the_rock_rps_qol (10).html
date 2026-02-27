@@ -429,6 +429,28 @@
       return sequence;
     }
 
+    function sequenceToReplaySeed(sequence) {
+      if (!Array.isArray(sequence) || sequence.length !== 20) return null;
+      const digitMap = { R: 0, P: 1, S: 2 };
+      let value = 0;
+      let factor = 1;
+
+      for (let i = 0; i < sequence.length; i += 1) {
+        const digit = digitMap[sequence[i]];
+        if (digit === undefined) return null;
+        value += digit * factor;
+        factor *= 3;
+      }
+
+      const candidate = value >>> 0;
+      const candidateSequence = generateSeededScriptSequence(candidate).join("");
+      const target = sequence.join("");
+      if (candidate !== DEFAULT_SEED && candidateSequence === target) return candidate;
+
+      if (target === ORIGINAL_SEED_ONE_SEQUENCE) return DEFAULT_SEED;
+      return null;
+    }
+
     let rngGame = null;
     let rngFlavor = null;
     let runSeed = 0;
@@ -1017,6 +1039,19 @@
       if (adaptiveEverOnThisRun && adaptiveAttempts > 0) {
         const acc = Math.round((adaptiveCorrectReads / adaptiveAttempts) * 100);
         summaryLines.push(`Adaptive Rock made ${adaptiveAttempts} read attempts, with ${adaptiveCorrectReads} correct, accuracy ${acc} percent.`);
+      }
+
+      if (adaptiveEverOnThisRun && historyLog.length === 20) {
+        const adaptiveSequence = historyLog.map(entry => entry.rockMove);
+        const replaySeed = sequenceToReplaySeed(adaptiveSequence);
+        if (replaySeed !== null) {
+          seedInputEl.value = String(replaySeed);
+          seedFeedbackEl.className = "seed-feedback info";
+          seedFeedbackEl.textContent = `Adaptive run replay seed generated: ${replaySeed}. Reset match to replay this sequence in scripted mode.`;
+          summaryLines.push(`Replay seed generated for this adaptive sequence, ${replaySeed}.`);
+        } else {
+          summaryLines.push("Could not generate a scripted replay seed for this adaptive sequence.");
+        }
       }
 
       const runAchievements = getUnlockedAchievementDefs();
