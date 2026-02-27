@@ -371,6 +371,7 @@
     let activeTimelineIndex = null;
     let storageEnabled = false;
     let recentRuns = [];
+    let initialSeedFromStorage = null;
 
     function detectStorage() {
       try {
@@ -425,10 +426,14 @@
 
       const lastSeed = storageGet(storageKeys.lastSeed);
       if (lastSeed && !seedInputEl.value.trim()) seedInputEl.value = lastSeed;
+      if (lastSeed) {
+        const parsedSeed = parseInt(lastSeed, 10);
+        if (!Number.isNaN(parsedSeed)) initialSeedFromStorage = parsedSeed;
+      }
 
       try {
         const parsed = JSON.parse(storageGet(storageKeys.recentRuns) || "[]");
-        if (Array.isArray(parsed)) recentRuns = parsed;
+        if (Array.isArray(parsed)) recentRuns = parsed.slice(0, recentRunsLimit);
       } catch (e) {
         recentRuns = [];
       }
@@ -876,11 +881,11 @@
       resetBtn.style.display = "inline-flex";
     }
 
-    function initFromSeed(seed, manualFlag) {
+    function initFromSeed(seed, manualFlag, persistSeed = true) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
       seedDisplayEl.textContent = `Run seed, ${runSeed}`;
-      storageSet(storageKeys.lastSeed, String(runSeed));
+      if (persistSeed) storageSet(storageKeys.lastSeed, String(runSeed));
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
 
@@ -939,7 +944,7 @@
         if (Number.isNaN(parsed)) newSeed = Math.floor(Math.random() * 1e9);
         else { newSeed = parsed; manual = true; }
       }
-      initFromSeed(newSeed, manual);
+      initFromSeed(newSeed, manual, true);
     }
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
@@ -969,7 +974,8 @@
     });
 
     loadPersistedSettings();
-    initFromSeed(Math.floor(Math.random() * 1e9), false);
+    const startupSeed = initialSeedFromStorage ?? Math.floor(Math.random() * 1e9);
+    initFromSeed(startupSeed, false, false);
   </script>
 </body>
 </html>
