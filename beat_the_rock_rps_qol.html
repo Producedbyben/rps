@@ -22,10 +22,12 @@
     .run-summary-pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.9); }
     .run-summary-pill strong { color: #e5e7eb; }
 
-    .seed-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; }
-    .seed-row span { white-space: nowrap; }
+    .seed-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; justify-content: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; }
     .seed-row label { display: inline-flex; align-items: center; gap: 6px; }
-    .seed-row input { background: #020617; border-radius: 999px; border: 1px solid rgba(148,163,184,0.7); padding: 4px 8px; color: #e5e7eb; font-size: 0.8rem; width: 120px; }
+    .seed-row input { background: #020617; border-radius: 999px; border: 1px solid rgba(148,163,184,0.7); padding: 5px 10px; color: #e5e7eb; font-size: 0.8rem; width: 165px; }
+    .seed-feedback { width: 100%; text-align: center; font-size: 0.78rem; min-height: 1.1rem; }
+    .seed-feedback.error { color: #fca5a5; }
+    .seed-feedback.info { color: #93c5fd; }
 
     .settings-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; font-size: 0.78rem; color: #9ca3af; margin-bottom: 6px; }
     .settings-row label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
@@ -40,6 +42,7 @@
     .adaptive-stats strong { color: #e5e7eb; }
     .mood-display { text-align: center; font-size: 0.78rem; color: #9ca3af; margin-bottom: 18px; }
     .mood-display strong { color: #fbbf24; }
+    .pre-round-hint { text-align: center; font-size: 0.8rem; color: #c3c7d1; margin-bottom: 14px; min-height: 1.2rem; }
 
     .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: #11141f; border-radius: 16px; padding: 18px 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); transform-origin: center; }
     @keyframes shake { 0%{transform:translate(0,0)} 20%{transform:translate(-4px,2px)} 40%{transform:translate(4px,-2px)} 60%{transform:translate(-3px,1px)} 80%{transform:translate(3px,0)} 100%{transform:translate(0,0)} }
@@ -58,6 +61,29 @@
     .progress-bar { position: relative; width: 100%; height: 6px; border-radius: 999px; background: #020617; overflow: hidden; border: 1px solid rgba(30,64,175,0.8); }
     .progress-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a); transition: width 0.25s ease; }
 
+    .round-board { margin-top: 14px; padding: 12px 10px 10px; border-radius: 12px; background: radial-gradient(circle at top, rgba(56,189,248,0.12), rgba(2,6,23,0.94)); border: 1px solid rgba(56,189,248,0.35); }
+    .round-board-header { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: #bae6fd; font-size: 0.8rem; margin-bottom: 8px; }
+    .round-board-grid { display: grid; grid-template-columns: repeat(20, minmax(16px, 1fr)); gap: 4px; }
+    .round-box { min-height: 44px; border-radius: 8px; border: 1px solid rgba(100,116,139,0.5); background: #111827; color: #64748b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1; cursor: default; padding: 3px 1px; }
+    .round-box .round-num { font-size: 0.55rem; color: #94a3b8; }
+    .round-box .round-hands { font-size: 0.68rem; color: #cbd5e1; min-height: 0.72rem; }
+    .round-box .round-outcome { font-size: 0.66rem; min-height: 0.66rem; }
+    .round-box.played { cursor: pointer; }
+    .round-box.played.win { border-color: rgba(52,211,153,0.9); background: #064e3b; }
+    .round-box.played.lose { border-color: rgba(248,113,113,0.9); background: #7f1d1d; }
+    .round-box.played.draw { border-color: rgba(250,204,21,0.9); background: #713f12; }
+    .round-box.current { border-color: rgba(216,180,254,1); box-shadow: inset 0 0 0 1px rgba(216,180,254,0.8); }
+    .round-box.played:hover,
+    .round-box.played:focus-visible { transform: translateY(-1px); border-color: #38bdf8; }
+    .round-box:focus-visible { outline: 3px solid #93c5fd; outline-offset: 1px; }
+    .round-board-preview { margin-top: 8px; min-height: 1.2rem; font-size: 0.78rem; color: #cbd5e1; }
+    .round-board-preview strong { color: #e5e7eb; }
+
+    .challenge-row { margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn-share { background: #2563eb; color: #eff6ff; box-shadow: 0 4px 10px rgba(0,0,0,0.55); }
+    .copy-status { font-size: 0.78rem; color: #93c5fd; min-height: 1.1rem; }
+    .copy-status.error { color: #fca5a5; }
+
     .controls { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
     button { border: none; border-radius: 999px; padding: 10px 18px; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease; }
     button span.hand-icon { font-size: 1.3rem; }
@@ -68,6 +94,7 @@
     button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.6); }
     button:active { transform: translateY(0); box-shadow: 0 3px 6px rgba(0,0,0,0.5); }
     button:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+    button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
 
     .result-line { margin-top: 14px; font-size: 1.02rem; text-align: center; min-height: 1.4rem; }
     .result-win { color: #6ee7b7; }
@@ -119,10 +146,14 @@
 
     .help-box { margin-top: 14px; font-size: 0.8rem; color: #9ca3af; border-radius: 10px; border: 1px solid rgba(148,163,184,0.4); background: #020617; padding: 8px 10px; }
     .help-box summary { cursor: pointer; list-style: none; color: #e5e7eb; font-weight: 600; }
+    .help-box summary:focus-visible,
+    .debug-panel summary:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; border-radius: 4px; }
     .help-box summary::marker { display: none; }
     .help-box summary::-webkit-details-marker { display: none; }
     .help-box-content { margin-top: 6px; line-height: 1.4; }
     .help-box-content ul { padding-left: 18px; margin: 4px 0 0; }
+    .help-legend { margin-top: 10px; font-size: 0.78rem; color: #c3c7d1; display: flex; flex-wrap: wrap; gap: 8px 10px; }
+    .help-legend span { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.75); }
 
     .debug-panel { margin-top: 16px; font-size: 0.8rem; color: #9ca3af; }
     .debug-panel summary { cursor: pointer; list-style: none; }
@@ -149,6 +180,7 @@
   </style>
 </head>
 <body>
+  <div id="achievementToasts" class="achievement-toast-stack" aria-live="polite" aria-atomic="false"></div>
   <div class="app">
     <h1>Beat The Rock</h1>
     <div class="subtitle">20 rounds of modelled Dwayne Johnson in progressive Rock Paper Scissors, you try to read the script.</div>
@@ -162,21 +194,13 @@
     </div>
 
     <div class="seed-row">
-      <span id="seedDisplay">Run seed, pending</span>
-      <label>Seed for next run <input id="seedInput" type="text" placeholder="leave blank for random" /></label>
-    </div>
-
-    <div class="mode-toggle">
-      <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he starts trying to read your last move after round 1.</label>
-    </div>
-
-    <div class="settings-row">
-      <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
-      <span class="settings-hint">Keyboard, R P S to play moves.</span>
+      <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
+      <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
     </div>
 
     <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
     <div id="moodDisplay" class="mood-display"><strong>Rock state</strong> Calm, mostly following his base pattern.</div>
+    <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
 
     <div class="arena-wrap">
       <div id="arena" class="arena">
@@ -208,9 +232,9 @@
     </div>
 
     <div class="controls">
-      <button class="btn-rock" data-move="R"><span class="hand-icon">✊</span> Rock</button>
-      <button class="btn-paper" data-move="P"><span class="hand-icon">✋</span> Paper</button>
-      <button class="btn-scissors" data-move="S"><span class="hand-icon">✌️</span> Scissors</button>
+      <button class="btn-rock" data-move="R" aria-label="Play Rock hand"><span class="hand-icon">✊</span> Rock</button>
+      <button class="btn-paper" data-move="P" aria-label="Play Paper hand"><span class="hand-icon">✋</span> Paper</button>
+      <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
       <button id="resetBtn" class="btn-reset" style="display:none;">Reset match</button>
     </div>
 
@@ -239,6 +263,11 @@
           <li>His mood changes when he loses and draws, Calm, Suspicious, Paranoid, and this changes his adapt chance.</li>
           <li>Use different seeds and toggles to create repeatable runs and shared challenges.</li>
         </ul>
+        <div class="help-legend">
+          <span><strong>Calm</strong> 30% adapt chance</span>
+          <span><strong>Suspicious</strong> 60% adapt chance</span>
+          <span><strong>Paranoid</strong> 90% adapt chance</span>
+        </div>
       </div>
     </details>
 
@@ -260,6 +289,7 @@
 
   <script>
     const rockSequenceBase = ["R","R","S","R","S","P","R","S","P","R","S","R","P","S","R","P","S","R","P","S"];
+    const SCRIPT_SEQUENCE_REGEX = /^[RPS]{20}$/i;
     const beats = { R: "P", P: "S", S: "R" };
     const names = { R: "Rock", P: "Paper", S: "Scissors" };
     const glyph = { R: "✊", P: "✋", S: "✌️" };
@@ -318,10 +348,12 @@
     const progressTextEl = document.getElementById("progressText");
     const adaptiveStatsEl = document.getElementById("adaptiveStats");
     const moodDisplayEl = document.getElementById("moodDisplay");
-    const seedDisplayEl = document.getElementById("seedDisplay");
     const seedInputEl = document.getElementById("seedInput");
+    const seedFeedbackEl = document.getElementById("seedFeedback");
+    const preRoundHintEl = document.getElementById("preRoundHint");
     const debugLogEl = document.getElementById("debugLog");
     const achievementsListEl = document.getElementById("achievementsList");
+    const achievementToastsEl = document.getElementById("achievementToasts");
     const runSummaryScoresEl = document.getElementById("runSummaryScores");
     const runSummarySeedEl = document.getElementById("runSummarySeed");
     const timelineTrackEl = document.getElementById("timelineTrack");
@@ -352,13 +384,13 @@
     let rngFlavor = null;
     let runSeed = 0;
     let seedWasManual = false;
+    let scriptedSequenceOverride = null;
 
     let currentRound = 0;
     let youScore = 0;
     let rockScore = 0;
     let draws = 0;
     let perfectHits = 0;
-    let track = [];
     let perfectAbbrevs = [];
     let lastYourMove = null;
 
@@ -595,9 +627,9 @@
       });
     }
 
-    function createTimelineCells() {
-      timelineTrackEl.innerHTML = "";
-      timelineCells = [];
+    function createRoundBoardCells() {
+      roundBoardEl.innerHTML = "";
+      roundBoardCells = [];
       for (let i = 0; i < 20; i++) {
         const cell = document.createElement("div");
         cell.className = "timeline-cell empty";
@@ -622,37 +654,42 @@
         } else if (i === currentRound && currentRound < 20) {
           cell.classList.add("current");
         }
+
+        const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
+        const resultMark = entry.outcome === "win" ? "W" : entry.outcome === "lose" ? "L" : "D";
+
+        cell.classList.add("played", entry.outcome);
+        cell.innerHTML =
+          `<span class="round-num">R${entry.round}</span>` +
+          `<span class="round-hands">${glyph[entry.rockMove]}${glyph[entry.yourMove]}</span>` +
+          `<span class="round-outcome">${resultMark}</span>`;
+        cell.setAttribute("aria-label", `Round ${entry.round}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${outcomeText}.`);
       });
-      if (activeTimelineIndex !== null && timelineCells[activeTimelineIndex]) {
-        timelineCells[activeTimelineIndex].classList.add("active");
+
+      if (currentRound >= 20) roundBoardStatusEl.textContent = "All 20 rounds complete";
+      else roundBoardStatusEl.textContent = `Round ${currentRound + 1} is live`;
+
+      if (activeRoundBoardIndex !== null && roundBoardCells[activeRoundBoardIndex]) {
+        roundBoardCells[activeRoundBoardIndex].classList.add("current");
       }
     }
 
-    function handleTimelineHover(index) {
+    function handleRoundBoardHover(index) {
       if (index >= historyLog.length) {
-        timelinePreviewEl.innerHTML = `<strong>Round ${index + 1}</strong> not played yet in this run.`;
+        roundBoardPreviewEl.innerHTML = `<strong>Round ${index + 1}</strong> not played yet in this run.`;
         return;
       }
-      if (activeTimelineIndex !== null && timelineCells[activeTimelineIndex]) {
-        timelineCells[activeTimelineIndex].classList.remove("active");
-      }
       const entry = historyLog[index];
-      activeTimelineIndex = index;
-      timelineCells[index].classList.add("active");
-
+      activeRoundBoardIndex = index;
       const outcomeText = entry.outcome === "win" ? "you win" : entry.outcome === "lose" ? "The Rock wins" : "draw";
-      const adaptiveText = entry.adaptiveUsed ? `adaptive yes, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "adaptive no";
-
-      timelinePreviewEl.innerHTML =
+      const pathText = entry.adaptiveUsed ? `adaptive read path, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "base script path";
+      roundBoardPreviewEl.innerHTML =
         `<strong>Round ${entry.round}</strong>, Dwayne ${names[entry.rockMove]} (${glyph[entry.rockMove]}) vs you ` +
-        `${names[entry.yourMove]} (${glyph[entry.yourMove]}), outcome ${outcomeText}, state ${entry.mood}, ${adaptiveText}.`;
+        `${names[entry.yourMove]} (${glyph[entry.yourMove]}), outcome ${outcomeText}, state ${entry.mood}, ${pathText}.`;
     }
 
-    function clearTimelineHover(index) {
-      if (activeTimelineIndex === index && timelineCells[index]) {
-        timelineCells[index].classList.remove("active");
-        activeTimelineIndex = null;
-      }
+    function clearRoundBoardHover(index) {
+      if (activeRoundBoardIndex === index) activeRoundBoardIndex = null;
       if (historyLog.length === 0) {
         timelinePreviewEl.textContent = "Hover a played round to preview exact hands and outcome.";
       if (timelineStatusEl) timelineStatusEl.textContent = "Round 1 is live";
@@ -677,6 +714,93 @@
       runSummarySeedEl.textContent = `Seed ${runSeed}`;
     }
 
+    function showCopyStatus(message, isError) {
+      copyStatusEl.textContent = message;
+      copyStatusEl.classList.toggle("error", !!isError);
+      if (showCopyStatus.timer) clearTimeout(showCopyStatus.timer);
+      showCopyStatus.timer = setTimeout(() => {
+        copyStatusEl.textContent = "";
+        copyStatusEl.classList.remove("error");
+      }, 2400);
+    }
+
+    function buildChallengeLink() {
+      const url = new URL(window.location.href);
+      const adaptiveRunSequence = historyLog.length === 20 && historyLog.some(entry => entry.adaptiveUsed)
+        ? historyLog.map(entry => entry.rockMove).join("")
+        : null;
+
+      url.searchParams.set("seed", String(runSeed));
+      if (adaptiveRunSequence) {
+        url.searchParams.set("script", adaptiveRunSequence);
+        url.searchParams.set("adaptive", "0");
+      } else {
+        url.searchParams.delete("script");
+        url.searchParams.set("adaptive", adaptiveToggle.checked ? "1" : "0");
+      }
+      url.searchParams.set("sfx", sfxToggle.checked ? "1" : "0");
+      return url.toString();
+    }
+
+    function fallbackCopyText(text) {
+      const tempInput = document.createElement("input");
+      tempInput.type = "text";
+      tempInput.value = text;
+      tempInput.setAttribute("readonly", "readonly");
+      tempInput.style.position = "fixed";
+      tempInput.style.opacity = "0";
+      document.body.appendChild(tempInput);
+      tempInput.focus();
+      tempInput.select();
+      tempInput.setSelectionRange(0, tempInput.value.length);
+      const copied = document.execCommand("copy");
+      document.body.removeChild(tempInput);
+      return copied;
+    }
+
+    async function copyChallengeLink() {
+      const challengeLink = buildChallengeLink();
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(challengeLink);
+          showCopyStatus("Challenge link copied.", false);
+          return;
+        }
+      } catch (err) {}
+
+      const copied = fallbackCopyText(challengeLink);
+      if (copied) showCopyStatus("Challenge link copied.", false);
+      else showCopyStatus("Could not copy. Please copy manually.", true);
+    }
+
+    function readInitialSettingsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const seedParam = params.get("seed");
+      const scriptParam = params.get("script");
+      const adaptiveParam = params.get("adaptive");
+      const sfxParam = params.get("sfx");
+
+      let scriptOverride = null;
+      if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
+        scriptOverride = scriptParam.toUpperCase().split("");
+      }
+
+      if (scriptOverride) {
+        adaptiveToggle.checked = false;
+      } else if (adaptiveParam === "1" || adaptiveParam === "0") {
+        adaptiveToggle.checked = adaptiveParam === "1";
+      }
+      if (sfxParam === "1" || sfxParam === "0") {
+        sfxToggle.checked = sfxParam === "1";
+      }
+      sfxEnabled = sfxToggle.checked;
+
+      if (seedParam === null) return { seed: null, manual: false, scriptOverride };
+      const normalizedSeed = normalizeSeed(seedParam);
+      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride };
+      return { seed: normalizedSeed.seed, manual: true, scriptOverride };
+    }
+
     function shakeArena() {
       arenaEl.classList.remove("shake");
       void arenaEl.offsetWidth;
@@ -685,28 +809,45 @@
     }
 
     function updateAdaptiveStats() {
+      const adaptPct = Math.round(moodAdaptChance() * 100);
       if (!adaptiveToggle.checked) {
-        adaptiveStatsEl.innerHTML = "<strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.";
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> is off. If he flipped it on in a promo, ${rockMood} would be a ${adaptPct} percent adapt chance.`;
         return;
       }
       if (adaptiveAttempts === 0) {
-        adaptiveStatsEl.innerHTML = "<strong>Adaptive Rock</strong> attempts will show here as you play rounds.";
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> current mood says ${adaptPct} percent adapt chance this round. Attempts will show once he starts taking swings.`;
         return;
       }
       const acc = Math.round((adaptiveCorrectReads / adaptiveAttempts) * 100);
-      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> attempts ${adaptiveAttempts}, correct reads ${adaptiveCorrectReads}, accuracy ${acc} percent.`;
+      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> chance this round ${adaptPct} percent, attempts ${adaptiveAttempts}, correct reads ${adaptiveCorrectReads}, accuracy ${acc} percent.`;
     }
 
     function updateMoodDisplay() {
+      const adaptPct = Math.round(moodAdaptChance() * 100);
       let text;
       if (!adaptiveToggle.checked) {
-        text = `<strong>Rock state</strong> ${rockMood}, adaptive mode is off so this does not affect the moves.`;
+        text = `<strong>Rock state</strong> ${rockMood}, adaptive mode is off so the ${adaptPct} percent read chance is just locker-room chatter.`;
       } else {
-        if (rockMood === "Calm") text = "<strong>Rock state</strong> Calm, he is mostly following his base pattern with a low adapt chance.";
-        else if (rockMood === "Suspicious") text = "<strong>Rock state</strong> Suspicious, he is noticeably more likely to adapt to your last move.";
-        else text = "<strong>Rock state</strong> Paranoid, he is almost always trying to counter you.";
+        if (rockMood === "Calm") text = `<strong>Rock state</strong> Calm, cool entrance music, ${adaptPct} percent chance he throws out script and reads your last move.`;
+        else if (rockMood === "Suspicious") text = `<strong>Rock state</strong> Suspicious, eyebrow up, ${adaptPct} percent chance he calls an audible to counter.`;
+        else text = `<strong>Rock state</strong> Paranoid, full main-event intensity, ${adaptPct} percent chance he tries to hard read you.`;
       }
       moodDisplayEl.innerHTML = text;
+    }
+
+    function updatePreRoundHint() {
+      if (currentRound >= 20) {
+        preRoundHintEl.textContent = "Pre-round scout, full match complete. Check the unified round board for the receipts.";
+        return;
+      }
+      const adaptPct = Math.round(moodAdaptChance() * 100);
+      if (!adaptiveToggle.checked || currentRound === 0 || !lastYourMove) {
+        preRoundHintEl.textContent = `Pre-round scout, ${rockMood.toLowerCase()} energy, script lane likely this beat.`;
+        return;
+      }
+      if (rockMood === "Calm") preRoundHintEl.textContent = `Pre-round scout, he's calm but alert, ${adaptPct} percent read chance right now.`;
+      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Pre-round scout, he's reading aggressively right now, ${adaptPct} percent chance he hunts your last hand.`;
+      else preRoundHintEl.textContent = `Pre-round scout, paranoid mode is blazing, ${adaptPct} percent chance he hard-counters your last hand.`;
     }
 
     function renderDebugLog() {
@@ -714,7 +855,7 @@
       historyLog.forEach(entry => {
         const div = document.createElement("div");
         div.className = "debug-log-entry";
-        const adaptiveText = entry.adaptiveUsed ? `adaptive yes, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "adaptive no";
+        const pathText = entry.adaptiveUsed ? `adaptive read path, correct read ${entry.adaptiveCorrect ? "yes" : "no"}` : "base script path";
         div.textContent =
           `Round ${entry.round}, state ${entry.mood}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${entry.outcome}, ${adaptiveText}.`;
         debugLogEl.appendChild(div);
@@ -737,7 +878,7 @@
       const adaptive = adaptiveToggle.checked;
       if (!adaptive || currentRound === 0 || !lastYourMove) {
         lastDecisionAdaptive = false;
-        return rockSequenceBase[currentRound];
+        return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : rockSequenceBase[currentRound];
       }
       const r = rngGame ? rngGame() : Math.random();
       if (r < moodAdaptChance()) {
@@ -746,7 +887,7 @@
         return beats[lastYourMove];
       }
       lastDecisionAdaptive = false;
-      return rockSequenceBase[currentRound];
+      return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : rockSequenceBase[currentRound];
     }
 
     function isGameActive() { return currentRound < 20 && !moveButtons[0].disabled; }
@@ -769,15 +910,15 @@
 
       let outcome;
       if (yourMove === rockMove) {
-        outcome = "draw"; draws += 1; track.push("D");
+        outcome = "draw"; draws += 1;
         resultLineEl.textContent = "Result, draw."; resultLineEl.className = "result-line result-draw";
         playBeep("draw");
       } else if (beats[rockMove] === yourMove) {
-        outcome = "win"; youScore += 1; track.push("W");
+        outcome = "win"; youScore += 1;
         resultLineEl.textContent = "Result, you win this round."; resultLineEl.className = "result-line result-win";
         playBeep("win"); shakeArena();
       } else {
-        outcome = "lose"; rockScore += 1; track.push("L");
+        outcome = "lose"; rockScore += 1;
         resultLineEl.textContent = "Result, The Rock wins this round."; resultLineEl.className = "result-line result-lose";
         playBeep("lose");
       }
@@ -799,14 +940,14 @@
         outcome,
         adaptiveUsed: lastDecisionAdaptive,
         adaptiveCorrect: lastDecisionAdaptive && (beats[yourMove] === rockMove),
-        mood: moodBefore
+        mood: moodBefore,
+        isPerfect
       });
 
       renderDebugLog();
-      renderTimeline();
 
       currentRound += 1;
-      updateScoreboard();
+      renderRoundBoard();
       updateScoreLabel();
       updateRoundLabel();
       updateProgressBar();
@@ -840,6 +981,8 @@
         maxRockStreak = Math.max(maxRockStreak, curL);
         if (entry.mood === "Paranoid") paranoidCount += 1;
       });
+      renderAchievements();
+    }
 
       if (maxWinStreak >= 4) achievements.push({ name: "Hot Streak", text: `You reached a win streak of ${maxWinStreak}.`, emoji: "🔥", rank: "silver" });
       if (maxRockStreak >= 3) achievements.push({ name: "Cold Shower", text: `The Rock reached a win streak of ${maxRockStreak}.`, emoji: "🧊", rank: "bronze" });
@@ -859,7 +1002,6 @@
     }
 
     function renderAchievements() {
-      const achievements = getAchievements();
       achievementsListEl.innerHTML = "";
       if (achievements.length === 0) {
         achievementsListEl.textContent = historyLog.length === 0
@@ -867,7 +1009,8 @@
           : "No achievements unlocked yet this run. Keep going.";
         return;
       }
-      achievements.forEach(a => {
+
+      unlocked.forEach(a => {
         const div = document.createElement("div");
         div.className = `achievement-badge rank-${a.rank || "bronze"}`;
         div.textContent = `${a.emoji || "🏅"} ${a.name}: ${a.text}`;
@@ -886,11 +1029,11 @@
         summaryLines.push(`Adaptive Rock made ${adaptiveAttempts} read attempts, with ${adaptiveCorrectReads} correct, accuracy ${acc} percent.`);
       }
 
-      const achievements = getAchievements();
-      if (achievements.length > 0) summaryLines.push(`Achievements unlocked this run, ${achievements.map(a => a.name).join(", ")}.`);
+      const runAchievements = getUnlockedAchievementDefs();
+      if (runAchievements.length > 0) summaryLines.push(`Achievements unlocked this run, ${runAchievements.map(a => a.name).join(", ")}.`);
       else summaryLines.push("No achievements this time, try different seeds or adaptive settings.");
 
-      summaryLines.push("Use the hand timeline or round log to review every move and state.");
+      summaryLines.push("Use the unified round board or round log to review every move and state.");
       commentaryEl.textContent = summaryLines.join(" ");
 
       renderAchievements();
@@ -907,12 +1050,18 @@
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
 
+      if (scriptedSequenceOverride) {
+        adaptiveToggle.checked = false;
+        adaptiveToggle.disabled = true;
+      } else {
+        adaptiveToggle.disabled = false;
+      }
+
       currentRound = 0;
       youScore = 0;
       rockScore = 0;
       draws = 0;
       perfectHits = 0;
-      track = [];
       perfectAbbrevs = [];
       lastYourMove = null;
 
@@ -949,7 +1098,13 @@
       updateProgressBar();
       updateAdaptiveStats();
       updateMoodDisplay();
+      updatePreRoundHint();
       updateRunSummary();
+
+      if (scriptedSequenceOverride) {
+        seedFeedbackEl.className = "seed-feedback info";
+        seedFeedbackEl.textContent = "Scripted challenge loaded from shared adaptive run. Adaptive mode is locked off for exact replay.";
+      }
 
       setButtonsEnabled(true);
       resetBtn.style.display = "none";
@@ -957,12 +1112,27 @@
 
     function resetGame() {
       const value = seedInputEl.value.trim();
-      let newSeed, manual = false;
-      if (value === "") newSeed = Math.floor(Math.random() * 1e9);
-      else {
-        const parsed = parseInt(value, 10);
-        if (Number.isNaN(parsed)) newSeed = Math.floor(Math.random() * 1e9);
-        else { newSeed = parsed; manual = true; }
+      let newSeed;
+      let manual = false;
+
+      if (value === "") {
+        newSeed = Math.floor(Math.random() * (U32_MAX + 1));
+        seedFeedbackEl.className = "seed-feedback info";
+        seedFeedbackEl.textContent = `Randomized seed for this run: ${newSeed}.`;
+      } else {
+        const normalizedSeed = normalizeSeed(value);
+        if (!normalizedSeed.valid) {
+          seedFeedbackEl.className = "seed-feedback error";
+          seedFeedbackEl.textContent = "Invalid seed. Use digits only (0–4294967295).";
+          return;
+        }
+
+        newSeed = normalizedSeed.seed;
+        manual = true;
+
+        seedFeedbackEl.className = "seed-feedback info";
+        if (normalizedSeed.clamped) seedFeedbackEl.textContent = `Seed clamped to unsigned 32-bit range. Starting run with normalized seed ${newSeed}.`;
+        else seedFeedbackEl.textContent = `Starting run with normalized seed ${newSeed}.`;
       }
       initFromSeed(newSeed, manual, true);
     }
