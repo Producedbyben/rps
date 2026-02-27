@@ -506,7 +506,11 @@
       list.className = "recent-runs-list";
       recentRuns.forEach(run => {
         const item = document.createElement("li");
-        item.textContent = `Seed ${run.seed}, score You ${run.youScore} - Rock ${run.rockScore} (${run.draws} draws), adaptive ${run.adaptive ? "on" : "off"}.`;
+        const runRecord = `record ${run.youScore}-${run.rockScore}-${run.draws}`;
+        const achieved = Array.isArray(run.achievements) && run.achievements.length
+          ? ` achievements ${run.achievements.join(", ")}`
+          : "";
+        item.textContent = `Seed ${run.seed}, ${runRecord}, adaptive ${run.adaptive ? "on" : "off"}, perfect ${run.perfectHits ?? "-"}/20.${achieved}`;
         list.appendChild(item);
       });
       recentRunsEl.appendChild(list);
@@ -514,12 +518,15 @@
 
     function persistRunSummary() {
       if (!storageEnabled) return;
+      const achievementNames = getAchievements().map(a => a.name);
       const runSummary = {
         seed: runSeed,
         youScore,
         rockScore,
         draws,
         adaptive: runAdaptiveSetting,
+        perfectHits,
+        achievements: achievementNames,
         ts: Date.now()
       };
       recentRuns.unshift(runSummary);
@@ -1013,7 +1020,7 @@
     function initFromSeed(seed, manualFlag, persistSeed = true) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
-      runSummarySeedEl.textContent = `Seed ${runSeed}`;
+      seedDisplayEl.textContent = `Run seed, ${runSeed}`;
       if (persistSeed) storageSet(storageKeys.lastSeed, String(runSeed));
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
@@ -1119,7 +1126,6 @@
       sfxEnabled = sfxToggle.checked;
       storageSet(storageKeys.sfx, String(sfxToggle.checked));
     });
-    if (copyLinkBtn) copyLinkBtn.addEventListener("click", copyChallengeLink);
     if (clearHistoryBtn) clearHistoryBtn.addEventListener("click", clearRecentRuns);
 
     document.addEventListener("keydown", e => {
@@ -1133,7 +1139,8 @@
 
     loadPersistedSettings();
     const startupSeed = initialSeedFromStorage ?? Math.floor(Math.random() * 1e9);
-    initFromSeed(startupSeed, false, false);
+    const shouldPersistStartupSeed = initialSeedFromStorage === null;
+    initFromSeed(startupSeed, false, shouldPersistStartupSeed);
   </script>
 </body>
 </html>
