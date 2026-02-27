@@ -271,6 +271,7 @@
 
   <script>
     const rockSequenceBase = ["R","R","S","R","S","P","R","S","P","R","S","R","P","S","R","P","S","R","P","S"];
+    const SCRIPT_SEQUENCE_REGEX = /^[RPS]{20}$/i;
     const beats = { R: "P", P: "S", S: "R" };
     const names = { R: "Rock", P: "Paper", S: "Scissors" };
     const glyph = { R: "✊", P: "✋", S: "✌️" };
@@ -371,6 +372,7 @@
     let rngFlavor = null;
     let runSeed = 0;
     let seedWasManual = false;
+    let scriptedSequenceOverride = null;
 
     let currentRound = 0;
     let youScore = 0;
@@ -570,8 +572,18 @@
 
     function buildChallengeLink() {
       const url = new URL(window.location.href);
+      const adaptiveRunSequence = historyLog.length === 20 && historyLog.some(entry => entry.adaptiveUsed)
+        ? historyLog.map(entry => entry.rockMove).join("")
+        : null;
+
       url.searchParams.set("seed", String(runSeed));
-      url.searchParams.set("adaptive", adaptiveToggle.checked ? "1" : "0");
+      if (adaptiveRunSequence) {
+        url.searchParams.set("script", adaptiveRunSequence);
+        url.searchParams.set("adaptive", "0");
+      } else {
+        url.searchParams.delete("script");
+        url.searchParams.set("adaptive", adaptiveToggle.checked ? "1" : "0");
+      }
       url.searchParams.set("sfx", sfxToggle.checked ? "1" : "0");
       return url.toString();
     }
@@ -610,10 +622,18 @@
     function readInitialSettingsFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const seedParam = params.get("seed");
+      const scriptParam = params.get("script");
       const adaptiveParam = params.get("adaptive");
       const sfxParam = params.get("sfx");
 
-      if (adaptiveParam === "1" || adaptiveParam === "0") {
+      let scriptOverride = null;
+      if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
+        scriptOverride = scriptParam.toUpperCase().split("");
+      }
+
+      if (scriptOverride) {
+        adaptiveToggle.checked = false;
+      } else if (adaptiveParam === "1" || adaptiveParam === "0") {
         adaptiveToggle.checked = adaptiveParam === "1";
       }
       if (sfxParam === "1" || sfxParam === "0") {
@@ -621,10 +641,10 @@
       }
       sfxEnabled = sfxToggle.checked;
 
-      if (seedParam === null) return { seed: null, manual: false };
+      if (seedParam === null) return { seed: null, manual: false, scriptOverride };
       const normalizedSeed = normalizeSeed(seedParam);
-      if (!normalizedSeed.valid) return { seed: null, manual: false };
-      return { seed: normalizedSeed.seed, manual: true };
+      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride };
+      return { seed: normalizedSeed.seed, manual: true, scriptOverride };
     }
 
     function shakeArena() {
@@ -704,7 +724,7 @@
       const adaptive = adaptiveToggle.checked;
       if (!adaptive || currentRound === 0 || !lastYourMove) {
         lastDecisionAdaptive = false;
-        return rockSequenceBase[currentRound];
+        return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : rockSequenceBase[currentRound];
       }
       const r = rngGame ? rngGame() : Math.random();
       if (r < moodAdaptChance()) {
@@ -713,7 +733,7 @@
         return beats[lastYourMove];
       }
       lastDecisionAdaptive = false;
-      return rockSequenceBase[currentRound];
+      return scriptedSequenceOverride ? scriptedSequenceOverride[currentRound] : rockSequenceBase[currentRound];
     }
 
     function isGameActive() { return currentRound < 20 && !moveButtons[0].disabled; }
@@ -884,11 +904,20 @@
       resetBtn.style.display = "inline-flex";
     }
 
-    function initFromSeed(seed, manualFlag) {
+    function initFromSeed(seed, manualFlag, scriptOverride) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
+      scriptedSequenceOverride = scriptOverride || null;
+
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
+
+      if (scriptedSequenceOverride) {
+        adaptiveToggle.checked = false;
+        adaptiveToggle.disabled = true;
+      } else {
+        adaptiveToggle.disabled = false;
+      }
 
       currentRound = 0;
       youScore = 0;
@@ -932,6 +961,11 @@
       updatePreRoundHint();
       updateRunSummary();
 
+      if (scriptedSequenceOverride) {
+        seedFeedbackEl.className = "seed-feedback info";
+        seedFeedbackEl.textContent = "Scripted challenge loaded from shared adaptive run. Adaptive mode is locked off for exact replay.";
+      }
+
       setButtonsEnabled(true);
       resetBtn.style.display = "none";
     }
@@ -961,7 +995,7 @@
         else seedFeedbackEl.textContent = `Starting run with normalized seed ${newSeed}.`;
       }
 
-      initFromSeed(newSeed, manual);
+      initFromSeed(newSeed, manual, null);
     }
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
@@ -984,8 +1018,8 @@
     });
 
     const initialSettings = readInitialSettingsFromUrl();
-    if (initialSettings.seed === null) initFromSeed(Math.floor(Math.random() * 1e9), false);
-    else initFromSeed(initialSettings.seed, initialSettings.manual);
+    if (initialSettings.seed === null) initFromSeed(Math.floor(Math.random() * 1e9), false, initialSettings.scriptOverride);
+    else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride);
   </script>
 </body>
 </html>
