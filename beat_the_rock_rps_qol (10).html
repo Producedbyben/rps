@@ -295,7 +295,7 @@
           <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and mood changes adapt chance.</li>
           <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
           <li>Set a seed in the field above to replay exact runs, or leave it blank to randomize next reset.</li>
-          <li>Achievements unlock immediately when earned during a run, and each unlock raises that achievement multiplier for this browser profile.</li>
+          <li>Achievements include clutch, chaos, and consolation badges; unlocks are immediate and each one raises its multiplier for this browser profile.</li>
         </ul>
         <div class="help-legend">
           <span><strong>Calm</strong> 30% adapt chance</span>
@@ -403,12 +403,16 @@
 
     const achievementCatalog = [
       { id: "opening-pop", name: "Opening Pop", text: "You won round 1.", rank: "bronze", unlocked: s => s.historyLog[0]?.outcome === "win" },
+      { id: "paperless-opener", name: "Paperless Opener", text: "Round 1, you opened with anything except Paper.", rank: "bronze", unlocked: s => s.openedNonPaper },
+      { id: "triple-mixup", name: "Triple Mixup", text: "Your first 3 moves were all different.", rank: "silver", unlocked: s => s.firstThreeUnique },
       { id: "unshaken-opener", name: "Unshaken Opener", text: "No losses in the first 5 rounds.", rank: "bronze", unlocked: s => s.historyLog.length >= 5 && s.noLossesFirstFive },
       { id: "hot-streak", name: "Hot Streak", text: "You reached a win streak of 4+.", rank: "silver", unlocked: s => s.maxWinStreak >= 4 },
       { id: "cold-shower", name: "Cold Shower", text: "The Rock reached a win streak of 3+.", rank: "bronze", unlocked: s => s.maxRockStreak >= 3 },
       { id: "draw-artist", name: "Draw Artist", text: "You reached 8+ draws in one run.", rank: "silver", unlocked: s => s.draws >= 8 },
+      { id: "draw-buffet", name: "Draw Buffet", text: "You stacked 12+ draws. Nobody ate, everyone watched.", rank: "gold", unlocked: s => s.draws >= 12 },
       { id: "paranoid-era", name: "Paranoid Era", text: "You kept The Rock in Paranoid state for a long stretch.", rank: "silver", unlocked: s => s.paranoidCount >= 5 },
       { id: "beat-the-rock-enjoyer", name: "Beat The Rock Enjoyer", text: "You beat The Rock in 10+ rounds.", rank: "silver", unlocked: s => s.beatRockHits >= 10 },
+      { id: "boulder-puncher", name: "Boulder Puncher", text: "You beat The Rock in 14+ rounds.", rank: "gold", unlocked: s => s.beatRockHits >= 14 },
       { id: "mood-breaker", name: "Mood Breaker", text: "You forced Calm, Suspicious, and Paranoid in one run.", rank: "gold", unlocked: s => s.seenMoods.size === 3 },
       { id: "edge-of-your-seat", name: "Edge Of Your Seat", text: "You won a very close run.", rank: "bronze", unlocked: s => s.matchFinished && Math.abs(s.youScore - s.rockScore) === 1 && s.youScore > s.rockScore },
       { id: "seeded-legend", name: "Seeded Legend", text: "You chose the seed and still beat The Rock.", rank: "gold", unlocked: s => s.matchFinished && s.seedWasManual && s.youScore > s.rockScore },
@@ -417,6 +421,8 @@
       { id: "clean-finish", name: "Clean Finish", text: "You won the final 3 rounds and took the run.", rank: "gold", unlocked: s => s.matchFinished && s.youScore > s.rockScore && s.lastThreeAreWins },
       { id: "theoretical-maximum", name: "Theoretical Maximum", text: "You beat The Rock in every single round.", rank: "platinum", unlocked: s => s.matchFinished && s.beatRockHits === s.historyLog.length },
       { id: "reverse-sweep", name: "Reverse Sweep", text: "You lost the first 3 rounds but still won the run.", rank: "platinum", unlocked: s => s.matchFinished && s.youScore > s.rockScore && s.lostFirstThree },
+      { id: "tough-crowd", name: "Tough Crowd", text: "Consolation badge, you lost by 8+ but still finished the run.", rank: "bronze", unlocked: s => s.matchFinished && s.lossMargin >= 8 },
+      { id: "main-event-survivor", name: "Main Event Survivor", text: "Consolation badge, you lost but stayed for all 20 rounds.", rank: "bronze", unlocked: s => s.matchFinished && s.rockScore > s.youScore },
       { id: "pacifist-match", name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", rank: "platinum", unlocked: s => s.matchFinished && s.youScore === 0 && s.rockScore === 0 && s.draws === 20 }
     ];
 
@@ -575,6 +581,9 @@
       const noLossesFirstFive = historyLog.slice(0, 5).every(entry => entry.outcome !== "lose");
       const lastThreeAreWins = historyLog.length >= 3 && historyLog.slice(-3).every(entry => entry.outcome === "win");
       const lostFirstThree = historyLog.length >= 3 && historyLog.slice(0, 3).every(entry => entry.outcome === "lose");
+      const firstThreeUnique = historyLog.length >= 3 && new Set(historyLog.slice(0, 3).map(entry => entry.yourMove)).size === 3;
+      const openedNonPaper = historyLog.length >= 1 && historyLog[0].yourMove !== "P";
+      const lossMargin = Math.max(0, rockScore - youScore);
 
       return {
         historyLog,
@@ -584,6 +593,9 @@
         noLossesFirstFive,
         lastThreeAreWins,
         lostFirstThree,
+        firstThreeUnique,
+        openedNonPaper,
+        lossMargin,
         maxRockLead,
         seenMoods,
         youScore,
