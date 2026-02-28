@@ -1572,6 +1572,15 @@
       moveButtons[0].focus();
     }
 
+    async function maybeAutoEnterSoloNode() {
+      if (!relicChoicePanelEl.classList.contains("is-hidden")) return false;
+      if (runState.pendingEvent) return false;
+      if (runState.activeNodeId !== null) return false;
+      if (!Array.isArray(runState.availableNodeIds) || runState.availableNodeIds.length !== 1) return false;
+      await selectNextNode(runState.availableNodeIds[0]);
+      return runState.activeNodeId !== null;
+    }
+
     function renderMapPanel() {
       const total = getTotalNodes();
       const activeNode = getActiveNode();
@@ -1661,7 +1670,10 @@
           relicChoicePanelEl.classList.add("is-hidden");
           renderRelicStrip();
           commentaryEl.textContent = `${commentaryEl.textContent} Relic drafted: ${relic.name}.`;
-          if (!isRunComplete() && runState.availableNodeIds.length > 0) setScene("map");
+          if (!isRunComplete() && runState.availableNodeIds.length > 0) {
+            setScene("map");
+            maybeAutoEnterSoloNode();
+          }
         });
         relicChoiceGridEl.appendChild(btn);
       });
@@ -2832,6 +2844,16 @@
       });
     }
 
+    function updateRockMood(outcome) {
+      if (outcome === "win") rockLossStreak += 1;
+      else if (outcome === "draw") rockLossStreak = Math.max(0, rockLossStreak - 1);
+      else rockLossStreak = 0;
+
+      if (rockLossStreak >= 3) rockMood = "Paranoid";
+      else if (rockLossStreak >= 1) rockMood = "Suspicious";
+      else rockMood = "Calm";
+    }
+
     function moodAdaptChance() { return rockMood === "Calm" ? 0.3 : rockMood === "Suspicious" ? 0.6 : 0.9; }
 
     function weightedRandomMove(weightMap) {
@@ -3196,8 +3218,13 @@
           }
         }
         const showedRelicChoice = maybeShowRelicChoice(activeNode ? activeNode.type : "normal", outcome === "win");
-        if (!showedRelicChoice) setScene("map");
-        setButtonsEnabled(false);
+        if (!showedRelicChoice) {
+          setScene("map");
+          setButtonsEnabled(false);
+          await maybeAutoEnterSoloNode();
+        } else {
+          setButtonsEnabled(false);
+        }
       } else {
         setButtonsEnabled(true);
       }
@@ -3597,16 +3624,22 @@
       }
     }
 
-    startMatchBtn.addEventListener("click", () => {
+    startMatchBtn.addEventListener("click", async () => {
+      ensureAudioContext();
+      syncAudioMix();
+
       if (runState.activeNodeId === null) {
         runState.availableNodeIds = [0];
         renderMapPanel();
       }
-      ensureAudioContext();
-      syncAudioMix();
+
       setScene("map");
       setButtonsEnabled(false);
       updateRunSummary();
+
+      if (runState.activeNodeId === null) {
+        await maybeAutoEnterSoloNode();
+      }
     });
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
@@ -3668,11 +3701,12 @@
       if (event.target === gameMenuModal) closeGameMenu();
     });
 
-    document.addEventListener("keydown", e => {
+    document.addEventListener("keydown", async e => {
       if (e.key === "Escape" && gameMenuModal.classList.contains("is-active")) {
         closeGameMenu();
         return;
       }
+      if (!isGameActive()) await maybeAutoEnterSoloNode();
       if (!isGameActive()) return;
       if (isModalInputFocused(e.target)) return;
       const targetTag = e.target && e.target.tagName ? e.target.tagName : "";
