@@ -96,6 +96,10 @@
     .settings-row label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
     .settings-row input[type="checkbox"] { accent-color: #8b5cf6; cursor: pointer; }
     .settings-hint { font-size: 0.75rem; color: #6b7280; }
+    .challenge-mode-row { margin: 8px 0 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .challenge-mode-row button { font-size: 0.76rem; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(96,165,250,0.75); background: rgba(15,23,42,0.92); color: #dbeafe; cursor: pointer; }
+    .challenge-mode-row button.active { border-color: rgba(52,211,153,0.95); color: #bbf7d0; }
+    .challenge-rules { margin-top: 6px; text-align: center; font-size: 0.76rem; color: #cbd5e1; min-height: 2.2rem; }
 
     .mode-toggle { text-align: center; font-size: 0.85rem; color: #9ca3af; margin-bottom: 10px; }
     .mode-toggle label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
@@ -456,6 +460,13 @@
             <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
           </div>
 
+          <div class="challenge-mode-row" role="group" aria-label="Challenge run modes">
+            <button id="casualModeBtn" class="active" type="button">Casual setup</button>
+            <button id="dailyModeBtn" type="button">Start Daily run</button>
+            <button id="weeklyModeBtn" type="button">Start Weekly run</button>
+          </div>
+          <div id="challengeRules" class="challenge-rules" aria-live="polite">Casual mode: seed and adaptive settings are fully editable.</div>
+
           <div class="mode-toggle">
             <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he reads your status, trends, and last move after round 1.</label>
           </div>
@@ -540,6 +551,7 @@
 
       <div id="seedShareAnchor" class="challenge-row">
         <button id="copyLinkBtn" class="btn-share" type="button">Copy challenge link</button>
+        <button id="copyResultBtn" class="btn-share" type="button">Copy challenge result</button>
         <div id="copyStatus" class="copy-status" aria-live="polite"></div>
       </div>
 
@@ -625,6 +637,7 @@
         <div class="post-match-actions">
           <button id="summaryPlayAgainBtn" class="btn-primary" type="button">Play Again</button>
           <button id="summaryCopyLinkBtn" class="btn-secondary" type="button">Copy Challenge Link</button>
+          <button id="summaryCopyResultBtn" class="btn-secondary" type="button">Copy Challenge Result</button>
           <button id="summaryViewBoardBtn" class="btn-tertiary" type="button">View Full Round Board</button>
         </div>
       </div>
@@ -767,6 +780,7 @@
     const roundBoardStatusEl = document.getElementById("roundBoardStatus");
     const roundBoardPreviewEl = document.getElementById("roundBoardPreview");
     const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const copyResultBtn = document.getElementById("copyResultBtn");
     const seedShareAnchorEl = document.getElementById("seedShareAnchor");
     const copyStatusEl = document.getElementById("copyStatus");
     const achievementToastsEl = document.getElementById("achievementToasts");
@@ -784,6 +798,7 @@
     const summaryAchievementsEmptyEl = document.getElementById("summaryAchievementsEmpty");
     const summaryPlayAgainBtn = document.getElementById("summaryPlayAgainBtn");
     const summaryCopyLinkBtn = document.getElementById("summaryCopyLinkBtn");
+    const summaryCopyResultBtn = document.getElementById("summaryCopyResultBtn");
     const summaryViewBoardBtn = document.getElementById("summaryViewBoardBtn");
     const gameMenuBtn = document.getElementById("gameMenuBtn");
     const gameMenuModal = document.getElementById("gameMenuModal");
@@ -812,6 +827,10 @@
     const enemyArenaNameEl = document.getElementById("enemyArenaName");
     const enemyArenaTitleEl = document.getElementById("enemyArenaTitle");
     const enemyArenaGimmickEl = document.getElementById("enemyArenaGimmick");
+    const casualModeBtn = document.getElementById("casualModeBtn");
+    const dailyModeBtn = document.getElementById("dailyModeBtn");
+    const weeklyModeBtn = document.getElementById("weeklyModeBtn");
+    const challengeRulesEl = document.getElementById("challengeRules");
 
     const U32_MIN = 0;
     const U32_MAX = 0xFFFFFFFF;
@@ -821,8 +840,15 @@
     const DIGITS_ONLY_REGEX = /^\d+$/;
     const ACHIEVEMENTS_STORAGE_KEY = "beatTheRockAchievementCounts.v2";
     const TUTORIAL_STORAGE_KEY = "beatTheRockTutorialState.v1";
+    const CHALLENGE_STATS_KEY_PREFIX = "beatTheRockModeStats.v1";
     const ORIGINAL_SEED_ONE_SEQUENCE = "RPSSRPPSPRRSPSPRPPRP";
     const ENCOUNTER_TYPES = ["normal", "elite", "event", "shop", "campfire", "boss"];
+    const CHALLENGE_MUTATOR_POOL = [
+      { id: "tight-budget", name: "Tight Budget", text: "Start with $3 cash instead of $6." },
+      { id: "iron-resolve", name: "Iron Resolve", text: "Start with +2 max resolve." },
+      { id: "glass-jaw", name: "Glass Jaw", text: "Start with -2 resolve." },
+      { id: "adaptive-onslaught", name: "Adaptive Onslaught", text: "Adaptive Rock is forced on for the full run." }
+    ];
     const AI_PROFILES = {
       random: "random",
       antiRepeat: "anti-repeat",
@@ -1130,6 +1156,10 @@
     let seedWasManual = false;
     let scriptedSequenceOverride = null;
     let seededScriptSequence = [];
+    let challengeMode = "casual";
+    let challengeRunHash = "";
+    let activeWeeklyMutatorSet = [];
+    let challengeContext = {};
 
     let currentRound = 0;
     let youScore = 0;
@@ -1203,6 +1233,174 @@
         anchor: () => seedShareAnchorEl
       }
     ];
+
+
+    function getUtcDateKey(date = new Date()) {
+      const y = date.getUTCFullYear();
+      const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const d = String(date.getUTCDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function getISOWeekInfoUTC(date = new Date()) {
+      const utcDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+      const day = utcDate.getUTCDay() || 7;
+      utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day);
+      const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
+      const week = Math.ceil((((utcDate - yearStart) / 86400000) + 1) / 7);
+      return { isoYear: utcDate.getUTCFullYear(), isoWeek: week };
+    }
+
+    function hashStringFNV1a(str) {
+      let hash = 0x811C9DC5;
+      for (let i = 0; i < str.length; i += 1) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+      }
+      return hash >>> 0;
+    }
+
+    function deriveDailySeed(date = new Date()) {
+      return hashStringFNV1a(`daily:${getUtcDateKey(date)}`) >>> 0;
+    }
+
+    function deriveWeeklyMutatorSet(date = new Date()) {
+      const info = getISOWeekInfoUTC(date);
+      const root = hashStringFNV1a(`weekly:${info.isoYear}-W${String(info.isoWeek).padStart(2, "0")}`);
+      const count = Math.min(2, CHALLENGE_MUTATOR_POOL.length);
+      const picks = [];
+      const used = new Set();
+      let cursor = root;
+      while (picks.length < count) {
+        const idx = cursor % CHALLENGE_MUTATOR_POOL.length;
+        if (!used.has(idx)) {
+          picks.push(CHALLENGE_MUTATOR_POOL[idx]);
+          used.add(idx);
+        }
+        cursor = Math.imul((cursor ^ 0x9E3779B9) >>> 0, 0x85EBCA6B) >>> 0;
+      }
+      return { info, mutators: picks };
+    }
+
+    function getActiveModeStatsKey() {
+      return `${CHALLENGE_STATS_KEY_PREFIX}.${challengeMode}`;
+    }
+
+    function loadModeStats(mode) {
+      try {
+        const raw = localStorage.getItem(`${CHALLENGE_STATS_KEY_PREFIX}.${mode}`);
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (!parsed || typeof parsed !== "object") return { runs: 0, wins: 0, losses: 0, draws: 0, lastHash: "" };
+        return {
+          runs: Number.isInteger(parsed.runs) ? parsed.runs : 0,
+          wins: Number.isInteger(parsed.wins) ? parsed.wins : 0,
+          losses: Number.isInteger(parsed.losses) ? parsed.losses : 0,
+          draws: Number.isInteger(parsed.draws) ? parsed.draws : 0,
+          lastHash: typeof parsed.lastHash === "string" ? parsed.lastHash : ""
+        };
+      } catch (err) {
+        return { runs: 0, wins: 0, losses: 0, draws: 0, lastHash: "" };
+      }
+    }
+
+    function saveRunToModeStats() {
+      const key = getActiveModeStatsKey();
+      const stats = loadModeStats(challengeMode);
+      stats.runs += 1;
+      if (youScore > rockScore) stats.wins += 1;
+      else if (rockScore > youScore) stats.losses += 1;
+      else stats.draws += 1;
+      stats.lastHash = challengeRunHash;
+      try { localStorage.setItem(key, JSON.stringify(stats)); } catch (err) {}
+    }
+
+    function applyChallengeModeLocks() {
+      const locked = challengeMode !== "casual";
+      seedInputEl.disabled = locked;
+      randomSeedBtn.disabled = locked;
+      if (locked) {
+        adaptiveToggle.disabled = true;
+      } else if (!scriptedSequenceOverride) {
+        adaptiveToggle.disabled = false;
+      }
+    }
+
+    function renderChallengeModeButtons() {
+      casualModeBtn.classList.toggle("active", challengeMode === "casual");
+      dailyModeBtn.classList.toggle("active", challengeMode === "daily");
+      weeklyModeBtn.classList.toggle("active", challengeMode === "weekly");
+    }
+
+    function getChallengeRulesText() {
+      if (challengeMode === "daily") {
+        return `Daily run locked to UTC date ${challengeContext.utcDateKey || getUtcDateKey()}. Seed ${runSeed}. Manual seed edits and adaptive toggle are locked.`;
+      }
+      if (challengeMode === "weekly") {
+        const label = challengeContext.weekLabel || "current ISO week";
+        const mutators = activeWeeklyMutatorSet.length ? activeWeeklyMutatorSet.map(m => `${m.name}: ${m.text}`).join(" · ") : "No mutators.";
+        return `Weekly run locked to ${label}. Seed ${runSeed}. ${mutators} Manual seed edits and adaptive toggle are locked.`;
+      }
+      return "Casual mode: seed and adaptive settings are fully editable.";
+    }
+
+    function updateChallengeRulesUI() {
+      renderChallengeModeButtons();
+      applyChallengeModeLocks();
+      challengeRulesEl.textContent = getChallengeRulesText();
+    }
+
+    function applyWeeklyMutators() {
+      activeWeeklyMutatorSet.forEach(mutator => {
+        if (mutator.id === "tight-budget") runState.cash = Math.min(runState.cash, 3);
+        else if (mutator.id === "iron-resolve") {
+          runState.maxResolve += 2;
+          runState.resolve += 2;
+        } else if (mutator.id === "glass-jaw") {
+          runState.maxResolve = Math.max(4, runState.maxResolve - 2);
+          runState.resolve = Math.min(runState.resolve, runState.maxResolve);
+        } else if (mutator.id === "adaptive-onslaught") {
+          adaptiveToggle.checked = true;
+        }
+      });
+    }
+
+    function computeChallengeRunHash() {
+      const outcomeTrace = historyLog.map(entry => `${entry.nodeId}:${entry.outcome[0]}:${entry.rockMove}${entry.yourMove}`).join("|");
+      const relicTrace = runState.activeRelics.map(relic => relic.id).sort().join(",") || "none";
+      const pathTrace = runState.selectedPath.join("-") || "none";
+      const payload = [
+        `mode=${challengeMode}`,
+        `seed=${runSeed}`,
+        `score=${youScore}-${rockScore}-${draws}`,
+        `path=${pathTrace}`,
+        `relics=${relicTrace}`,
+        `outcomes=${outcomeTrace}`
+      ].join(";");
+      return hashStringFNV1a(payload).toString(36).toUpperCase().padStart(7, "0");
+    }
+
+    function buildChallengeResultText() {
+      const modeLabel = challengeMode.charAt(0).toUpperCase() + challengeMode.slice(1);
+      const weeklyLabel = challengeMode === "weekly" ? ` | ${challengeContext.weekLabel || "weekly"}` : "";
+      const dailyLabel = challengeMode === "daily" ? ` | ${challengeContext.utcDateKey || getUtcDateKey()}` : "";
+      const relics = runState.activeRelics.map(relic => relic.id).join(",") || "none";
+      const path = runState.selectedPath.join("-") || "none";
+      return `[BeatTheRock ${modeLabel}${dailyLabel}${weeklyLabel}] Seed ${runSeed} | Score You ${youScore} Rock ${rockScore} Draw ${draws} | Path ${path} | Relics ${relics} | Hash ${challengeRunHash}`;
+    }
+
+    async function copyChallengeResult() {
+      const resultText = buildChallengeResultText();
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(resultText);
+          showCopyStatus("Challenge result copied to clipboard.", false);
+          return;
+        }
+      } catch (err) {}
+      const copied = fallbackCopyText(resultText);
+      if (copied) showCopyStatus("Challenge result copied to clipboard.", false);
+      else showCopyStatus("Could not copy challenge result. Please copy manually.", true);
+    }
 
 
     function nodeTypeLabel(type) {
@@ -2175,7 +2373,8 @@
     }
     function updateRunSummary() {
       runSummarySeedEl.textContent = `Seed ${runSeed}`;
-      runSummaryModeEl.textContent = adaptiveToggle.checked ? "Adaptive on" : "Scripted";
+      const modeLabel = challengeMode === "casual" ? (adaptiveToggle.checked ? "Adaptive on" : "Scripted") : `${challengeMode.toUpperCase()} challenge`;
+      runSummaryModeEl.textContent = modeLabel;
       const runStarted = currentRound > 0 || runState.selectedPath.length > 0 || sceneState === "inRound" || sceneState === "roundResult" || sceneState === "matchSummary" || sceneState === "map";
       runSummaryPillEl.classList.toggle("is-hidden", !runStarted);
     }
@@ -2199,6 +2398,11 @@
       const curseRunSequence = runState.activeCurses.join(",");
 
       url.searchParams.set("seed", String(runSeed));
+      url.searchParams.set("mode", challengeMode);
+      if (challengeMode === "daily" && challengeContext.utcDateKey) url.searchParams.set("date", challengeContext.utcDateKey);
+      else url.searchParams.delete("date");
+      if (challengeMode === "weekly" && challengeContext.weekLabel) url.searchParams.set("week", challengeContext.weekLabel);
+      else url.searchParams.delete("week");
       if (adaptiveRunSequence) {
         url.searchParams.set("script", adaptiveRunSequence);
         url.searchParams.set("adaptive", "0");
@@ -2253,6 +2457,7 @@
       const sfxParam = params.get("sfx");
       const relicsParam = params.get("relics");
       const cursesParam = params.get("curses");
+      const modeParam = params.get("mode");
 
       let scriptOverride = null;
       if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
@@ -2277,10 +2482,11 @@
         ? cursesParam.split(",").map(id => id.trim()).filter(id => curseCatalog.some(curse => curse.id === id))
         : [];
 
-      if (seedParam === null) return { seed: null, manual: false, scriptOverride, initialRelics, initialCurses };
+      const initialMode = ["casual", "daily", "weekly"].includes(modeParam) ? modeParam : "casual";
+      if (seedParam === null) return { seed: null, manual: false, scriptOverride, initialRelics, initialCurses, initialMode };
       const normalizedSeed = normalizeSeed(seedParam);
-      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride, initialRelics, initialCurses };
-      return { seed: normalizedSeed.seed, manual: true, scriptOverride, initialRelics, initialCurses };
+      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride, initialRelics, initialCurses, initialMode };
+      return { seed: normalizedSeed.seed, manual: true, scriptOverride, initialRelics, initialCurses, initialMode };
     }
 
     function shakeArena() {
@@ -2886,6 +3092,11 @@
         summaryLines.push("No relics were drafted this run.");
       }
 
+      challengeRunHash = computeChallengeRunHash();
+      summaryLines.push(`Challenge validation hash: ${challengeRunHash}.`);
+      saveRunToModeStats();
+      const modeStats = loadModeStats(challengeMode);
+      summaryLines.push(`Mode stats (${challengeMode}): runs ${modeStats.runs}, wins ${modeStats.wins}, losses ${modeStats.losses}, draws ${modeStats.draws}.`);
       summaryLines.push("Use the unified round board or round log to review every move and state.");
       commentaryEl.textContent = summaryLines.join(" ");
 
@@ -2933,6 +3144,7 @@
       runState.consumableShieldCharges = 0;
       runState.relicUpgradeLevel = 0;
       runState.runFailed = false;
+      if (challengeMode === "weekly") applyWeeklyMutators();
       runState.activeRelics = initialRelics
         .filter(id => relicCatalog.some(relic => relic.id === id))
         .map(id => ({ id, used: false }));
@@ -2942,9 +3154,6 @@
 
       if (scriptedSequenceOverride) {
         adaptiveToggle.checked = false;
-        adaptiveToggle.disabled = true;
-      } else {
-        adaptiveToggle.disabled = false;
       }
 
       currentRound = 0;
@@ -2994,6 +3203,7 @@
       updateMoodDisplay();
       updatePreRoundHint();
       updateRunSummary();
+      updateChallengeRulesUI();
 
       if (scriptedSequenceOverride) {
         seedFeedbackEl.className = "seed-feedback info";
@@ -3019,6 +3229,18 @@
     }
 
     function resetGame() {
+      if (challengeMode === "daily") {
+        challengeContext = { utcDateKey: getUtcDateKey() };
+        initFromSeed(deriveDailySeed(), false, null, [], []);
+        return;
+      }
+      if (challengeMode === "weekly") {
+        const weekly = deriveWeeklyMutatorSet();
+        activeWeeklyMutatorSet = weekly.mutators.slice();
+        challengeContext = { weekLabel: `${weekly.info.isoYear}-W${String(weekly.info.isoWeek).padStart(2, "0")}` };
+        initFromSeed((hashStringFNV1a(`weekly-seed:${challengeContext.weekLabel}`) ^ 0xA5A5A5A5) >>> 0, false, null, [], []);
+        return;
+      }
       const value = seedInputEl.value.trim();
       let newSeed;
       let manual = false;
@@ -3046,6 +3268,31 @@
       initFromSeed(newSeed, manual, null, [], []);
     }
 
+
+    function startChallengeMode(mode) {
+      challengeMode = mode;
+      if (mode === "daily") {
+        challengeContext = { utcDateKey: getUtcDateKey() };
+        activeWeeklyMutatorSet = [];
+        adaptiveToggle.checked = false;
+        initFromSeed(deriveDailySeed(), false, null, [], []);
+        seedFeedbackEl.className = "seed-feedback info";
+        seedFeedbackEl.textContent = `Daily challenge loaded for ${challengeContext.utcDateKey}. Seed locked to ${runSeed}.`;
+      } else if (mode === "weekly") {
+        const weekly = deriveWeeklyMutatorSet();
+        activeWeeklyMutatorSet = weekly.mutators.slice();
+        challengeContext = { weekLabel: `${weekly.info.isoYear}-W${String(weekly.info.isoWeek).padStart(2, "0")}` };
+        initFromSeed((hashStringFNV1a(`weekly-seed:${challengeContext.weekLabel}`) ^ 0xA5A5A5A5) >>> 0, false, null, [], []);
+        seedFeedbackEl.className = "seed-feedback info";
+        seedFeedbackEl.textContent = `Weekly challenge loaded for ${challengeContext.weekLabel}. Mutators: ${activeWeeklyMutatorSet.map(m => m.name).join(", ")}.`;
+      } else {
+        challengeMode = "casual";
+        activeWeeklyMutatorSet = [];
+        challengeContext = {};
+        updateChallengeRulesUI();
+      }
+    }
+
     startMatchBtn.addEventListener("click", () => {
       if (runState.activeNodeId === null) {
         runState.availableNodeIds = [0];
@@ -3065,7 +3312,12 @@
     resetBtn.addEventListener("click", resetGame);
     summaryPlayAgainBtn.addEventListener("click", resetGame);
     summaryCopyLinkBtn.addEventListener("click", copyChallengeLink);
+    copyResultBtn.addEventListener("click", copyChallengeResult);
+    summaryCopyResultBtn.addEventListener("click", copyChallengeResult);
     summaryViewBoardBtn.addEventListener("click", jumpToRoundBoardFromSummary);
+    casualModeBtn.addEventListener("click", () => startChallengeMode("casual"));
+    dailyModeBtn.addEventListener("click", () => startChallengeMode("daily"));
+    weeklyModeBtn.addEventListener("click", () => startChallengeMode("weekly"));
     randomSeedBtn.addEventListener("click", () => {
       const generatedSeed = generateRandomSeed();
       seedInputEl.value = String(generatedSeed);
@@ -3119,8 +3371,18 @@
 
     const initialSettings = readInitialSettingsFromUrl();
     seedInputEl.value = String(DEFAULT_SEED);
-    if (initialSettings.seed === null) initFromSeed(DEFAULT_SEED, false, initialSettings.scriptOverride, initialSettings.initialRelics || [], initialSettings.initialCurses || []);
+    if (initialSettings.initialMode && initialSettings.initialMode !== "casual") challengeMode = initialSettings.initialMode;
+    if (challengeMode === "daily") {
+      challengeContext = { utcDateKey: getUtcDateKey() };
+      initFromSeed(deriveDailySeed(), false, initialSettings.scriptOverride, initialSettings.initialRelics || [], initialSettings.initialCurses || []);
+    } else if (challengeMode === "weekly") {
+      const weekly = deriveWeeklyMutatorSet();
+      activeWeeklyMutatorSet = weekly.mutators.slice();
+      challengeContext = { weekLabel: `${weekly.info.isoYear}-W${String(weekly.info.isoWeek).padStart(2, "0")}` };
+      initFromSeed((hashStringFNV1a(`weekly-seed:${challengeContext.weekLabel}`) ^ 0xA5A5A5A5) >>> 0, false, initialSettings.scriptOverride, initialSettings.initialRelics || [], initialSettings.initialCurses || []);
+    } else if (initialSettings.seed === null) initFromSeed(DEFAULT_SEED, false, initialSettings.scriptOverride, initialSettings.initialRelics || [], initialSettings.initialCurses || []);
     else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride, initialSettings.initialRelics || [], initialSettings.initialCurses || []);
+    updateChallengeRulesUI();
     maybeStartTutorial();
   </script>
 </body>
