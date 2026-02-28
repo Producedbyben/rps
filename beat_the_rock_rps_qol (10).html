@@ -413,6 +413,8 @@
       </div>
       <div id="roundLabel" class="hud-chip">Act 1 Node 1</div>
       <div id="scoreLabel" class="hud-chip">The Rock 0  |  You 0  |  Draws 0</div>
+      <div id="resolveLabel" class="hud-chip">Resolve 12/12</div>
+      <div id="cashLabel" class="hud-chip">Cash $0</div>
       <div id="moodDisplay" class="mood-display severity-low">🧊 The Rock is calm · Read risk 30%</div>
     </div>
 
@@ -713,6 +715,8 @@
     const yourMoveLabelEl = document.getElementById("yourMoveLabel");
     const roundLabelEl = document.getElementById("roundLabel");
     const scoreLabelEl = document.getElementById("scoreLabel");
+    const resolveLabelEl = document.getElementById("resolveLabel");
+    const cashLabelEl = document.getElementById("cashLabel");
     const resultLineEl = document.getElementById("resultLine");
     const commentaryEl = document.getElementById("commentary");
     const resetBtn = document.getElementById("resetBtn");
@@ -796,6 +800,15 @@
     const TUTORIAL_STORAGE_KEY = "beatTheRockTutorialState.v1";
     const ORIGINAL_SEED_ONE_SEQUENCE = "RPSSRPPSPRRSPSPRPPRP";
     const ENCOUNTER_TYPES = ["normal", "elite", "event", "shop", "campfire", "boss"];
+    const RUN_BALANCE = {
+      startingResolve: 12,
+      startingCash: 5,
+      rewardCashOnWin: { normal: 3, elite: 6, boss: 9 },
+      loseResolvePenalty: { normal: 2, elite: 4, boss: 5 },
+      campfireHeal: 4,
+      shopPrices: { heal: 4, relic: 7, consumable: 5, cleanseCurse: 5 },
+      shopHealAmount: 3
+    };
 
     const runState = {
       mapNodes: [],
@@ -811,7 +824,13 @@
       revealedNodeRewards: {},
       curseStacks: 0,
       rareChainStage: 0,
-      unlockedBossVariant: null
+      unlockedBossVariant: null,
+      resolve: RUN_BALANCE.startingResolve,
+      maxResolve: RUN_BALANCE.startingResolve,
+      cash: RUN_BALANCE.startingCash,
+      consumableShieldCharges: 0,
+      relicUpgradeLevel: 0,
+      runFailed: false
     };
 
     const relicCatalog = [
@@ -1096,7 +1115,83 @@
 
     function getTotalNodes() { return runState.mapNodes.length || 1; }
     function getActiveNode() { return runState.mapNodes[runState.activeNodeId] || null; }
-    function isRunComplete() { return currentRound >= getTotalNodes(); }
+    function isRunComplete() { return runState.runFailed || currentRound >= getTotalNodes(); }
+
+    function clampResolve(value) {
+      return Math.max(0, Math.min(runState.maxResolve, value));
+    }
+
+    function applyShopChoice(choice, node) {
+      if (choice === "heal") {
+        if (runState.cash < RUN_BALANCE.shopPrices.heal) return "Not enough cash for patches.";
+        runState.cash -= RUN_BALANCE.shopPrices.heal;
+        runState.resolve = clampResolve(runState.resolve + RUN_BALANCE.shopHealAmount);
+        return `Bought ringside patches: +${RUN_BALANCE.shopHealAmount} resolve.`;
+      }
+      if (choice === "relic") {
+        if (runState.cash < RUN_BALANCE.shopPrices.relic) return "Not enough cash for a relic crate.";
+        const relic = rollDeterministicRelic(node.id, "shop-relic");
+        if (!relic) return "No relics left in stock.";
+        runState.cash -= RUN_BALANCE.shopPrices.relic;
+        runState.activeRelics.push({ id: relic.id, used: false });
+        return `Bought relic ${relic.name}.`;
+      }
+      if (choice === "consumable") {
+        if (runState.cash < RUN_BALANCE.shopPrices.consumable) return "Not enough cash for a tonic.";
+        runState.cash -= RUN_BALANCE.shopPrices.consumable;
+        runState.consumableShieldCharges += 1;
+        return "Bought Smoke Tonic: next resolve loss is prevented once.";
+      }
+      if (choice === "cleanse") {
+        if (runState.curseStacks <= 0) return "No curses to remove.";
+        if (runState.cash < RUN_BALANCE.shopPrices.cleanseCurse) return "Not enough cash for curse removal.";
+        runState.cash -= RUN_BALANCE.shopPrices.cleanseCurse;
+        runState.curseStacks = Math.max(0, runState.curseStacks - 1);
+        return "Paid the shrine keeper: removed 1 curse.";
+      }
+      return "Saved your cash for later.";
+    }
+
+    function getSpecialNodeChoices(node) {
+      if (!node) return null;
+      if (node.type === "shop") {
+        return {
+          title: "Backstage Shop",
+          text: "Spend cash before the next throw. Small buys, big momentum.",
+          choices: [
+            { id: "heal", title: `Buy Patches ($${RUN_BALANCE.shopPrices.heal})`, text: `Heal ${RUN_BALANCE.shopHealAmount} resolve.` },
+            { id: "relic", title: `Buy Relic Crate ($${RUN_BALANCE.shopPrices.relic})`, text: "Add one random relic you do not own." },
+            { id: "consumable", title: `Buy Smoke Tonic ($${RUN_BALANCE.shopPrices.consumable})`, text: "One-time consumable: negates the next resolve loss." },
+            { id: "cleanse", title: `Cleanse Curse ($${RUN_BALANCE.shopPrices.cleanseCurse})`, text: "Remove one curse stack." },
+            { id: "leave", title: "Leave", text: "Save your cash for a later node." }
+          ],
+          resolveChoice: (choice) => applyShopChoice(choice.id, node)
+        };
+      }
+      if (node.type === "campfire") {
+        return {
+          title: "Campfire",
+          text: "Take a breather before the next clash.",
+          choices: [
+            { id: "heal", title: "Recover", text: `Heal ${RUN_BALANCE.campfireHeal} resolve.` },
+            { id: "upgrade", title: "Upgrade Relic Aura", text: "Relics gain +1 bonus score when they trigger on a win." },
+            { id: "leave", title: "Leave", text: "Keep your current edge." }
+          ],
+          resolveChoice: (choice) => {
+            if (choice.id === "heal") {
+              runState.resolve = clampResolve(runState.resolve + RUN_BALANCE.campfireHeal);
+              return `Recovered ${RUN_BALANCE.campfireHeal} resolve.`;
+            }
+            if (choice.id === "upgrade") {
+              runState.relicUpgradeLevel += 1;
+              return `Relic aura upgraded to +${runState.relicUpgradeLevel}.`;
+            }
+            return "You kept watch and moved on.";
+          }
+        };
+      }
+      return null;
+    }
 
     function selectNextNode(nodeId) {
       if (!relicChoicePanelEl.classList.contains("is-hidden")) return;
@@ -1116,6 +1211,15 @@
           setButtonsEnabled(false);
           return;
         }
+      }
+      const specialNode = getSpecialNodeChoices(node);
+      if (specialNode) {
+        runState.pendingEvent = { node, event: specialNode };
+        renderEventPanel();
+        renderMapPanel();
+        setScene("map");
+        setButtonsEnabled(false);
+        return;
       }
       renderEventPanel();
       renderMapPanel();
@@ -1308,6 +1412,20 @@
       const pending = runState.pendingEvent;
       if (!pending) return;
       const { event, node } = pending;
+      if (typeof event.resolveChoice === "function") {
+        const effectsText = event.resolveChoice(choice);
+        logEventDecision(event, choice, effectsText, node);
+        commentaryEl.textContent = `${event.title}: ${choice.title}. ${effectsText}.`;
+        runState.pendingEvent = null;
+        renderEventPanel();
+        renderRelicStrip();
+        updateScoreLabel();
+        updateResourceLabels();
+        setScene("inRound");
+        setButtonsEnabled(true);
+        moveButtons[0].focus();
+        return;
+      }
       let effectsText = "No effect";
 
       if (choice.effect === "gainRelicAndCurse") {
@@ -1348,6 +1466,7 @@
       renderEventPanel();
       renderRelicStrip();
       updateScoreLabel();
+      updateResourceLabels();
       setScene("inRound");
       setButtonsEnabled(true);
       moveButtons[0].focus();
@@ -1785,7 +1904,12 @@
       const extras = [];
       if (runState.skipNextLossPenalty) extras.push("ward ready");
       if (runState.curseStacks > 0) extras.push(`curses ${runState.curseStacks}`);
+      if (runState.consumableShieldCharges > 0) extras.push(`tonics ${runState.consumableShieldCharges}`);
       scoreLabelEl.textContent = `The Rock ${rockScore}  |  You ${youScore}  |  Draws ${draws}${extras.length ? `  |  ${extras.join(" · ")}` : ""}`;
+    }
+    function updateResourceLabels() {
+      resolveLabelEl.textContent = `Resolve ${runState.resolve}/${runState.maxResolve}`;
+      cashLabelEl.textContent = `Cash $${runState.cash}`;
     }
     function updateProgressBar() {
       const pct = (currentRound / getTotalNodes()) * 100;
@@ -2174,6 +2298,28 @@
         scoreContext.youDelta -= cursePenalty;
         if (cursePenalty > 0) relicFeedback.push(`Curse drag -${cursePenalty}`);
       }
+      if (scoreContext.baseOutcome === "win" && runState.relicUpgradeLevel > 0 && relicFeedback.length > 0) {
+        scoreContext.youDelta += runState.relicUpgradeLevel;
+        relicFeedback.push(`Relic aura +${runState.relicUpgradeLevel}`);
+      }
+
+      const rewardCash = scoreContext.baseOutcome === "win" ? (RUN_BALANCE.rewardCashOnWin[scoreContext.nodeType] || 0) : 0;
+      if (rewardCash > 0) {
+        runState.cash += rewardCash;
+        relicFeedback.push(`Cash +$${rewardCash}`);
+      }
+
+      let resolvePenalty = scoreContext.baseOutcome === "lose" ? (RUN_BALANCE.loseResolvePenalty[scoreContext.nodeType] || 0) : 0;
+      if (resolvePenalty > 0 && runState.consumableShieldCharges > 0) {
+        runState.consumableShieldCharges -= 1;
+        resolvePenalty = 0;
+        relicFeedback.push("Smoke Tonic blocked resolve loss");
+      }
+      if (resolvePenalty > 0) {
+        runState.resolve = clampResolve(runState.resolve - resolvePenalty);
+        relicFeedback.push(`Resolve -${resolvePenalty}`);
+      }
+
       outcome = scoreContext.outcome;
       youScore += scoreContext.youDelta;
       rockScore += scoreContext.rockDelta;
@@ -2232,10 +2378,12 @@
       maybeRevealUpcomingRewards();
 
       currentRound += 1;
+      if (runState.resolve <= 0) runState.runFailed = true;
       if (!isRunComplete() && runState.availableNodeIds.length > 0) runState.activeNodeId = null;
       renderMapPanel();
       renderRoundBoard();
       updateScoreLabel();
+      updateResourceLabels();
       updateRoundLabel();
       updateProgressBar();
       updateAdaptiveStats();
@@ -2325,9 +2473,16 @@
       const runAchievements = getUnlockedAchievementDefs();
       const youWon = youScore > rockScore;
       const rockWon = rockScore > youScore;
+      const defeated = runState.runFailed;
 
       summaryWinnerBannerEl.className = "post-match-banner";
-      if (youWon) {
+      if (defeated) {
+        const remainingNodes = Math.max(0, getTotalNodes() - currentRound);
+        summaryWinnerBannerEl.classList.add("rock-win");
+        summaryWinnerBannerEl.textContent = "Defeat: Resolve broken";
+        summaryTitleEl.textContent = "You were worn down before the final bell";
+        summaryFlavorEl.textContent = `Resolve hit zero with ${remainingNodes} node${remainingNodes === 1 ? "" : "s"} still ahead. Reload, reroute, and come back richer.`;
+      } else if (youWon) {
         summaryWinnerBannerEl.classList.add("you-win");
         summaryWinnerBannerEl.textContent = "Winner: You";
         summaryTitleEl.textContent = "You beat The Rock";
@@ -2385,6 +2540,8 @@
     function showFinalSummary() {
       const summaryLines = [];
       summaryLines.push(`Final score after ${getTotalNodes()} nodes: The Rock ${rockScore}, You ${youScore}, Draws ${draws}.`);
+      summaryLines.push(`Resources: Resolve ${runState.resolve}/${runState.maxResolve}, Cash $${runState.cash}.`);
+      if (runState.runFailed) summaryLines.push(`Defeat condition triggered: resolve dropped to zero at node ${currentRound}.`);
       summaryLines.push(`You beat The Rock ${beatRockHits} out of ${getTotalNodes()} nodes.`);
       summaryLines.push(`Beat-The-Rock sequence for this showdown: ${beatRockAbbrevs.join(" ")}.`);
       summaryLines.push(`Legend: R Rock, P Paper, S Scissors.`);
@@ -2456,6 +2613,12 @@
       runState.curseStacks = 0;
       runState.rareChainStage = 0;
       runState.unlockedBossVariant = null;
+      runState.resolve = RUN_BALANCE.startingResolve;
+      runState.maxResolve = RUN_BALANCE.startingResolve;
+      runState.cash = RUN_BALANCE.startingCash;
+      runState.consumableShieldCharges = 0;
+      runState.relicUpgradeLevel = 0;
+      runState.runFailed = false;
       runState.activeRelics = initialRelics
         .filter(id => relicCatalog.some(relic => relic.id === id))
         .map(id => ({ id, used: false }));
@@ -2508,6 +2671,7 @@
       roundBoardPreviewEl.textContent = "Hover, focus, or tap a played node to preview exact hands, outcome, and mood.";
 
       updateScoreLabel();
+      updateResourceLabels();
       updateRoundLabel();
       updateProgressBar();
       updateAdaptiveStats();
