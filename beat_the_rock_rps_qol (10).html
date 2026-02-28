@@ -192,6 +192,18 @@
     .help-box summary::-webkit-details-marker { display: none; }
     .help-box-content { margin-top: 6px; line-height: 1.4; }
     .help-box-content ul { padding-left: 18px; margin: 4px 0 0; }
+
+    body.gameplay-active .help-box { opacity: 0.58; border-color: rgba(148,163,184,0.35); background: rgba(2,6,23,0.8); }
+    body.gameplay-active .help-box summary { color: #cbd5e1; }
+
+    .tutorial-tooltip { position: fixed; z-index: 85; max-width: 290px; background: rgba(2,6,23,0.97); border: 1px solid rgba(125,211,252,0.78); border-radius: 12px; box-shadow: 0 16px 34px rgba(0,0,0,0.48); padding: 10px 12px; color: #dbeafe; font-size: 0.78rem; line-height: 1.35; }
+    .tutorial-tooltip.is-hidden { display: none; }
+    .tutorial-tooltip-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #93c5fd; margin-bottom: 4px; }
+    .tutorial-tooltip-text { margin: 0; }
+    .tutorial-tooltip-actions { margin-top: 8px; display: flex; justify-content: flex-end; }
+    .tutorial-skip-btn { border: 1px solid rgba(148,163,184,0.62); background: rgba(15,23,42,0.9); color: #e2e8f0; border-radius: 999px; padding: 4px 10px; font-size: 0.72rem; cursor: pointer; }
+    .tutorial-skip-btn:hover { filter: brightness(1.08); }
+    .tutorial-target { box-shadow: 0 0 0 2px rgba(56,189,248,0.85); border-radius: 10px; }
     .help-legend { margin-top: 10px; font-size: 0.78rem; color: #c3c7d1; display: flex; flex-wrap: wrap; gap: 8px 10px; }
     .help-legend span { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.75); }
 
@@ -335,7 +347,7 @@
         <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
       </div>
 
-      <div class="controls">
+      <div id="moveButtonsAnchor" class="controls">
         <button class="btn-rock" data-move="R" aria-label="Play Rock hand"><span class="hand-icon">✊</span> Rock</button>
         <button class="btn-paper" data-move="P" aria-label="Play Paper hand"><span class="hand-icon">✋</span> Paper</button>
         <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
@@ -352,7 +364,7 @@
         <div id="commentary" class="commentary" role="status" aria-live="polite" aria-atomic="true"></div>
       </div>
 
-      <div class="challenge-row">
+      <div id="seedShareAnchor" class="challenge-row">
         <button id="copyLinkBtn" class="btn-share" type="button">Copy challenge link</button>
         <div id="copyStatus" class="copy-status" aria-live="polite"></div>
       </div>
@@ -455,6 +467,7 @@
 
         <div class="settings-row">
           <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
+          <button id="replayTutorialBtn" class="menu-btn" type="button">Replay Tutorial</button>
           <span class="settings-hint">Keyboard, R P S to play moves.</span>
         </div>
 
@@ -477,6 +490,16 @@
           </div>
         </details>
 
+      </div>
+    </div>
+
+
+
+    <div id="tutorialTooltip" class="tutorial-tooltip is-hidden" role="status" aria-live="polite">
+      <div id="tutorialTooltipTitle" class="tutorial-tooltip-title"></div>
+      <p id="tutorialTooltipText" class="tutorial-tooltip-text"></p>
+      <div class="tutorial-tooltip-actions">
+        <button id="tutorialSkipBtn" class="tutorial-skip-btn" type="button">Skip tutorial</button>
       </div>
     </div>
 
@@ -539,6 +562,7 @@
     const commentaryEl = document.getElementById("commentary");
     const resetBtn = document.getElementById("resetBtn");
     const moveButtons = Array.from(document.querySelectorAll("button[data-move]"));
+    const moveButtonsAnchorEl = document.getElementById("moveButtonsAnchor");
     const adaptiveToggle = document.getElementById("adaptiveToggle");
     const arenaEl = document.getElementById("arena");
     const progressFillEl = document.getElementById("progressFill");
@@ -562,6 +586,7 @@
     const roundBoardStatusEl = document.getElementById("roundBoardStatus");
     const roundBoardPreviewEl = document.getElementById("roundBoardPreview");
     const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const seedShareAnchorEl = document.getElementById("seedShareAnchor");
     const copyStatusEl = document.getElementById("copyStatus");
     const achievementToastsEl = document.getElementById("achievementToasts");
     const resetAchievementsBtn = document.getElementById("resetAchievementsBtn");
@@ -582,6 +607,11 @@
     const gameMenuBtn = document.getElementById("gameMenuBtn");
     const gameMenuModal = document.getElementById("gameMenuModal");
     const closeMenuBtn = document.getElementById("closeMenuBtn");
+    const replayTutorialBtn = document.getElementById("replayTutorialBtn");
+    const tutorialTooltipEl = document.getElementById("tutorialTooltip");
+    const tutorialTooltipTitleEl = document.getElementById("tutorialTooltipTitle");
+    const tutorialTooltipTextEl = document.getElementById("tutorialTooltipText");
+    const tutorialSkipBtn = document.getElementById("tutorialSkipBtn");
     const roundResultOverlayEl = document.getElementById("roundResultOverlay");
     const roundResultOverlayTextEl = document.getElementById("roundResultOverlayText");
 
@@ -592,6 +622,7 @@
     const TERNARY_SPACE = 3486784401;
     const DIGITS_ONLY_REGEX = /^\d+$/;
     const ACHIEVEMENTS_STORAGE_KEY = "beatTheRockAchievementCounts.v2";
+    const TUTORIAL_STORAGE_KEY = "beatTheRockTutorialState.v1";
     const ORIGINAL_SEED_ONE_SEQUENCE = "PPSSRPPSPRRSPSPRPPRP";
 
     const achievementCatalog = [
@@ -723,6 +754,10 @@
     let announcedAchievements = new Set();
     let achievementUnlockCounts = {};
     let sceneState = "lobby";
+    let tutorialActive = false;
+    let tutorialStepIndex = 0;
+    let tutorialCompleted = false;
+    let tutorialCurrentTarget = null;
     let roundResultTimer = null;
     let roundPhase = "idle";
     let roundAnimationToken = 0;
@@ -734,6 +769,38 @@
       resolved: 380
     };
     const reducedMotionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+    const tutorialSteps = [
+      {
+        id: "moveButtons",
+        title: "Step 1 · Throw your hand",
+        text: "Start here. Tap Rock, Paper, or Scissors to play your first round.",
+        anchor: () => moveButtonsAnchorEl
+      },
+      {
+        id: "moodDisplay",
+        title: "Step 2 · Read his mood",
+        text: "Watch Rock state here. Calm, Suspicious, and Paranoid each change his read chance.",
+        anchor: () => moodDisplayEl
+      },
+      {
+        id: "adaptiveToggle",
+        title: "Step 3 · Toggle adaptive mode",
+        text: "Flip Adaptive Rock mode once so you know where to enable his trend reads.",
+        anchor: () => adaptiveToggle
+      },
+      {
+        id: "roundBoard",
+        title: "Step 4 · Inspect the board",
+        text: "Hover or focus a round tile to preview exact hands, outcomes, and pathing.",
+        anchor: () => roundBoardPreviewEl
+      },
+      {
+        id: "seedShare",
+        title: "Step 5 · Share and replay",
+        text: "Use Copy challenge link or set a seed to share exact runs. Tutorial ends after this step.",
+        anchor: () => seedShareAnchorEl
+      }
+    ];
 
     function loadPersistentAchievements() {
       try {
@@ -767,6 +834,94 @@
 
     function generateRandomSeed() {
       return Math.floor(Math.random() * (U32_MAX + 1));
+    }
+
+    function loadTutorialState() {
+      try {
+        return localStorage.getItem(TUTORIAL_STORAGE_KEY) === "done";
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function persistTutorialComplete() {
+      tutorialCompleted = true;
+      try {
+        localStorage.setItem(TUTORIAL_STORAGE_KEY, "done");
+      } catch (err) {}
+    }
+
+    function clearTutorialTarget() {
+      if (!tutorialCurrentTarget) return;
+      tutorialCurrentTarget.classList.remove("tutorial-target");
+      tutorialCurrentTarget = null;
+    }
+
+    function hideTutorialTooltip() {
+      tutorialTooltipEl.classList.add("is-hidden");
+      clearTutorialTarget();
+    }
+
+    function positionTutorialTooltip(targetEl) {
+      if (!targetEl) return;
+      const rect = targetEl.getBoundingClientRect();
+      const maxLeft = window.innerWidth - tutorialTooltipEl.offsetWidth - 10;
+      let left = Math.max(10, Math.min(rect.left, maxLeft));
+      let top = rect.bottom + 12;
+      const maxTop = window.innerHeight - tutorialTooltipEl.offsetHeight - 10;
+      if (top > maxTop) top = Math.max(10, rect.top - tutorialTooltipEl.offsetHeight - 12);
+      tutorialTooltipEl.style.left = `${left}px`;
+      tutorialTooltipEl.style.top = `${top}px`;
+    }
+
+    function renderTutorialStep() {
+      if (!tutorialActive || tutorialStepIndex >= tutorialSteps.length) {
+        hideTutorialTooltip();
+        return;
+      }
+
+      const step = tutorialSteps[tutorialStepIndex];
+      const targetEl = step.anchor && step.anchor();
+      if (!targetEl) {
+        completeTutorial();
+        return;
+      }
+
+      tutorialTooltipTitleEl.textContent = step.title;
+      tutorialTooltipTextEl.textContent = step.text;
+      tutorialTooltipEl.classList.remove("is-hidden");
+      clearTutorialTarget();
+      tutorialCurrentTarget = targetEl;
+      tutorialCurrentTarget.classList.add("tutorial-target");
+      positionTutorialTooltip(targetEl);
+    }
+
+    function completeTutorial() {
+      tutorialActive = false;
+      hideTutorialTooltip();
+      persistTutorialComplete();
+    }
+
+    function advanceTutorialOnAction(actionId) {
+      if (!tutorialActive) return;
+      const step = tutorialSteps[tutorialStepIndex];
+      if (!step || step.id !== actionId) return;
+      tutorialStepIndex += 1;
+      if (tutorialStepIndex >= tutorialSteps.length) completeTutorial();
+      else renderTutorialStep();
+    }
+
+    function startTutorial({ replay = false } = {}) {
+      tutorialActive = true;
+      tutorialStepIndex = 0;
+      if (replay) tutorialCompleted = false;
+      renderTutorialStep();
+    }
+
+    function maybeStartTutorial() {
+      tutorialCompleted = loadTutorialState();
+      if (!tutorialCompleted) startTutorial();
+      else hideTutorialTooltip();
     }
 
     function buildAchievementState() {
@@ -978,6 +1133,7 @@
     }
 
     function handleRoundBoardHover(index) {
+      advanceTutorialOnAction("roundBoard");
       if (index >= historyLog.length) {
         roundBoardPreviewEl.innerHTML = `<strong>Round ${index + 1}</strong> not played yet in this run.`;
         return;
@@ -1015,6 +1171,8 @@
       sceneLobbyEl.classList.toggle("is-hidden", nextScene !== "lobby");
       sceneGameEl.classList.remove("is-hidden");
       sceneSummaryEl.classList.toggle("is-hidden", nextScene !== "matchSummary");
+      document.body.classList.toggle("gameplay-active", nextScene === "inRound" || nextScene === "roundResult");
+      if (tutorialActive) renderTutorialStep();
     }
 
     function showRoundResultOverlay(text) {
@@ -1411,6 +1569,7 @@
 
       updateRockMood(outcome);
       updateMoodDisplay();
+      advanceTutorialOnAction("moodDisplay");
 
       commentaryEl.textContent = describeRound(outcome, beatRockThisRound);
 
@@ -1708,6 +1867,7 @@
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
       if (!isGameActive()) return;
+      advanceTutorialOnAction("moveButtons");
       playRound(btn.getAttribute("data-move"));
     }));
 
@@ -1726,9 +1886,22 @@
       seedFeedbackEl.className = "seed-feedback info";
       seedFeedbackEl.textContent = "Achievements reset for this browser profile.";
     });
-    adaptiveToggle.addEventListener("change", () => { updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); });
+    adaptiveToggle.addEventListener("change", () => { advanceTutorialOnAction("adaptiveToggle"); updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); });
+    moodDisplayEl.addEventListener("click", () => advanceTutorialOnAction("moodDisplay"));
     sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
-    copyLinkBtn.addEventListener("click", copyChallengeLink);
+    copyLinkBtn.addEventListener("click", () => {
+      advanceTutorialOnAction("seedShare");
+      copyChallengeLink();
+    });
+    seedInputEl.addEventListener("focus", () => advanceTutorialOnAction("seedShare"));
+    randomSeedBtn.addEventListener("click", () => advanceTutorialOnAction("seedShare"));
+    replayTutorialBtn.addEventListener("click", () => {
+      closeGameMenu();
+      startTutorial({ replay: true });
+    });
+    tutorialSkipBtn.addEventListener("click", completeTutorial);
+    window.addEventListener("resize", () => { if (tutorialActive) renderTutorialStep(); });
+    window.addEventListener("scroll", () => { if (tutorialActive) renderTutorialStep(); }, { passive: true });
     gameMenuBtn.addEventListener("click", openGameMenu);
     closeMenuBtn.addEventListener("click", closeGameMenu);
     gameMenuModal.addEventListener("click", (event) => {
@@ -1757,6 +1930,7 @@
     seedInputEl.value = String(DEFAULT_SEED);
     if (initialSettings.seed === null) initFromSeed(DEFAULT_SEED, false, initialSettings.scriptOverride);
     else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride);
+    maybeStartTutorial();
   </script>
 </body>
 </html>
