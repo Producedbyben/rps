@@ -71,6 +71,7 @@
       text-shadow: 0 0 24px rgba(34,211,238,0.45), 0 0 38px rgba(167,139,250,0.4);
     }
     .subtitle { text-align: center; font-size: 0.95rem; color: #dbe4ff; margin-bottom: 6px; }
+    .title-cosmetic-obsidian { text-shadow: 0 0 22px rgba(125,211,252,0.35), 0 0 36px rgba(56,189,248,0.35), 0 0 56px rgba(15,23,42,0.8); }
     .run-summary { text-align: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 10px; }
     .run-summary-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.9); }
     .run-summary-pill strong { color: #e5e7eb; }
@@ -392,6 +393,20 @@
     .summary-card { margin-top: 12px; border-radius: 14px; border: 1px solid rgba(125,211,252,0.38); background: linear-gradient(145deg, rgba(15,23,42,0.94), rgba(30,41,59,0.75)); padding: 12px; box-shadow: inset 0 0 18px rgba(34,211,238,0.08); }
     .summary-card h2 { margin: 0 0 6px; font-size: 1rem; color: #f8fafc; }
     .summary-card p { margin: 0; font-size: 0.82rem; color: #cbd5e1; line-height: 1.35; }
+    .profile-card { margin-top: 10px; border-radius: 12px; border: 1px solid rgba(34,211,238,0.52); background: linear-gradient(145deg, rgba(8,47,73,0.65), rgba(15,23,42,0.95)); padding: 10px; }
+    .profile-card h3 { margin: 0 0 6px; font-size: 0.9rem; color: #cffafe; }
+    .profile-card p { margin: 0 0 8px; font-size: 0.78rem; color: #bae6fd; }
+    .profile-progress { height: 8px; border-radius: 999px; background: rgba(2,6,23,0.9); border: 1px solid rgba(125,211,252,0.45); overflow: hidden; }
+    .profile-progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, #22d3ee, #a78bfa); transition: width 0.25s ease; }
+    .codex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+    .codex-card { border-radius: 10px; border: 1px solid rgba(148,163,184,0.45); background: rgba(15,23,42,0.9); padding: 8px; }
+    .codex-card h4 { margin: 0 0 6px; font-size: 0.78rem; color: #e2e8f0; }
+    .codex-list { margin: 0; padding-left: 16px; font-size: 0.74rem; color: #cbd5e1; line-height: 1.3; }
+    .codex-list li { margin-bottom: 3px; }
+    .codex-list .unknown { color: #64748b; }
+    .summary-unlocks { border-radius: 10px; border: 1px solid rgba(34,197,94,0.5); background: rgba(20,83,45,0.3); padding: 9px; margin-bottom: 12px; }
+    .summary-unlocks h3 { margin: 0 0 5px; font-size: 0.84rem; color: #bbf7d0; }
+    .summary-unlocks ul { margin: 0; padding-left: 18px; font-size: 0.78rem; color: #dcfce7; }
 
     .post-match-overlay { position: fixed; inset: 0; z-index: 70; padding: 20px; background: rgba(2,6,23,0.78); display: flex; align-items: center; justify-content: center; overflow-y: auto; }
     .post-match-overlay.is-hidden { display: none; }
@@ -489,6 +504,7 @@
           <div class="seed-row">
             <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
             <button id="randomSeedBtn" type="button">Generate random seed</button>
+            <button id="resetProfileBtn" type="button">Reset profile</button>
             <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
           </div>
 
@@ -520,6 +536,11 @@
       <div class="summary-card">
         <h2>Lobby</h2>
         <p>Use Match panels for Stats, Achievements, Replay/Seed, and Debug. Set seed, adaptive mode, and SFX in Match Setup, then hit Start Match to enter the arena.</p>
+      </div>
+      <div class="profile-card">
+        <h3 id="profileLevelLabel">Profile level 1</h3>
+        <p id="profileXpLabel">0 / 100 XP</p>
+        <div class="profile-progress"><div id="profileProgressFill" class="profile-progress-fill"></div></div>
       </div>
     </section>
 
@@ -628,6 +649,17 @@
           </div>
         </details>
 
+        <details id="codexPanel" class="drawer-panel">
+          <summary>Codex</summary>
+          <div class="drawer-panel-body">
+            <div class="codex-grid">
+              <div class="codex-card"><h4>Relics</h4><ul id="codexRelics" class="codex-list"></ul></div>
+              <div class="codex-card"><h4>Events</h4><ul id="codexEvents" class="codex-list"></ul></div>
+              <div class="codex-card"><h4>Enemies</h4><ul id="codexEnemies" class="codex-list"></ul></div>
+            </div>
+          </div>
+        </details>
+
         <details id="debugPanel" class="drawer-panel debug-panel">
           <summary><span>Debug</span></summary>
           <div class="drawer-panel-body">
@@ -663,6 +695,8 @@
           <p id="summaryEventFlavor">No event decisions logged this run.</p>
           <ul id="summaryEventList" class="event-log-list"></ul>
         </div>
+
+        <div id="summaryUnlocks" class="summary-unlocks is-hidden"><h3>New profile unlocks</h3><ul id="summaryUnlockList"></ul></div>
 
         <div class="post-match-achievements">
           <h3>Achievements unlocked this run</h3>
@@ -784,6 +818,7 @@
       "Somewhere, the beat-The-Rock timeline branches off without you."
     ];
 
+    const gameTitleEl = document.querySelector("h1");
     const rockHandEl = document.getElementById("rockHand");
     const yourHandEl = document.getElementById("yourHand");
     const rockMoveLabelEl = document.getElementById("rockMoveLabel");
@@ -884,6 +919,16 @@
     const dailyModeBtn = document.getElementById("dailyModeBtn");
     const weeklyModeBtn = document.getElementById("weeklyModeBtn");
     const challengeRulesEl = document.getElementById("challengeRules");
+    const codexPanelEl = document.getElementById("codexPanel");
+    const codexRelicsEl = document.getElementById("codexRelics");
+    const codexEventsEl = document.getElementById("codexEvents");
+    const codexEnemiesEl = document.getElementById("codexEnemies");
+    const profileLevelLabelEl = document.getElementById("profileLevelLabel");
+    const profileXpLabelEl = document.getElementById("profileXpLabel");
+    const profileProgressFillEl = document.getElementById("profileProgressFill");
+    const summaryUnlocksEl = document.getElementById("summaryUnlocks");
+    const summaryUnlockListEl = document.getElementById("summaryUnlockList");
+    const resetProfileBtn = document.getElementById("resetProfileBtn");
 
     const U32_MIN = 0;
     const U32_MAX = 0xFFFFFFFF;
@@ -894,6 +939,24 @@
     const ACHIEVEMENTS_STORAGE_KEY = "beatTheRockAchievementCounts.v2";
     const TUTORIAL_STORAGE_KEY = "beatTheRockTutorialState.v1";
     const CHALLENGE_STATS_KEY_PREFIX = "beatTheRockModeStats.v1";
+    const PROFILE_STORAGE_KEY = "beatTheRockProfile.v1";
+    const PROFILE_SCHEMA_VERSION = 1;
+    const PROFILE_MILESTONES = [
+      { id: "finish-1", xp: 40, text: "First completed run" },
+      { id: "finish-5", xp: 65, text: "Complete 5 total runs" },
+      { id: "finish-15", xp: 90, text: "Complete 15 total runs" },
+      { id: "wins-1", xp: 35, text: "First run victory" },
+      { id: "wins-5", xp: 70, text: "Win 5 total runs" },
+      { id: "wins-15", xp: 110, text: "Win 15 total runs" },
+      { id: "nodes-60", xp: 80, text: "Play 60 total nodes" }
+    ];
+    const PROFILE_LEVEL_REWARDS = [
+      { level: 2, id: "enemy-pool-mirror", text: "Enemy pool unlock: Mirrorlag can appear in normal nodes.", type: "enemyPool" },
+      { level: 3, id: "relic-pool-strategic", text: "Relic pool unlock: strategic relics added to draft pool.", type: "relicPool" },
+      { level: 4, id: "event-chain-producer", text: "Event chain unlock: Producer's Gambit can appear.", type: "eventChain" },
+      { level: 5, id: "cosmetic-banner-obsidian", text: "Cosmetic unlock: Obsidian banner title treatment.", type: "cosmetic" },
+      { level: 6, id: "enemy-pool-boss-variant", text: "Enemy unlock option: Obsidian boss can appear via event chain.", type: "enemyVariant" }
+    ];
     const ORIGINAL_SEED_ONE_SEQUENCE = "RPSSRPPSPRRSPSPRPPRP";
     const ENCOUNTER_TYPES = ["normal", "elite", "event", "shop", "campfire", "boss"];
     const CHALLENGE_MUTATOR_POOL = [
@@ -1043,19 +1106,19 @@
       { id: "campfire-focus", name: "Campfire Focus", text: "+1 score on win after elite/boss fights.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.prevNodeWasHighTier) { scoreContext.youDelta += 1; feedback.push("Campfire Focus +1"); } } },
       { id: "momentum-punch", name: "Momentum Punch", text: "First win after a loss gives +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.previousOutcome === "lose") { scoreContext.youDelta += 1; feedback.push("Momentum Punch +1"); } } },
       { id: "parry-gloves", name: "Parry Gloves", text: "On losses, gain +1 pity score once every 2 rounds.", apply: ({ scoreContext, relicState, feedback }) => { if (scoreContext.baseOutcome === "lose" && (scoreContext.round % 2 === 0 || relicState.lastRoundApplied === scoreContext.round - 1)) { scoreContext.youDelta += 1; feedback.push("Parry Gloves pity +1"); relicState.lastRoundApplied = scoreContext.round; } } },
-      { id: "clean-finishers", name: "Clean Finishers", text: "+1 score on wins while The Rock is Calm.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.moodBefore === "Calm") { scoreContext.youDelta += 1; feedback.push("Clean Finishers +1"); } } },
+      { id: "clean-finishers", name: "Clean Finishers", unlockId: "relic-pool-strategic", text: "+1 score on wins while The Rock is Calm.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.moodBefore === "Calm") { scoreContext.youDelta += 1; feedback.push("Clean Finishers +1"); } } },
       { id: "crowd-noise", name: "Crowd Noise", text: "If you and Rock repeat same moves as last round, gain +1 draw point.", apply: ({ scoreContext, feedback }) => { if (scoreContext.repeatedPairFromLastRound) { scoreContext.drawDelta += 1; feedback.push("Crowd Noise +1 draw"); } } },
       { id: "paper-trainer", name: "Paper Trainer", text: "Paper wins grant +1 extra score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.yourMove === "P") { scoreContext.youDelta += 1; feedback.push("Paper Trainer +1"); } } },
       { id: "scissor-kick", name: "Scissor Kick", text: "Scissors wins grant +1 extra score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.yourMove === "S") { scoreContext.youDelta += 1; feedback.push("Scissor Kick +1"); } } },
       { id: "rock-stance", name: "Rock Stance", text: "Rock wins grant +1 extra score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.yourMove === "R") { scoreContext.youDelta += 1; feedback.push("Rock Stance +1"); } } },
-      { id: "equalizer", name: "Equalizer", text: "When trailing by 2+, wins grant +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.preScoreDiff <= -2) { scoreContext.youDelta += 1; feedback.push("Equalizer +1"); } } },
-      { id: "front-runner", name: "Front Runner", text: "When leading by 2+, wins grant +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.preScoreDiff >= 2) { scoreContext.youDelta += 1; feedback.push("Front Runner +1"); } } },
+      { id: "equalizer", name: "Equalizer", unlockId: "relic-pool-strategic", text: "When trailing by 2+, wins grant +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.preScoreDiff <= -2) { scoreContext.youDelta += 1; feedback.push("Equalizer +1"); } } },
+      { id: "front-runner", name: "Front Runner", unlockId: "relic-pool-strategic", text: "When leading by 2+, wins grant +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.preScoreDiff >= 2) { scoreContext.youDelta += 1; feedback.push("Front Runner +1"); } } },
       { id: "icewater", name: "Icewater", text: "First draw each encounter grants +1 draw.", apply: ({ scoreContext, relicState, feedback }) => { if (scoreContext.baseOutcome === "draw" && relicState.lastEncounter !== scoreContext.nodeIndex) { scoreContext.drawDelta += 1; relicState.lastEncounter = scoreContext.nodeIndex; feedback.push("Icewater +1 draw"); } } },
       { id: "boss-hunter", name: "Boss Hunter", text: "Boss node win grants +2 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.nodeType === "boss") { scoreContext.youDelta += 2; feedback.push("Boss Hunter +2"); } } },
       { id: "elite-bounty", name: "Elite Bounty", text: "Elite node win grants +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.nodeType === "elite") { scoreContext.youDelta += 1; feedback.push("Elite Bounty +1"); } } },
       { id: "stonewall", name: "Stonewall", text: "On draw, The Rock loses 1 point if he leads.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "draw" && scoreContext.preScoreDiff < 0) { scoreContext.rockDelta -= 1; feedback.push("Stonewall -1 Rock"); } } },
       { id: "last-breath", name: "Last Breath", text: "If final node is a loss, turn it into draw once.", oneUse: true, apply: ({ scoreContext, relicState, feedback }) => { if (!relicState.used && scoreContext.isFinalNode && scoreContext.baseOutcome === "lose") { scoreContext.outcome = "draw"; relicState.used = true; feedback.push("Last Breath saved final node"); } } },
-      { id: "pattern-seer", name: "Pattern Seer", text: "+1 score if your move beats your own previous move.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.beatsOwnLastMove) { scoreContext.youDelta += 1; feedback.push("Pattern Seer +1"); } } }
+      { id: "pattern-seer", name: "Pattern Seer", unlockId: "relic-pool-strategic", text: "+1 score if your move beats your own previous move.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.beatsOwnLastMove) { scoreContext.youDelta += 1; feedback.push("Pattern Seer +1"); } } }
     ];
 
     const eventCatalog = [
@@ -1094,6 +1157,16 @@
         choices: [
           { id: "temper", title: "Temper the shard", text: "Unlock the Obsidian Headliner boss variant.", effect: "unlockBossVariant" },
           { id: "break", title: "Break it", text: "Gain skip-next-loss but end the chain.", effect: "skipNextLossPenaltyAndEndChain" }
+        ]
+      },
+      {
+        id: "producer-gambit",
+        title: "Producer's Gambit",
+        unlockId: "event-chain-producer",
+        text: "A producer offers glitz. You can style the run without raw stat buffs.",
+        choices: [
+          { id: "spotlight", title: "Take spotlight", text: "Unlock cosmetic title for this profile.", effect: "unlockCosmeticSpotlight" },
+          { id: "draft-reshuffle", title: "Reshuffle draft", text: "Reveal next node reward preview.", effect: "revealNextNodeReward" }
         ]
       }
     ];
@@ -1213,6 +1286,8 @@
     let challengeRunHash = "";
     let activeWeeklyMutatorSet = [];
     let challengeContext = {};
+    let profileState = null;
+    let latestProfileUnlocks = [];
 
     let currentRound = 0;
     let youScore = 0;
@@ -1509,7 +1584,7 @@
           assignments[node.id] = runState.unlockedBossVariant === "obsidian-headliner" ? ENEMY_DEFINITIONS.obsidianBoss.id : ENEMY_DEFINITIONS.rockBoss.id;
           return;
         }
-        const pool = NODE_ENEMY_POOLS[node.type] || NODE_ENEMY_POOLS.normal;
+        const pool = getEnemyPoolForNodeType(node.type);
         const pickKey = pickDeterministic(pool, "enemy-node", selectedSeed, node.id, node.index);
         const enemy = ENEMY_DEFINITIONS[pickKey] || ENEMY_DEFINITIONS.graniteRookie;
         assignments[node.id] = enemy.id;
@@ -1648,6 +1723,7 @@
       runState.selectedPath.push(nodeId);
       runState.availableNodeIds = [];
       runState.activeEnemyId = runState.nodeEnemyAssignments[nodeId] || ENEMY_DEFINITIONS.graniteRookie.id;
+      noteDiscovery("enemy", runState.activeEnemyId);
       runState.phaseAnnouncement = "";
       playUiPip("confirm");
       const node = getActiveNode();
@@ -1747,7 +1823,7 @@
 
     function rollRelicChoices() {
       const ownedIds = new Set(runState.activeRelics.map(relic => relic.id));
-      const pool = relicCatalog.filter(relic => !ownedIds.has(relic.id));
+      const pool = relicCatalog.filter(relic => !ownedIds.has(relic.id) && canUseRelic(relic));
       if (pool.length <= 3) return pool.slice();
       const picks = [];
       while (picks.length < 3 && pool.length > 0) {
@@ -1775,6 +1851,7 @@
         btn.innerHTML = `<strong>${relic.name}</strong>${relic.text}`;
         btn.addEventListener("click", () => {
           runState.activeRelics.push({ id: relic.id, used: false });
+          noteDiscovery("relic", relic.id);
           relicChoicePanelEl.classList.add("is-hidden");
           renderRelicStrip();
           commentaryEl.textContent = `${commentaryEl.textContent} Relic drafted: ${relic.name}.`;
@@ -1857,7 +1934,7 @@
 
     function rollDeterministicRelic(...parts) {
       const ownedIds = new Set(runState.activeRelics.map(relic => relic.id));
-      const pool = relicCatalog.filter(relic => !ownedIds.has(relic.id));
+      const pool = relicCatalog.filter(relic => !ownedIds.has(relic.id) && canUseRelic(relic));
       return pickDeterministic(pool, "event-relic", ...parts);
     }
 
@@ -1884,7 +1961,7 @@
       if (chainReady && (mixSeed("forge-gate", node.id, runState.selectedPath.join("-")) % 4 === 0)) {
         return eventCatalog.find(event => event.id === "forge-echo") || null;
       }
-      const pool = eventCatalog.filter(event => event.id !== "forge-echo");
+      const pool = eventCatalog.filter(event => event.id !== "forge-echo" && canUseEvent(event));
       return pickDeterministic(pool, "node-event", node.id, runState.selectedPath.join("-"));
     }
 
@@ -1909,6 +1986,7 @@
     }
 
     function logEventDecision(event, choice, effectsText, node) {
+      noteDiscovery("event", event.id);
       const detail = `${event.title} · ${choice.title} (${effectsText})`;
       runState.eventLog.push({ nodeId: node.id, nodeIndex: node.index, detail });
     }
@@ -1939,9 +2017,11 @@
         const curse = gainRandomCurse(node.id, choice.id);
         if (relic && curse) {
           runState.activeRelics.push({ id: relic.id, used: false });
+          noteDiscovery("relic", relic.id);
           effectsText = `Gained relic ${relic.name} and curse ${curse.name}`;
         } else if (relic) {
           runState.activeRelics.push({ id: relic.id, used: false });
+          noteDiscovery("relic", relic.id);
           effectsText = `Gained relic ${relic.name}; no new curses available`;
         } else if (curse) {
           effectsText = `No relic available, gained curse ${curse.name}`;
@@ -1982,6 +2062,166 @@
       setScene("inRound");
       setButtonsEnabled(true);
       moveButtons[0].focus();
+    }
+
+    function getDefaultProfileState() {
+      return {
+        schemaVersion: PROFILE_SCHEMA_VERSION,
+        xp: 0,
+        totalRuns: 0,
+        totalWins: 0,
+        totalNodesPlayed: 0,
+        claimedMilestones: {},
+        unlockedRewards: ["enemy-pool-boss-variant"],
+        discoveredRelics: {},
+        discoveredEvents: {},
+        discoveredEnemies: {},
+        cosmetics: {}
+      };
+    }
+
+    function migrateProfileState(raw) {
+      const base = getDefaultProfileState();
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return base;
+      const migrated = {
+        ...base,
+        ...raw,
+        schemaVersion: PROFILE_SCHEMA_VERSION,
+        claimedMilestones: raw.claimedMilestones && typeof raw.claimedMilestones === "object" ? raw.claimedMilestones : {},
+        unlockedRewards: Array.isArray(raw.unlockedRewards) ? raw.unlockedRewards.slice() : base.unlockedRewards.slice(),
+        discoveredRelics: raw.discoveredRelics && typeof raw.discoveredRelics === "object" ? raw.discoveredRelics : {},
+        discoveredEvents: raw.discoveredEvents && typeof raw.discoveredEvents === "object" ? raw.discoveredEvents : {},
+        discoveredEnemies: raw.discoveredEnemies && typeof raw.discoveredEnemies === "object" ? raw.discoveredEnemies : {},
+        cosmetics: raw.cosmetics && typeof raw.cosmetics === "object" ? raw.cosmetics : {}
+      };
+      if (!migrated.unlockedRewards.includes("enemy-pool-boss-variant")) migrated.unlockedRewards.push("enemy-pool-boss-variant");
+      return migrated;
+    }
+
+    function loadProfileState() {
+      try {
+        const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+        if (!raw) return getDefaultProfileState();
+        const parsed = JSON.parse(raw);
+        return migrateProfileState(parsed);
+      } catch (err) {
+        return getDefaultProfileState();
+      }
+    }
+
+    function saveProfileState() {
+      if (!profileState) return;
+      try { localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileState)); } catch (err) {}
+    }
+
+    function getXpToNextLevel(level) {
+      return 80 + ((level - 1) * 35);
+    }
+
+    function getProfileLevelAndRemainder(xp) {
+      let level = 1;
+      let remaining = Math.max(0, Math.floor(Number(xp) || 0));
+      let need = getXpToNextLevel(level);
+      while (remaining >= need) {
+        remaining -= need;
+        level += 1;
+        need = getXpToNextLevel(level);
+      }
+      return { level, current: remaining, needed: need };
+    }
+
+    function hasProfileUnlock(unlockId) {
+      return !!(profileState && profileState.unlockedRewards.includes(unlockId));
+    }
+
+    function canUseRelic(relic) {
+      return !relic.unlockId || hasProfileUnlock(relic.unlockId);
+    }
+
+    function canUseEvent(event) {
+      return !event.unlockId || hasProfileUnlock(event.unlockId);
+    }
+
+    function getEnemyPoolForNodeType(type) {
+      const basePool = (NODE_ENEMY_POOLS[type] || NODE_ENEMY_POOLS.normal || []).slice();
+      if (type === "normal" && hasProfileUnlock("enemy-pool-mirror") && !basePool.includes("mirrorLag")) basePool.push("mirrorLag");
+      return basePool;
+    }
+
+    function noteDiscovery(kind, id) {
+      if (!profileState || !id) return;
+      const key = kind === "relic" ? "discoveredRelics" : kind === "event" ? "discoveredEvents" : "discoveredEnemies";
+      if (profileState[key][id]) return;
+      profileState[key][id] = true;
+      saveProfileState();
+      renderProfileUI();
+    }
+
+    function renderCodexList(targetEl, entries, discoveredMap, labelFn, availableFn = () => true) {
+      if (!targetEl) return;
+      targetEl.innerHTML = "";
+      entries.forEach(entry => {
+        const li = document.createElement("li");
+        const available = availableFn(entry);
+        const discovered = !!discoveredMap[entry.id];
+        if (!available) {
+          li.className = "unknown";
+          li.textContent = "🔒 Locked by profile level";
+        } else if (discovered) {
+          li.className = "known";
+          li.textContent = labelFn(entry);
+        } else {
+          li.className = "unknown";
+          li.textContent = "??? Undiscovered";
+        }
+        targetEl.appendChild(li);
+      });
+    }
+
+    function renderProfileUI() {
+      if (!profileState) return;
+      const xpState = getProfileLevelAndRemainder(profileState.xp);
+      if (profileLevelLabelEl) profileLevelLabelEl.textContent = `Profile level ${xpState.level}`;
+      if (profileXpLabelEl) profileXpLabelEl.textContent = `${xpState.current} / ${xpState.needed} XP`;
+      if (profileProgressFillEl) profileProgressFillEl.style.width = `${Math.round((xpState.current / xpState.needed) * 100)}%`;
+      renderCodexList(codexRelicsEl, relicCatalog, profileState.discoveredRelics, relic => relic.name, canUseRelic);
+      renderCodexList(codexEventsEl, eventCatalog, profileState.discoveredEvents, event => event.title, canUseEvent);
+      renderCodexList(codexEnemiesEl, Object.values(ENEMY_DEFINITIONS), profileState.discoveredEnemies, enemy => `${enemy.portrait} ${enemy.name}`);
+      if (gameTitleEl) gameTitleEl.classList.toggle("title-cosmetic-obsidian", !!profileState.cosmetics.obsidianBanner);
+    }
+
+    function applyProfileProgressFromRun() {
+      if (!profileState) return [];
+      const before = getProfileLevelAndRemainder(profileState.xp).level;
+      profileState.totalRuns += 1;
+      profileState.totalNodesPlayed += historyLog.length;
+      if (youScore > rockScore && !runState.runFailed) profileState.totalWins += 1;
+
+      PROFILE_MILESTONES.forEach(milestone => {
+        if (profileState.claimedMilestones[milestone.id]) return;
+        let met = false;
+        if (milestone.id.startsWith("finish-")) met = profileState.totalRuns >= Number(milestone.id.split("-")[1]);
+        else if (milestone.id.startsWith("wins-")) met = profileState.totalWins >= Number(milestone.id.split("-")[1]);
+        else if (milestone.id === "nodes-60") met = profileState.totalNodesPlayed >= 60;
+        if (met) {
+          profileState.claimedMilestones[milestone.id] = true;
+          profileState.xp += milestone.xp;
+        }
+      });
+
+      const after = getProfileLevelAndRemainder(profileState.xp).level;
+      const newUnlocks = [];
+      PROFILE_LEVEL_REWARDS.forEach(reward => {
+        if (after < reward.level) return;
+        if (profileState.unlockedRewards.includes(reward.id)) return;
+        profileState.unlockedRewards.push(reward.id);
+        if (reward.id === "cosmetic-banner-obsidian") profileState.cosmetics.obsidianBanner = true;
+        newUnlocks.push(reward.text);
+      });
+
+      saveProfileState();
+      renderProfileUI();
+      return after > before || newUnlocks.length ? newUnlocks : [];
     }
 
     function loadPersistentAchievements() {
@@ -3270,6 +3510,18 @@
           summaryAchievementsListEl.appendChild(li);
         });
       }
+
+      summaryUnlockListEl.innerHTML = "";
+      if (!latestProfileUnlocks.length) {
+        summaryUnlocksEl.classList.add("is-hidden");
+      } else {
+        summaryUnlocksEl.classList.remove("is-hidden");
+        latestProfileUnlocks.forEach(text => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          summaryUnlockListEl.appendChild(li);
+        });
+      }
     }
 
     function jumpToRoundBoardFromSummary() {
@@ -3326,6 +3578,7 @@
         summaryLines.push("No relics were drafted this run.");
       }
 
+      latestProfileUnlocks = applyProfileProgressFromRun();
       challengeRunHash = computeChallengeRunHash();
       summaryLines.push(`Challenge validation hash: ${challengeRunHash}.`);
       saveRunToModeStats();
@@ -3341,6 +3594,15 @@
       resetBtn.style.display = "none";
       renderPostMatchSummary();
       setScene("matchSummary");
+      latestProfileUnlocks.forEach((text, idx) => {
+        setTimeout(() => {
+          const toast = document.createElement("div");
+          toast.className = "achievement-toast";
+          toast.innerHTML = `<strong>New unlock:</strong> ${text}`;
+          achievementToastsEl.appendChild(toast);
+          setTimeout(() => { toast.style.opacity = "0"; toast.style.transform = "translateX(10px)"; setTimeout(() => toast.remove(), 260); }, 3200);
+        }, idx * 250);
+      });
     }
 
     function initFromSeed(seed, manualFlag, scriptOverride, initialRelics = [], initialCurses = []) {
@@ -3410,6 +3672,7 @@
       announcedNodeCards.clear();
       debugLogEl.innerHTML = "";
       announcedAchievements = new Set();
+      latestProfileUnlocks = [];
       achievementToastsEl.innerHTML = "";
       renderAchievements();
 
@@ -3567,6 +3830,13 @@
       seedFeedbackEl.className = "seed-feedback info";
       seedFeedbackEl.textContent = "Achievements reset for this browser profile.";
     });
+    resetProfileBtn.addEventListener("click", () => {
+      profileState = getDefaultProfileState();
+      saveProfileState();
+      renderProfileUI();
+      seedFeedbackEl.className = "seed-feedback info";
+      seedFeedbackEl.textContent = "Profile progression reset for this browser profile.";
+    });
     adaptiveToggle.addEventListener("change", () => { advanceTutorialOnAction("adaptiveToggle"); updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); updateRunSummary(); });
     moodDisplayEl.addEventListener("click", () => advanceTutorialOnAction("moodDisplay"));
     sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; ensureAudioContext(); syncAudioMix(); playUiPip("hover"); });
@@ -3606,6 +3876,9 @@
       else if (key === "p") playRound("P");
       else if (key === "s") playRound("S");
     });
+
+    profileState = loadProfileState();
+    renderProfileUI();
 
     achievementUnlockCounts = loadPersistentAchievements();
     achievementCatalog.forEach(a => { if (!Number.isInteger(achievementUnlockCounts[a.id]) || achievementUnlockCounts[a.id] < 0) achievementUnlockCounts[a.id] = 0; });
