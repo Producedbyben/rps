@@ -19,8 +19,16 @@
     h1 { font-size: 1.6rem; margin: 0 0 4px; text-align: center; }
     .subtitle { text-align: center; font-size: 0.9rem; color: #c3c7d1; margin-bottom: 4px; }
     .run-summary { text-align: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 10px; }
-    .run-summary-pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.9); }
+    .run-summary-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.9); }
     .run-summary-pill strong { color: #e5e7eb; }
+
+    .title-shell { margin-bottom: 14px; border-radius: 14px; border: 1px solid rgba(148,163,184,0.45); background: rgba(15,23,42,0.92); padding: 16px 14px; text-align: center; }
+    .title-shell h2 { margin: 0 0 6px; font-size: 1.2rem; color: #f8fafc; }
+    .title-shell p { margin: 0 0 12px; font-size: 0.85rem; color: #cbd5e1; }
+    .title-shell .btn-primary { min-width: 180px; }
+    .match-setup { margin-top: 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,0.4); background: rgba(2,6,23,0.64); padding: 12px 10px; }
+    .match-setup h3 { margin: 0 0 10px; font-size: 0.82rem; letter-spacing: 0.06em; color: #bfdbfe; text-transform: uppercase; }
+    .run-mode-badge { border: 1px solid rgba(125,211,252,0.65); border-radius: 999px; padding: 2px 8px; font-size: 0.72rem; color: #dbeafe; }
 
     .seed-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; justify-content: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; }
     .seed-row label { display: inline-flex; align-items: center; gap: 6px; }
@@ -36,7 +44,7 @@
     .settings-row input[type="checkbox"] { accent-color: #8b5cf6; cursor: pointer; }
     .settings-hint { font-size: 0.75rem; color: #6b7280; }
 
-    .mode-toggle { text-align: center; font-size: 0.85rem; color: #9ca3af; margin-bottom: 4px; }
+    .mode-toggle { text-align: center; font-size: 0.85rem; color: #9ca3af; margin-bottom: 10px; }
     .mode-toggle label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
     .mode-toggle input { accent-color: #8b5cf6; cursor: pointer; }
 
@@ -51,6 +59,7 @@
       gap: 8px;
       margin: 8px 0 14px;
     }
+    .hud-row .run-summary { grid-column: 1 / -1; margin: 0; }
     .hud-chip {
       border-radius: 999px;
       border: 1px solid rgba(148,163,184,0.5);
@@ -277,6 +286,7 @@
       .vs { justify-self: center; }
       button { padding: 12px 20px; }
       .hud-row { grid-template-columns: 1fr; position: static; }
+      .hud-row .run-summary-pill { width: 100%; justify-content: center; flex-wrap: wrap; }
       .post-match-stats { grid-template-columns: 1fr; }
       .post-match-actions { flex-direction: column; }
       .post-match-actions button { width: 100%; justify-content: center; }
@@ -294,30 +304,52 @@
     <div class="subtitle">20 rounds of modelled Dwayne Johnson in progressive Rock Paper Scissors, you try to read the script.</div>
 
     <section id="sceneMetaPanels" class="scene">
-      <div class="run-summary">
-        <div id="runSummaryPill" class="run-summary-pill">
-          <span><strong>Run</strong> pending</span>
-          <span id="runSummaryScores">You 0, Rock 0, draws 0</span>
-          <span id="runSummarySeed">Seed pending</span>
-        </div>
-      </div>
       <div class="app-toolbar">
         <button id="gameMenuBtn" class="menu-btn" type="button" aria-controls="gameMenuModal" aria-expanded="false">Game Menu</button>
       </div>
     </section>
 
     <div class="hud-row" aria-label="Match HUD">
+      <div class="run-summary">
+        <div id="runSummaryPill" class="run-summary-pill is-hidden">
+          <span><strong>Run</strong> live</span>
+          <span id="runSummarySeed" class="run-mode-badge">Seed pending</span>
+          <span id="runSummaryMode" class="run-mode-badge">Mode pending</span>
+        </div>
+      </div>
       <div id="roundLabel" class="hud-chip">Round 1 of 20</div>
       <div id="scoreLabel" class="hud-chip">Dwayne 0  |  You 0  |  Draws 0</div>
       <div id="moodDisplay" class="mood-display severity-low">🧊 Rock is calm · Read risk 30%</div>
     </div>
 
     <section id="sceneLobby" class="scene">
+      <div class="title-shell">
+        <h2>Welcome to Beat The Rock</h2>
+        <p>He has the script. You have 20 rounds to break it before the bell.</p>
+        <button id="startMatchBtn" class="btn-primary" type="button">Start Match</button>
+
+        <div class="match-setup">
+          <h3>Match Setup</h3>
+          <div class="seed-row">
+            <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
+            <button id="randomSeedBtn" type="button">Generate random seed</button>
+            <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
+          </div>
+
+          <div class="mode-toggle">
+            <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he reads your status, trends, and last move after round 1.</label>
+          </div>
+
+          <div class="settings-row">
+            <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
+          </div>
+        </div>
+      </div>
       <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
       <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
       <div class="summary-card">
         <h2>Lobby</h2>
-        <p>Use Match panels for Stats, Achievements, Replay/Seed, and Debug. Open Game Menu for sound/help, then throw your first hand to start the match.</p>
+        <p>Use Match panels for Stats, Achievements, Replay/Seed, and Debug. Set seed, adaptive mode, and SFX in Match Setup, then hit Start Match to enter the arena.</p>
       </div>
     </section>
 
@@ -353,11 +385,6 @@
         <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
         <button id="resetBtn" class="btn-reset" style="display:none;">Reset match</button>
       </div>
-
-      <div class="mode-toggle">
-        <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he reads your status, trends, and last move after round 1.</label>
-      </div>
-
       <div id="resultLine" class="result-line" role="status" aria-live="polite" aria-atomic="true"></div>
       <div class="commentary-wrap">
         <div class="commentary-title">The Rock reaction</div>
@@ -402,11 +429,7 @@
         <details id="replaySeedPanel" class="drawer-panel">
           <summary>Replay/Seed</summary>
           <div class="drawer-panel-body">
-            <div class="seed-row">
-              <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
-              <button id="randomSeedBtn" type="button">Generate random seed</button>
-              <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
-            </div>
+            <p class="settings-hint">Seed and mode controls now live in Match Setup before you start a run.</p>
           </div>
         </details>
 
@@ -466,7 +489,6 @@
         </div>
 
         <div class="settings-row">
-          <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
           <button id="replayTutorialBtn" class="menu-btn" type="button">Replay Tutorial</button>
           <span class="settings-hint">Keyboard, R P S to play moves.</span>
         </div>
@@ -577,8 +599,10 @@
     const achievementsPanelEl = document.getElementById("achievementsPanel");
     const replaySeedPanelEl = document.getElementById("replaySeedPanel");
     const debugPanelEl = document.getElementById("debugPanel");
-    const runSummaryScoresEl = document.getElementById("runSummaryScores");
+    const runSummaryPillEl = document.getElementById("runSummaryPill");
     const runSummarySeedEl = document.getElementById("runSummarySeed");
+    const runSummaryModeEl = document.getElementById("runSummaryMode");
+    const startMatchBtn = document.getElementById("startMatchBtn");
     const sfxToggle = document.getElementById("sfxToggle");
     const seedFeedbackEl = document.getElementById("seedFeedback");
     const preRoundHintEl = document.getElementById("preRoundHint");
@@ -1169,7 +1193,7 @@
     function setScene(nextScene) {
       sceneState = nextScene;
       sceneLobbyEl.classList.toggle("is-hidden", nextScene !== "lobby");
-      sceneGameEl.classList.remove("is-hidden");
+      sceneGameEl.classList.toggle("is-hidden", nextScene === "lobby");
       sceneSummaryEl.classList.toggle("is-hidden", nextScene !== "matchSummary");
       document.body.classList.toggle("gameplay-active", nextScene === "inRound" || nextScene === "roundResult");
       if (tutorialActive) renderTutorialStep();
@@ -1231,8 +1255,10 @@
       progressTextEl.textContent = `${currentRound} of 20 completed`;
     }
     function updateRunSummary() {
-      runSummaryScoresEl.textContent = `You ${youScore}, Rock ${rockScore}, draws ${draws}`;
       runSummarySeedEl.textContent = `Seed ${runSeed}`;
+      runSummaryModeEl.textContent = adaptiveToggle.checked ? "Adaptive on" : "Scripted";
+      const runStarted = currentRound > 0 || sceneState === "inRound" || sceneState === "roundResult" || sceneState === "matchSummary";
+      runSummaryPillEl.classList.toggle("is-hidden", !runStarted);
     }
 
     function showCopyStatus(message, isError) {
@@ -1824,7 +1850,7 @@
       achievementsPanelEl.open = false;
       replaySeedPanelEl.open = false;
       debugPanelEl.open = false;
-      setButtonsEnabled(true);
+      setButtonsEnabled(false);
       resetBtn.style.display = "none";
       roundResultOverlayEl.classList.add("is-hidden");
       if (roundResultTimer) {
@@ -1865,6 +1891,13 @@
       initFromSeed(newSeed, manual, null);
     }
 
+    startMatchBtn.addEventListener("click", () => {
+      setScene("inRound");
+      setButtonsEnabled(true);
+      updateRunSummary();
+      moveButtons[0].focus();
+    });
+
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
       if (!isGameActive()) return;
       advanceTutorialOnAction("moveButtons");
@@ -1886,7 +1919,7 @@
       seedFeedbackEl.className = "seed-feedback info";
       seedFeedbackEl.textContent = "Achievements reset for this browser profile.";
     });
-    adaptiveToggle.addEventListener("change", () => { advanceTutorialOnAction("adaptiveToggle"); updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); });
+    adaptiveToggle.addEventListener("change", () => { advanceTutorialOnAction("adaptiveToggle"); updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); updateRunSummary(); });
     moodDisplayEl.addEventListener("click", () => advanceTutorialOnAction("moodDisplay"));
     sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
     copyLinkBtn.addEventListener("click", () => {
