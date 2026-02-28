@@ -42,10 +42,29 @@
 
     .adaptive-stats { text-align: center; font-size: 0.78rem; color: #6b7280; margin-bottom: 4px; margin-top: 2px; }
     .adaptive-stats strong { color: #e5e7eb; }
+    .hud-row {
+      position: sticky;
+      top: 8px;
+      z-index: 30;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 8px 0 14px;
+    }
+    .hud-chip {
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(15,23,42,0.92);
+      font-size: 0.78rem;
+      color: #e5e7eb;
+      padding: 8px 12px;
+      text-align: center;
+      line-height: 1.25;
+    }
     .mood-display {
-      margin: 6px auto 16px;
-      padding: 10px 12px;
-      border-radius: 12px;
+      margin: 0;
+      padding: 8px 10px;
+      border-radius: 999px;
       border: 1px solid rgba(148,163,184,0.45);
       background: linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));
       color: #e2e8f0;
@@ -53,15 +72,15 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      font-size: 0.82rem;
+      font-size: 0.74rem;
       font-weight: 600;
       transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
     }
     .mood-emoji { font-size: 1.3rem; line-height: 1; }
     .mood-text { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
     .mood-label { text-transform: uppercase; letter-spacing: 0.06em; color: rgba(226,232,240,0.9); font-size: 0.7rem; }
-    .mood-state { font-size: 0.95rem; color: #f8fafc; }
-    .mood-risk { font-size: 0.76rem; color: rgba(226,232,240,0.95); }
+    .mood-state { font-size: 0.84rem; color: #f8fafc; }
+    .mood-risk { font-size: 0.72rem; color: rgba(226,232,240,0.95); }
     .mood-display.severity-low {
       background: linear-gradient(135deg, rgba(20,83,45,0.75), rgba(15,23,42,0.95));
       border-color: rgba(74,222,128,0.55);
@@ -184,6 +203,17 @@
     .debug-log { margin-top: 8px; max-height: 260px; overflow-y: auto; border-top: 1px solid rgba(148,163,184,0.3); padding-top: 6px; }
     .debug-log-entry { margin-bottom: 4px; line-height: 1.3; }
 
+    .analysis-drawer { margin-top: 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,0.45); background: rgba(15,23,42,0.92); padding: 10px; }
+    .analysis-drawer-title { margin: 0 0 8px; font-size: 0.85rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
+    .drawer-panel { border: 1px solid rgba(148,163,184,0.35); border-radius: 10px; background: rgba(2,6,23,0.7); margin-bottom: 8px; overflow: hidden; transition: border-color 0.25s ease, box-shadow 0.25s ease; }
+    .drawer-panel[open] { border-color: rgba(125,211,252,0.6); }
+    .drawer-panel:last-child { margin-bottom: 0; }
+    .drawer-panel summary { cursor: pointer; list-style: none; padding: 9px 11px; font-size: 0.82rem; font-weight: 600; color: #e2e8f0; }
+    .drawer-panel summary::marker,
+    .drawer-panel summary::-webkit-details-marker { display: none; }
+    .drawer-panel-body { padding: 0 11px 11px; }
+    .drawer-panel.highlighted { box-shadow: 0 0 0 2px rgba(250,204,21,0.7); border-color: rgba(250,204,21,0.88); }
+
     .footer { margin-top: 18px; font-size: 0.8rem; color: #6b7280; text-align: center; line-height: 1.3; }
 
     .is-hidden { display: none !important; }
@@ -211,6 +241,7 @@
       .arena { grid-template-columns: 1fr; text-align: center; }
       .vs { justify-self: center; }
       button { padding: 12px 20px; }
+      .hud-row { grid-template-columns: 1fr; position: static; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -237,13 +268,18 @@
       </div>
     </section>
 
+    <div class="hud-row" aria-label="Match HUD">
+      <div id="roundLabel" class="hud-chip">Round 1 of 20</div>
+      <div id="scoreLabel" class="hud-chip">Dwayne 0  |  You 0  |  Draws 0</div>
+      <div id="moodDisplay" class="mood-display severity-low">🧊 Rock is calm · Read risk 30%</div>
+    </div>
+
     <section id="sceneLobby" class="scene">
       <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
-      <div id="moodDisplay" class="mood-display severity-low">🧊 Rock is calm · Read risk 30%</div>
       <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
       <div class="summary-card">
         <h2>Lobby</h2>
-        <p>Open Game Menu for seed, sound, achievements, help, and debug tools. Then throw your first hand to start the match.</p>
+        <p>Use Match panels for Stats, Achievements, Replay/Seed, and Debug. Open Game Menu for sound/help, then throw your first hand to start the match.</p>
       </div>
     </section>
 
@@ -264,10 +300,6 @@
         </div>
       </div>
 
-      <div class="round-info">
-        <span id="roundLabel">Round 1 of 20</span>
-        <span id="scoreLabel">Dwayne 0  |  You 0  |  Draws 0</span>
-      </div>
 
       <div class="progress-wrap">
         <div class="progress-labels">
@@ -294,20 +326,59 @@
         <div id="commentary" class="commentary" role="status" aria-live="polite" aria-atomic="true"></div>
       </div>
 
-      <div class="round-board">
-        <div class="round-board-header">
-          <span>20-round unified board (result + hands + order)</span>
-          <span>Outcome uses W/L/D</span>
-          <span id="roundBoardStatus">Round 1 is live</span>
-        </div>
-        <div id="roundBoard" class="round-board-grid"></div>
-        <div id="roundBoardPreview" class="round-board-preview">Hover, focus, or tap a played round to preview exact hands, outcome, and mood.</div>
-      </div>
-
       <div class="challenge-row">
         <button id="copyLinkBtn" class="btn-share" type="button">Copy challenge link</button>
         <div id="copyStatus" class="copy-status" aria-live="polite"></div>
       </div>
+
+      <section class="analysis-drawer" aria-label="Match intelligence panels">
+        <h2 class="analysis-drawer-title">Match panels</h2>
+        <details id="statsPanel" class="drawer-panel" open>
+          <summary>Stats</summary>
+          <div class="drawer-panel-body">
+            <div class="round-board">
+              <div class="round-board-header">
+                <span>20-round unified board (result + hands + order)</span>
+                <span>Outcome uses W/L/D</span>
+                <span id="roundBoardStatus">Round 1 is live</span>
+              </div>
+              <div id="roundBoard" class="round-board-grid"></div>
+              <div id="roundBoardPreview" class="round-board-preview">Hover, focus, or tap a played round to preview exact hands, outcome, and mood.</div>
+            </div>
+          </div>
+        </details>
+
+        <details id="achievementsPanel" class="drawer-panel">
+          <summary>Achievements</summary>
+          <div class="drawer-panel-body">
+            <div class="achievements">
+              <div class="achievements-header">
+                <span>Run achievements</span>
+                <button id="resetAchievementsBtn" class="btn-achievements-reset" type="button">Reset achievements</button>
+              </div>
+              <div id="achievementsList" class="achievements-list"></div>
+            </div>
+          </div>
+        </details>
+
+        <details id="replaySeedPanel" class="drawer-panel">
+          <summary>Replay/Seed</summary>
+          <div class="drawer-panel-body">
+            <div class="seed-row">
+              <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
+              <button id="randomSeedBtn" type="button">Generate random seed</button>
+              <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
+            </div>
+          </div>
+        </details>
+
+        <details id="debugPanel" class="drawer-panel debug-panel">
+          <summary><span>Debug</span></summary>
+          <div class="drawer-panel-body">
+            <div id="debugLog" class="debug-log"></div>
+          </div>
+        </details>
+      </section>
     </section>
 
     <section id="sceneSummary" class="scene is-hidden">
@@ -328,23 +399,9 @@
           <button id="closeMenuBtn" class="menu-close-btn" type="button">Close</button>
         </div>
 
-        <div class="seed-row">
-          <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
-          <button id="randomSeedBtn" type="button">Generate random seed</button>
-          <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
-        </div>
-
         <div class="settings-row">
           <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
           <span class="settings-hint">Keyboard, R P S to play moves.</span>
-        </div>
-
-        <div class="achievements">
-          <div class="achievements-header">
-            <span>Run achievements</span>
-            <button id="resetAchievementsBtn" class="btn-achievements-reset" type="button">Reset achievements</button>
-          </div>
-          <div id="achievementsList" class="achievements-list"></div>
         </div>
 
         <details class="help-box">
@@ -355,7 +412,7 @@
               <li>Dwayne starts from a fixed base script; in Adaptive mode he uses score state, mood, and your recent move trends to pick his next hand after round 1.</li>
               <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and mood changes adapt chance.</li>
               <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
-              <li>Set a seed in the field above to replay exact runs, or leave it blank to randomize next reset.</li>
+              <li>Set a seed in the Replay/Seed panel to replay exact runs, or leave it blank to randomize next reset.</li>
               <li>Achievements include clutch, chaos, status, sequence, and consolation badges; unlocks are immediate and each one raises its multiplier for this browser profile.</li>
             </ul>
             <div class="help-legend">
@@ -366,10 +423,6 @@
           </div>
         </details>
 
-        <details class="debug-panel">
-          <summary><span>Round log and debug info</span></summary>
-          <div id="debugLog" class="debug-log"></div>
-        </details>
       </div>
     </div>
 
@@ -442,6 +495,10 @@
     const randomSeedBtn = document.getElementById("randomSeedBtn");
     const debugLogEl = document.getElementById("debugLog");
     const achievementsListEl = document.getElementById("achievementsList");
+    const statsPanelEl = document.getElementById("statsPanel");
+    const achievementsPanelEl = document.getElementById("achievementsPanel");
+    const replaySeedPanelEl = document.getElementById("replaySeedPanel");
+    const debugPanelEl = document.getElementById("debugPanel");
     const runSummaryScoresEl = document.getElementById("runSummaryScores");
     const runSummarySeedEl = document.getElementById("runSummarySeed");
     const sfxToggle = document.getElementById("sfxToggle");
@@ -878,6 +935,14 @@
         const outcomeText = last.outcome === "win" ? "you win" : last.outcome === "lose" ? "The Rock wins" : "draw";
         roundBoardPreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}. Hover any played round for detail.`;
       }
+    }
+
+    function openDrawerPanel(panelEl, { highlight = false } = {}) {
+      if (!panelEl) return;
+      panelEl.open = true;
+      if (!highlight) return;
+      panelEl.classList.add("highlighted");
+      setTimeout(() => panelEl.classList.remove("highlighted"), 1500);
     }
 
     function setScene(nextScene) {
@@ -1336,6 +1401,7 @@
         savePersistentAchievements();
         showAchievementToast(achievement, nextCount);
       });
+      if (newlyUnlocked.length > 0) openDrawerPanel(achievementsPanelEl, { highlight: true });
       renderAchievements();
     }
 
@@ -1402,6 +1468,8 @@
       commentaryEl.textContent = summaryLines.join(" ");
 
       renderAchievements();
+      openDrawerPanel(statsPanelEl);
+      openDrawerPanel(achievementsPanelEl, { highlight: true });
       if (historyLog.length > 0) handleRoundBoardHover(historyLog.length - 1);
       resetBtn.style.display = "inline-flex";
       setScene("matchSummary");
@@ -1470,6 +1538,10 @@
         seedFeedbackEl.textContent = "Scripted challenge loaded from shared adaptive run. Adaptive mode is locked off for exact replay.";
       }
 
+      statsPanelEl.open = true;
+      achievementsPanelEl.open = false;
+      replaySeedPanelEl.open = false;
+      debugPanelEl.open = false;
       setButtonsEnabled(true);
       resetBtn.style.display = "none";
       roundResultOverlayEl.classList.add("is-hidden");
