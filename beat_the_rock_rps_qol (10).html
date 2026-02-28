@@ -233,6 +233,14 @@
     .relic-choice-btn strong { display: block; font-size: 0.78rem; color: #fff7ed; margin-bottom: 3px; }
     .map-node-btn.completed { opacity: 0.65; }
 
+    .event-card { margin: 10px 0 2px; padding: 11px; border-radius: 12px; border: 1px solid rgba(251,191,36,0.65); background: linear-gradient(145deg, rgba(120,53,15,0.62), rgba(15,23,42,0.95)); }
+    .event-card h3 { margin: 0 0 4px; font-size: 0.9rem; color: #fde68a; }
+    .event-card p { margin: 0 0 8px; font-size: 0.77rem; color: #fef3c7; }
+    .event-choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+    .event-choice-btn { text-align: left; border-radius: 10px; border: 1px solid rgba(253,224,71,0.55); background: rgba(30,41,59,0.92); color: #fef9c3; font-size: 0.76rem; padding: 8px; }
+    .event-choice-btn strong { display: block; font-size: 0.78rem; color: #fff7ed; margin-bottom: 3px; }
+    .event-log-list { margin: 8px 0 0; padding-left: 18px; color: #e2e8f0; font-size: 0.78rem; }
+
     .challenge-row { margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
     .btn-share { background: #2563eb; color: #eff6ff; box-shadow: 0 4px 10px rgba(0,0,0,0.55); }
     .copy-status { font-size: 0.78rem; color: #93c5fd; min-height: 1.1rem; }
@@ -440,6 +448,10 @@
       </div>
       <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
       <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
+      <div id="eventLobbyCard" class="event-card">
+        <h3>Run events</h3>
+        <p>Branching event nodes can grant risky relic deals, tactical shields, or hidden boss variants.</p>
+      </div>
       <div class="summary-card">
         <h2>Lobby</h2>
         <p>Use Match panels for Stats, Achievements, Replay/Seed, and Debug. Set seed, adaptive mode, and SFX in Match Setup, then hit Start Match to enter the arena.</p>
@@ -455,6 +467,12 @@
         </div>
         <div id="mapPath" class="map-path">Completed path: none yet.</div>
         <div id="mapChoices" class="map-choices" role="group" aria-label="Choose next map node"></div>
+      </div>
+
+      <div id="eventPanel" class="event-card is-hidden" aria-live="polite">
+        <h3 id="eventTitle">Event</h3>
+        <p id="eventBody">A side scene unfolds between clashes.</p>
+        <div id="eventChoiceGrid" class="event-choice-grid"></div>
       </div>
 
       <div id="relicChoicePanel" class="relic-choice-panel is-hidden" aria-live="polite">
@@ -570,6 +588,12 @@
             <div class="post-match-stat-label">Mood pressure moments</div>
             <div id="summaryMoodPressure" class="post-match-stat-value">0 rounds</div>
           </div>
+        </div>
+
+        <div id="summaryEventCard" class="event-card">
+          <h3>Run events</h3>
+          <p id="summaryEventFlavor">No event decisions logged this run.</p>
+          <ul id="summaryEventList" class="event-log-list"></ul>
         </div>
 
         <div class="post-match-achievements">
@@ -755,6 +779,12 @@
     const relicStripListEl = document.getElementById("relicStripList");
     const relicChoicePanelEl = document.getElementById("relicChoicePanel");
     const relicChoiceGridEl = document.getElementById("relicChoiceGrid");
+    const eventPanelEl = document.getElementById("eventPanel");
+    const eventTitleEl = document.getElementById("eventTitle");
+    const eventBodyEl = document.getElementById("eventBody");
+    const eventChoiceGridEl = document.getElementById("eventChoiceGrid");
+    const summaryEventFlavorEl = document.getElementById("summaryEventFlavor");
+    const summaryEventListEl = document.getElementById("summaryEventList");
 
     const U32_MIN = 0;
     const U32_MAX = 0xFFFFFFFF;
@@ -773,7 +803,15 @@
       availableNodeIds: [],
       activeNodeId: null,
       completedNodeIds: [],
-      activeRelics: []
+      activeRelics: [],
+      eventLog: [],
+      pendingEvent: null,
+      skipNextLossPenalty: false,
+      revealNextNodeReward: false,
+      revealedNodeRewards: {},
+      curseStacks: 0,
+      rareChainStage: 0,
+      unlockedBossVariant: null
     };
 
     const relicCatalog = [
@@ -797,6 +835,46 @@
       { id: "stonewall", name: "Stonewall", text: "On draw, The Rock loses 1 point if he leads.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "draw" && scoreContext.preScoreDiff < 0) { scoreContext.rockDelta -= 1; feedback.push("Stonewall -1 Rock"); } } },
       { id: "last-breath", name: "Last Breath", text: "If final node is a loss, turn it into draw once.", oneUse: true, apply: ({ scoreContext, relicState, feedback }) => { if (!relicState.used && scoreContext.isFinalNode && scoreContext.baseOutcome === "lose") { scoreContext.outcome = "draw"; relicState.used = true; feedback.push("Last Breath saved final node"); } } },
       { id: "pattern-seer", name: "Pattern Seer", text: "+1 score if your move beats your own previous move.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.beatsOwnLastMove) { scoreContext.youDelta += 1; feedback.push("Pattern Seer +1"); } } }
+    ];
+
+    const eventCatalog = [
+      {
+        id: "promoter-backroom",
+        title: "Backroom Promoter",
+        text: "A suit offers you a scripted edge, but every deal has weight.",
+        choices: [
+          { id: "sign-ink", title: "Sign the ink", text: "Gain a random relic and 1 curse stack.", effect: "gainRelicAndCurse" },
+          { id: "walk-away", title: "Walk away", text: "No change. Keep your hands clean.", effect: "noop" }
+        ]
+      },
+      {
+        id: "ringside-medic",
+        title: "Ringside Medic",
+        text: "The medic tapes your wrist and whispers a survival trick.",
+        choices: [
+          { id: "brace", title: "Take the brace", text: "Skip the next loss penalty.", effect: "skipNextLossPenalty" },
+          { id: "peek", title: "Ask for route intel", text: "Reveal the next node reward preview.", effect: "revealNextNodeReward" },
+          { id: "decline", title: "Decline help", text: "No immediate bonus.", effect: "noop" }
+        ]
+      },
+      {
+        id: "oracle-shard",
+        title: "Oracle Shard",
+        text: "A shard hums with replay-static from future finals.",
+        choices: [
+          { id: "attune", title: "Attune to it", text: "Begin a rare chain toward a hidden boss variant.", effect: "rareChainStart" },
+          { id: "stow", title: "Pocket and move", text: "Gain +1 draw score instantly.", effect: "instantDraw" }
+        ]
+      },
+      {
+        id: "forge-echo",
+        title: "Forge Echo",
+        text: "The shard resonates with the arena bell. The chain can be completed here.",
+        choices: [
+          { id: "temper", title: "Temper the shard", text: "Unlock the Obsidian Headliner boss variant.", effect: "unlockBossVariant" },
+          { id: "break", title: "Break it", text: "Gain skip-next-loss but end the chain.", effect: "skipNextLossPenaltyAndEndChain" }
+        ]
+      }
     ];
 
     const achievementCatalog = [
@@ -1022,10 +1100,24 @@
 
     function selectNextNode(nodeId) {
       if (!relicChoicePanelEl.classList.contains("is-hidden")) return;
+      if (runState.pendingEvent) return;
       if (!runState.availableNodeIds.includes(nodeId)) return;
       runState.activeNodeId = nodeId;
       runState.selectedPath.push(nodeId);
       runState.availableNodeIds = [];
+      const node = getActiveNode();
+      if (node && node.type === "event") {
+        const event = getEventForNode(node);
+        if (event) {
+          runState.pendingEvent = { node, event };
+          renderEventPanel();
+          renderMapPanel();
+          setScene("map");
+          setButtonsEnabled(false);
+          return;
+        }
+      }
+      renderEventPanel();
       renderMapPanel();
       setScene("inRound");
       setButtonsEnabled(true);
@@ -1053,7 +1145,8 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "map-node-btn";
-        btn.textContent = `Act ${node.act} Node ${node.index} · ${nodeTypeLabel(node.type)}`;
+        const preview = runState.revealedNodeRewards[id];
+        btn.textContent = `Act ${node.act} Node ${node.index} · ${nodeTypeLabel(node.type)}${preview ? ` · ${preview}` : ""}`;
         if (runState.completedNodeIds.includes(id)) btn.classList.add("completed");
         if (runState.activeNodeId === id) btn.classList.add("current");
         const selectable = runState.availableNodeIds.includes(id);
@@ -1135,6 +1228,129 @@
         relicDef.apply({ scoreContext, relicState, feedback });
       });
       return feedback;
+    }
+
+    function mixSeed(...parts) {
+      let value = runSeed >>> 0;
+      parts.forEach((part, index) => {
+        const n = typeof part === "number" ? part : String(part).split("").reduce((acc, ch) => (Math.imul(acc, 33) + ch.charCodeAt(0)) >>> 0, 5381);
+        value = (value ^ (Math.imul((n >>> 0) + index + 1, 0x9E3779B1) >>> 0)) >>> 0;
+        value = Math.imul(value ^ (value >>> 16), 0x85EBCA6B) >>> 0;
+      });
+      return value >>> 0;
+    }
+
+    function pickDeterministic(items, ...parts) {
+      if (!items.length) return null;
+      const idx = mixSeed(...parts) % items.length;
+      return items[idx];
+    }
+
+    function rollDeterministicRelic(...parts) {
+      const ownedIds = new Set(runState.activeRelics.map(relic => relic.id));
+      const pool = relicCatalog.filter(relic => !ownedIds.has(relic.id));
+      return pickDeterministic(pool, "event-relic", ...parts);
+    }
+
+    function getNodeRewardPreview(nodeId) {
+      const node = runState.mapNodes[nodeId];
+      if (!node) return "Unknown node";
+      if (node.type === "boss") return "Boss reward: guaranteed relic draft";
+      if (node.type === "elite") return "Elite reward: guaranteed relic draft on win";
+      if (node.type === "event") return "Event reward: narrative choice modifier";
+      return "Normal reward: 40% relic draft on win";
+    }
+
+    function maybeRevealUpcomingRewards() {
+      if (!runState.revealNextNodeReward || !runState.availableNodeIds.length) return;
+      runState.availableNodeIds.forEach(id => {
+        runState.revealedNodeRewards[id] = getNodeRewardPreview(id);
+      });
+      runState.revealNextNodeReward = false;
+    }
+
+    function getEventForNode(node) {
+      if (!node || node.type !== "event") return null;
+      const chainReady = runState.rareChainStage === 1;
+      if (chainReady && (mixSeed("forge-gate", node.id, runState.selectedPath.join("-")) % 4 === 0)) {
+        return eventCatalog.find(event => event.id === "forge-echo") || null;
+      }
+      const pool = eventCatalog.filter(event => event.id !== "forge-echo");
+      return pickDeterministic(pool, "node-event", node.id, runState.selectedPath.join("-"));
+    }
+
+    function renderEventPanel() {
+      const pending = runState.pendingEvent;
+      if (!pending) {
+        eventPanelEl.classList.add("is-hidden");
+        return;
+      }
+      eventPanelEl.classList.remove("is-hidden");
+      eventTitleEl.textContent = pending.event.title;
+      eventBodyEl.textContent = pending.event.text;
+      eventChoiceGridEl.innerHTML = "";
+      pending.event.choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "event-choice-btn";
+        btn.innerHTML = `<strong>${choice.title}</strong>${choice.text}`;
+        btn.addEventListener("click", () => resolveEventChoice(choice));
+        eventChoiceGridEl.appendChild(btn);
+      });
+    }
+
+    function logEventDecision(event, choice, effectsText, node) {
+      const detail = `${event.title} · ${choice.title} (${effectsText})`;
+      runState.eventLog.push({ nodeId: node.id, nodeIndex: node.index, detail });
+    }
+
+    function resolveEventChoice(choice) {
+      const pending = runState.pendingEvent;
+      if (!pending) return;
+      const { event, node } = pending;
+      let effectsText = "No effect";
+
+      if (choice.effect === "gainRelicAndCurse") {
+        const relic = rollDeterministicRelic(node.id, choice.id);
+        if (relic) {
+          runState.activeRelics.push({ id: relic.id, used: false });
+          runState.curseStacks += 1;
+          effectsText = `Gained relic ${relic.name} and +1 curse`;
+        } else {
+          runState.curseStacks += 1;
+          effectsText = "No relic available, +1 curse";
+        }
+      } else if (choice.effect === "skipNextLossPenalty") {
+        runState.skipNextLossPenalty = true;
+        effectsText = "Next loss will not grant Rock score";
+      } else if (choice.effect === "revealNextNodeReward") {
+        runState.revealNextNodeReward = true;
+        effectsText = "Next branch reward preview revealed";
+      } else if (choice.effect === "rareChainStart") {
+        runState.rareChainStage = 1;
+        effectsText = "Rare chain started";
+      } else if (choice.effect === "instantDraw") {
+        draws += 1;
+        effectsText = "+1 draw score";
+      } else if (choice.effect === "unlockBossVariant") {
+        runState.rareChainStage = 2;
+        runState.unlockedBossVariant = "obsidian-headliner";
+        effectsText = "Unlocked Obsidian Headliner boss variant";
+      } else if (choice.effect === "skipNextLossPenaltyAndEndChain") {
+        runState.skipNextLossPenalty = true;
+        runState.rareChainStage = 0;
+        effectsText = "Chain ended, next loss penalty skipped";
+      }
+
+      logEventDecision(event, choice, effectsText, node);
+      commentaryEl.textContent = `${event.title}: ${choice.title}. ${effectsText}.`;
+      runState.pendingEvent = null;
+      renderEventPanel();
+      renderRelicStrip();
+      updateScoreLabel();
+      setScene("inRound");
+      setButtonsEnabled(true);
+      moveButtons[0].focus();
     }
 
     function loadPersistentAchievements() {
@@ -1507,6 +1723,7 @@
       sceneGameEl.classList.toggle("is-hidden", nextScene === "lobby");
       sceneSummaryEl.classList.toggle("is-hidden", nextScene !== "matchSummary");
       mapPanelEl.classList.toggle("is-hidden", nextScene === "lobby" || nextScene === "matchSummary");
+      eventPanelEl.classList.toggle("is-hidden", !(sceneState === "map" && !!runState.pendingEvent));
       document.body.classList.toggle("gameplay-active", nextScene === "inRound" || nextScene === "roundResult");
       if (tutorialActive) renderTutorialStep();
     }
@@ -1564,7 +1781,12 @@
       const activeNode = getActiveNode();
       roundLabelEl.textContent = activeNode ? `Act ${activeNode.act} Node ${activeNode.index}` : `Act 1 Node ${Math.min(currentRound + 1, getTotalNodes())}`;
     }
-    function updateScoreLabel() { scoreLabelEl.textContent = `The Rock ${rockScore}  |  You ${youScore}  |  Draws ${draws}`; }
+    function updateScoreLabel() {
+      const extras = [];
+      if (runState.skipNextLossPenalty) extras.push("ward ready");
+      if (runState.curseStacks > 0) extras.push(`curses ${runState.curseStacks}`);
+      scoreLabelEl.textContent = `The Rock ${rockScore}  |  You ${youScore}  |  Draws ${draws}${extras.length ? `  |  ${extras.join(" · ")}` : ""}`;
+    }
     function updateProgressBar() {
       const pct = (currentRound / getTotalNodes()) * 100;
       progressFillEl.style.width = `${pct}%`;
@@ -1938,6 +2160,20 @@
       };
 
       const relicFeedback = applyRelicEffects(scoreContext);
+      if (scoreContext.nodeType === "boss" && runState.unlockedBossVariant === "obsidian-headliner" && scoreContext.baseOutcome === "lose") {
+        scoreContext.rockDelta += 1;
+        relicFeedback.push("Obsidian Headliner pressure +1");
+      }
+      if (scoreContext.baseOutcome === "lose" && runState.skipNextLossPenalty) {
+        scoreContext.rockDelta = 0;
+        runState.skipNextLossPenalty = false;
+        relicFeedback.push("Event ward negated loss penalty");
+      }
+      if (runState.curseStacks > 0 && scoreContext.baseOutcome === "win") {
+        const cursePenalty = Math.min(runState.curseStacks, scoreContext.youDelta);
+        scoreContext.youDelta -= cursePenalty;
+        if (cursePenalty > 0) relicFeedback.push(`Curse drag -${cursePenalty}`);
+      }
       outcome = scoreContext.outcome;
       youScore += scoreContext.youDelta;
       rockScore += scoreContext.rockDelta;
@@ -1982,7 +2218,8 @@
         adaptiveUsed: lastDecisionAdaptive,
         adaptiveCorrect: lastDecisionAdaptive && (beats[yourMove] === rockMove),
         mood: moodBefore,
-        beatRockThisRound
+        beatRockThisRound,
+        eventDecision: runState.eventLog.find(log => log.nodeId === (activeNode ? activeNode.id : -1)) || null
       });
 
       renderDebugLog();
@@ -1992,6 +2229,7 @@
         runState.completedNodeIds.push(completedNode.id);
         runState.availableNodeIds = completedNode.next.slice();
       }
+      maybeRevealUpcomingRewards();
 
       currentRound += 1;
       if (!isRunComplete() && runState.availableNodeIds.length > 0) runState.activeNodeId = null;
@@ -2110,6 +2348,18 @@
       summaryBeatRockRateEl.textContent = `${beatRockRate}% (${beatRockHits}/${historyLog.length || getTotalNodes()})`;
       summaryMoodPressureEl.textContent = `${moodPressureMoments} rounds`;
 
+      summaryEventListEl.innerHTML = "";
+      if (!runState.eventLog.length) {
+        summaryEventFlavorEl.textContent = "No event decisions logged this run.";
+      } else {
+        summaryEventFlavorEl.textContent = runState.unlockedBossVariant ? `Rare chain complete: ${runState.unlockedBossVariant}.` : "Event decisions logged for this seeded path.";
+        runState.eventLog.forEach(eventEntry => {
+          const li = document.createElement("li");
+          li.textContent = `Node ${eventEntry.nodeIndex}: ${eventEntry.detail}`;
+          summaryEventListEl.appendChild(li);
+        });
+      }
+
       summaryAchievementsListEl.innerHTML = "";
       if (runAchievements.length === 0) {
         summaryAchievementsListEl.classList.add("is-hidden");
@@ -2160,6 +2410,12 @@
       const runAchievements = getUnlockedAchievementDefs();
       if (runAchievements.length > 0) summaryLines.push(`Achievements unlocked this run, ${runAchievements.map(a => a.name).join(", ")}.`);
       else summaryLines.push("No achievements this time, try different seeds or adaptive settings.");
+      const historyEventDetails = historyLog.filter(entry => entry.eventDecision).map(entry => `Node ${entry.nodeIndex}: ${entry.eventDecision.detail}`);
+      if (historyEventDetails.length > 0) {
+        summaryLines.push(`Event decisions this run, ${historyEventDetails.join(" | ")}.`);
+      } else summaryLines.push("No event decisions were logged this run.");
+      if (runState.unlockedBossVariant) summaryLines.push(`Rare chain complete: unlocked boss variant ${runState.unlockedBossVariant}.`);
+
       if (runState.activeRelics.length > 0) {
         const relicNames = runState.activeRelics.map(relicState => {
           const relic = relicCatalog.find(entry => entry.id === relicState.id);
@@ -2192,6 +2448,14 @@
       runState.availableNodeIds = [0];
       runState.activeNodeId = null;
       runState.completedNodeIds = [];
+      runState.eventLog = [];
+      runState.pendingEvent = null;
+      runState.skipNextLossPenalty = false;
+      runState.revealNextNodeReward = false;
+      runState.revealedNodeRewards = {};
+      runState.curseStacks = 0;
+      runState.rareChainStage = 0;
+      runState.unlockedBossVariant = null;
       runState.activeRelics = initialRelics
         .filter(id => relicCatalog.some(relic => relic.id === id))
         .map(id => ({ id, used: false }));
@@ -2239,6 +2503,7 @@
       createRoundBoardCells();
       renderRoundBoard();
       renderRelicStrip();
+      renderEventPanel();
       relicChoicePanelEl.classList.add("is-hidden");
       roundBoardPreviewEl.textContent = "Hover, focus, or tap a played node to preview exact hands, outcome, and mood.";
 
