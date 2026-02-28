@@ -2,22 +2,75 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Beat The Rock - Progressive Rock Paper Scissors</title>
+  <title>Beat The Rock: Challenge Dwayne Johnson at Rock Paper Scissors</title>
   <style>
+    :root {
+      --panel-bg: rgba(8, 14, 30, 0.72);
+      --panel-border: rgba(148, 163, 184, 0.32);
+      --text-soft: #c3c7d1;
+      --neon-cyan: #22d3ee;
+      --neon-violet: #a78bfa;
+    }
     body {
       margin: 0;
       padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0b0c10;
+      font-family: "Segoe UI", Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       color: #f5f5f5;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(34, 211, 238, 0.22), transparent 35%),
+        radial-gradient(circle at 84% 7%, rgba(167, 139, 250, 0.24), transparent 34%),
+        radial-gradient(circle at 70% 72%, rgba(244, 114, 182, 0.16), transparent 38%),
+        linear-gradient(140deg, #04050c 0%, #0a1224 48%, #070910 100%);
+      background-attachment: fixed;
     }
-    .app { max-width: 880px; width: 100%; padding: 24px 20px 40px; box-sizing: border-box; }
-    h1 { font-size: 1.6rem; margin: 0 0 4px; text-align: center; }
-    .subtitle { text-align: center; font-size: 0.9rem; color: #c3c7d1; margin-bottom: 4px; }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -25vmax;
+      background: conic-gradient(from 120deg at 50% 50%, rgba(34,211,238,0.12), rgba(167,139,250,0.13), rgba(244,114,182,0.12), rgba(34,211,238,0.12));
+      filter: blur(70px);
+      animation: auroraSpin 26s linear infinite;
+      pointer-events: none;
+      z-index: -2;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(rgba(148,163,184,0.2) 0.65px, transparent 0.65px);
+      background-size: 3px 3px;
+      opacity: 0.16;
+      pointer-events: none;
+      z-index: -1;
+    }
+    @keyframes auroraSpin { from { transform: rotate(0deg) scale(1.03); } to { transform: rotate(360deg) scale(1.03); } }
+    .app {
+      max-width: 920px;
+      width: 100%;
+      padding: 26px 22px 44px;
+      margin: 18px auto 30px;
+      box-sizing: border-box;
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.22);
+      background: linear-gradient(160deg, rgba(15,23,42,0.62), rgba(2,6,23,0.8));
+      box-shadow: 0 26px 60px rgba(2, 6, 23, 0.68), inset 0 0 0 1px rgba(255,255,255,0.04);
+      backdrop-filter: blur(14px);
+    }
+    h1 {
+      font-size: clamp(2rem, 3.5vw, 2.7rem);
+      margin: 0 0 5px;
+      text-align: center;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-shadow: 0 0 24px rgba(34,211,238,0.45), 0 0 38px rgba(167,139,250,0.4);
+    }
+    .subtitle { text-align: center; font-size: 0.95rem; color: #dbe4ff; margin-bottom: 6px; }
     .run-summary { text-align: center; font-size: 0.8rem; color: #9ca3af; margin-bottom: 10px; }
     .run-summary-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.9); }
     .run-summary-pill strong { color: #e5e7eb; }
@@ -48,6 +101,15 @@
     .mode-toggle label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
     .mode-toggle input { accent-color: #8b5cf6; cursor: pointer; }
 
+    .scene {
+      border: 1px solid var(--panel-border);
+      background: var(--panel-bg);
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      margin-bottom: 12px;
+      box-shadow: 0 10px 24px rgba(2,6,23,0.4);
+      backdrop-filter: blur(8px);
+    }
     .adaptive-stats { text-align: center; font-size: 0.78rem; color: #6b7280; margin-bottom: 4px; margin-top: 2px; }
     .adaptive-stats strong { color: #e5e7eb; }
     .hud-row {
@@ -62,13 +124,15 @@
     .hud-row .run-summary { grid-column: 1 / -1; margin: 0; }
     .hud-chip {
       border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.5);
-      background: rgba(15,23,42,0.92);
+      border: 1px solid rgba(125,211,252,0.38);
+      background: linear-gradient(140deg, rgba(15,23,42,0.92), rgba(30,41,59,0.7));
       font-size: 0.78rem;
       color: #e5e7eb;
       padding: 8px 12px;
       text-align: center;
       line-height: 1.25;
+      box-shadow: 0 8px 18px rgba(2,6,23,0.45), inset 0 0 16px rgba(34,211,238,0.08);
+      backdrop-filter: blur(6px);
     }
     .mood-display {
       margin: 0;
@@ -107,7 +171,8 @@
     }
     .pre-round-hint { text-align: center; font-size: 0.8rem; color: #c3c7d1; margin-bottom: 14px; min-height: 1.2rem; }
 
-    .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: #11141f; border-radius: 16px; padding: 18px 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); transform-origin: center; }
+    .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: linear-gradient(155deg, rgba(17,20,31,0.78), rgba(15,23,42,0.95)); border: 1px solid rgba(148,163,184,0.34); border-radius: 18px; padding: 20px 18px; box-shadow: 0 18px 42px rgba(0,0,0,0.52), inset 0 0 30px rgba(139,92,246,0.13); transform-origin: center; position: relative; overflow: hidden; }
+    .arena::before { content: ""; position: absolute; inset: -30% 15% auto; height: 60%; background: radial-gradient(circle at center, rgba(34,211,238,0.23), transparent 70%); filter: blur(22px); pointer-events: none; }
     @keyframes shake { 0%{transform:translate(0,0)} 20%{transform:translate(-4px,2px)} 40%{transform:translate(4px,-2px)} 60%{transform:translate(-3px,1px)} 80%{transform:translate(3px,0)} 100%{transform:translate(0,0)} }
     .arena.shake { animation: shake 0.35s ease; }
     @keyframes lockPulse { 0%{transform:scale(1)} 50%{transform:scale(1.01)} 100%{transform:scale(1)} }
@@ -119,9 +184,9 @@
     .side h2 { font-size: 1rem; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.06em; color: #c3c7d1; }
     .side .name-rock { color: #ffcc4d; font-weight: 700; }
     .side .name-you { color: #6ee7b7; font-weight: 700; }
-    .hand { font-size: 3.2rem; min-height: 3.2rem; line-height: 1; margin-bottom: 8px; }
+    .hand { font-size: 3.35rem; min-height: 3.2rem; line-height: 1; margin-bottom: 8px; text-shadow: 0 0 18px rgba(255,255,255,0.2), 0 0 26px rgba(34,211,238,0.24); }
     .label-move { font-size: 0.9rem; color: #aeb2c0; min-height: 1.2rem; }
-    .vs { font-size: 1.2rem; font-weight: 700; color: #8b5cf6; padding: 8px 10px; border-radius: 999px; border: 1px solid rgba(139,92,246,0.6); background: radial-gradient(circle at 30% 0, rgba(139,92,246,0.3), transparent), rgba(17,24,39,0.9); }
+    .vs { font-size: 1.2rem; font-weight: 700; color: #ddd6fe; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(139,92,246,0.72); background: radial-gradient(circle at 30% 0, rgba(139,92,246,0.45), transparent), rgba(17,24,39,0.94); box-shadow: 0 0 18px rgba(139,92,246,0.45); letter-spacing: 0.18em; }
 
     .round-info { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: space-between; align-items: baseline; font-size: 0.95rem; color: #c3c7d1; }
     .progress-wrap { margin-top: 10px; }
@@ -129,7 +194,7 @@
     .progress-bar { position: relative; width: 100%; height: 6px; border-radius: 999px; background: #020617; overflow: hidden; border: 1px solid rgba(30,64,175,0.8); }
     .progress-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #4ade80, #22c55e, #16a34a); transition: width 0.25s ease; }
 
-    .round-board { margin-top: 14px; padding: 12px 10px 10px; border-radius: 12px; background: radial-gradient(circle at top, rgba(56,189,248,0.12), rgba(2,6,23,0.94)); border: 1px solid rgba(56,189,248,0.35); }
+    .round-board { margin-top: 14px; padding: 12px 10px 10px; border-radius: 14px; background: radial-gradient(circle at top, rgba(56,189,248,0.18), rgba(2,6,23,0.94)); border: 1px solid rgba(56,189,248,0.4); box-shadow: inset 0 0 26px rgba(34,211,238,0.1); }
     .round-board-header { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: #bae6fd; font-size: 0.8rem; margin-bottom: 8px; }
     .round-board-grid { display: grid; grid-template-columns: repeat(20, minmax(16px, 1fr)); gap: 4px; }
     .round-box { min-height: 44px; border-radius: 8px; border: 1px solid rgba(100,116,139,0.5); background: #111827; color: #64748b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1; cursor: default; padding: 3px 1px; }
@@ -153,13 +218,13 @@
     .copy-status.error { color: #fca5a5; }
 
     .controls { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-    button { border: none; border-radius: 999px; padding: 10px 18px; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease; }
+    button { border: 1px solid rgba(148,163,184,0.32); border-radius: 999px; padding: 10px 18px; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease; backdrop-filter: blur(5px); }
     button span.hand-icon { font-size: 1.3rem; }
-    .btn-rock { background: #1f2937; color: #f9fafb; box-shadow: 0 4px 10px rgba(0,0,0,0.55); min-width: 110px; }
-    .btn-paper { background: #111827; color: #f9fafb; box-shadow: 0 4px 10px rgba(0,0,0,0.55); min-width: 110px; }
-    .btn-scissors { background: #0f172a; color: #f9fafb; box-shadow: 0 4px 10px rgba(0,0,0,0.55); min-width: 110px; }
-    .btn-reset { background: #ef4444; color: #fef2f2; box-shadow: 0 4px 10px rgba(0,0,0,0.55); }
-    button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.6); }
+    .btn-rock { background: linear-gradient(135deg, #0f172a, #1d4ed8); color: #f9fafb; box-shadow: 0 10px 18px rgba(30,64,175,0.42); min-width: 120px; }
+    .btn-paper { background: linear-gradient(135deg, #1e1b4b, #7c3aed); color: #f9fafb; box-shadow: 0 10px 18px rgba(109,40,217,0.4); min-width: 120px; }
+    .btn-scissors { background: linear-gradient(135deg, #0f172a, #0891b2); color: #f9fafb; box-shadow: 0 10px 18px rgba(8,145,178,0.4); min-width: 120px; }
+    .btn-reset { background: linear-gradient(135deg, #b91c1c, #ef4444); color: #fef2f2; box-shadow: 0 10px 20px rgba(220,38,38,0.4); }
+    button:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 24px rgba(0,0,0,0.56); border-color: rgba(125,211,252,0.58); }
     button:active { transform: translateY(0); box-shadow: 0 3px 6px rgba(0,0,0,0.5); }
     button:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
     button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
@@ -254,13 +319,13 @@
     .round-result-overlay { position: fixed; inset: auto 0 26px; display: flex; justify-content: center; z-index: 50; pointer-events: none; }
     .round-result-overlay-card { background: rgba(15,23,42,0.95); border: 1px solid rgba(148,163,184,0.55); border-radius: 999px; padding: 8px 14px; font-size: 0.8rem; color: #e2e8f0; box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
 
-    .summary-card { margin-top: 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,0.45); background: rgba(15,23,42,0.92); padding: 12px; }
+    .summary-card { margin-top: 12px; border-radius: 14px; border: 1px solid rgba(125,211,252,0.38); background: linear-gradient(145deg, rgba(15,23,42,0.94), rgba(30,41,59,0.75)); padding: 12px; box-shadow: inset 0 0 18px rgba(34,211,238,0.08); }
     .summary-card h2 { margin: 0 0 6px; font-size: 1rem; color: #f8fafc; }
     .summary-card p { margin: 0; font-size: 0.82rem; color: #cbd5e1; line-height: 1.35; }
 
     .post-match-overlay { position: fixed; inset: 0; z-index: 70; padding: 20px; background: rgba(2,6,23,0.78); display: flex; align-items: center; justify-content: center; overflow-y: auto; }
     .post-match-overlay.is-hidden { display: none; }
-    .post-match-card { width: min(760px, 100%); border-radius: 16px; border: 1px solid rgba(148,163,184,0.6); background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(2,6,23,0.98)); box-shadow: 0 22px 48px rgba(0,0,0,0.55); padding: 18px 16px; }
+    .post-match-card { width: min(760px, 100%); border-radius: 18px; border: 1px solid rgba(125,211,252,0.5); background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(2,6,23,0.98)); box-shadow: 0 22px 48px rgba(0,0,0,0.55), inset 0 0 40px rgba(139,92,246,0.14); padding: 18px 16px; }
     .post-match-banner { display: inline-flex; border-radius: 999px; border: 1px solid rgba(148,163,184,0.65); background: rgba(30,41,59,0.8); padding: 6px 12px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: #e2e8f0; margin-bottom: 8px; }
     .post-match-banner.you-win { border-color: rgba(52,211,153,0.9); color: #bbf7d0; }
     .post-match-banner.rock-win { border-color: rgba(248,113,113,0.9); color: #fecaca; }
@@ -301,11 +366,11 @@
   <div id="achievementToasts" class="achievement-toast-stack" aria-live="polite" aria-atomic="false"></div>
   <div class="app">
     <h1>Beat The Rock</h1>
-    <div class="subtitle">20 rounds of modelled Dwayne Johnson in progressive Rock Paper Scissors, you try to read the script.</div>
+    <div class="subtitle">20 rounds against a modeled Dwayne "The Rock" Johnson. Read his tendencies, outplay the script, and win the showdown.</div>
 
     <section id="sceneMetaPanels" class="scene">
       <div class="app-toolbar">
-        <button id="gameMenuBtn" class="menu-btn" type="button" aria-controls="gameMenuModal" aria-expanded="false">Game Menu</button>
+        <button id="gameMenuBtn" class="menu-btn" type="button" aria-controls="gameMenuModal" aria-expanded="false">Fight Menu</button>
       </div>
     </section>
 
@@ -318,8 +383,8 @@
         </div>
       </div>
       <div id="roundLabel" class="hud-chip">Round 1 of 20</div>
-      <div id="scoreLabel" class="hud-chip">Dwayne 0  |  You 0  |  Draws 0</div>
-      <div id="moodDisplay" class="mood-display severity-low">🧊 Rock is calm · Read risk 30%</div>
+      <div id="scoreLabel" class="hud-chip">The Rock 0  |  You 0  |  Draws 0</div>
+      <div id="moodDisplay" class="mood-display severity-low">🧊 The Rock is calm · Read risk 30%</div>
     </div>
 
     <section id="sceneLobby" class="scene">
@@ -359,13 +424,13 @@
           <div class="side">
             <h2><span class="name-rock">Dwayne</span> (The Rock)</h2>
             <div id="rockHand" class="hand">❔</div>
-            <div id="rockMoveLabel" class="label-move">Waiting for bell.</div>
+            <div id="rockMoveLabel" class="label-move">Awaiting the opening bell.</div>
           </div>
           <div class="vs">R P S</div>
           <div class="side">
             <h2><span class="name-you">You</span></h2>
             <div id="yourHand" class="hand">❔</div>
-            <div id="yourMoveLabel" class="label-move">Pick your opener.</div>
+            <div id="yourMoveLabel" class="label-move">Pick your opening throw.</div>
           </div>
         </div>
       </div>
@@ -383,11 +448,11 @@
         <button class="btn-rock" data-move="R" aria-label="Play Rock hand"><span class="hand-icon">✊</span> Rock</button>
         <button class="btn-paper" data-move="P" aria-label="Play Paper hand"><span class="hand-icon">✋</span> Paper</button>
         <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
-        <button id="resetBtn" class="btn-reset" style="display:none;">Reset match</button>
+        <button id="resetBtn" class="btn-reset" style="display:none;">Start new showdown</button>
       </div>
       <div id="resultLine" class="result-line" role="status" aria-live="polite" aria-atomic="true"></div>
       <div class="commentary-wrap">
-        <div class="commentary-title">The Rock reaction</div>
+        <div class="commentary-title">Commentary desk</div>
         <div id="commentary" class="commentary" role="status" aria-live="polite" aria-atomic="true"></div>
       </div>
 
@@ -403,9 +468,9 @@
           <div class="drawer-panel-body">
             <div class="round-board">
               <div class="round-board-header">
-                <span>20-round unified board (result + hands + order)</span>
-                <span>Outcome uses W/L/D</span>
-                <span id="roundBoardStatus">Round 1 is live</span>
+                <span>20-round fight card (result + hands + order)</span>
+                <span>Outcomes use W/L/D</span>
+                <span id="roundBoardStatus">Round 1 is underway</span>
               </div>
               <div id="roundBoard" class="round-board-grid"></div>
               <div id="roundBoardPreview" class="round-board-preview">Hover, focus, or tap a played round to preview exact hands, outcome, and mood.</div>
@@ -427,7 +492,7 @@
         </details>
 
         <details id="replaySeedPanel" class="drawer-panel">
-          <summary>Replay/Seed</summary>
+          <summary>Replay & Seed</summary>
           <div class="drawer-panel-body">
             <p class="settings-hint">Seed and mode controls now live in Match Setup before you start a run.</p>
           </div>
@@ -484,7 +549,7 @@
     <div id="gameMenuModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="gameMenuTitle">
       <div class="menu-panel">
         <div class="menu-header">
-          <h2 id="gameMenuTitle">Game Menu</h2>
+          <h2 id="gameMenuTitle">Fight Menu</h2>
           <button id="closeMenuBtn" class="menu-close-btn" type="button">Close</button>
         </div>
 
@@ -494,15 +559,15 @@
         </div>
 
         <details class="help-box">
-          <summary>How this works</summary>
+          <summary>How the showdown works</summary>
           <div class="help-box-content">
             <ul>
-              <li>Every run is 20 rounds, and each round is logged in the unified board with hands plus W/L/D outcome.</li>
-              <li>Dwayne starts from a fixed base script; in Adaptive mode he uses score state, mood, and your recent move trends to pick his next hand after round 1.</li>
-              <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and mood changes adapt chance.</li>
+              <li>Every showdown is 20 rounds, and each round is logged on the fight card with hands and W/L/D.</li>
+              <li>Dwayne "The Rock" Johnson starts on a seeded script. In Adaptive mode, after round 1 he uses score state, mood, and your recent trends to choose his next hand.</li>
+              <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and each mood changes his read chance.</li>
               <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
-              <li>Set a seed in the Replay/Seed panel to replay exact runs, or leave it blank to randomize next reset.</li>
-              <li>Achievements include clutch, chaos, status, sequence, and consolation badges; unlocks are immediate and each one raises its multiplier for this browser profile.</li>
+              <li>Set a seed in Replay & Seed to replay exact showdowns, or leave it blank to randomize the next reset.</li>
+              <li>Achievements cover clutch, chaos, mood, sequence, and consolation badges. Unlocks are instant and increase their multiplier for this browser profile.</li>
             </ul>
             <div class="help-legend">
               <span><strong>Calm</strong> 30% adapt chance</span>
@@ -521,13 +586,13 @@
       <div id="tutorialTooltipTitle" class="tutorial-tooltip-title"></div>
       <p id="tutorialTooltipText" class="tutorial-tooltip-text"></p>
       <div class="tutorial-tooltip-actions">
-        <button id="tutorialSkipBtn" class="tutorial-skip-btn" type="button">Skip tutorial</button>
+        <button id="tutorialSkipBtn" class="tutorial-skip-btn" type="button">Skip walkthrough</button>
       </div>
     </div>
 
     <div class="footer">
-      With Adaptive Rock off, Dwayne uses a seeded scripted sequence, with it on he uses status and trends to pick from weighted adaptive plays.<br />
-      Every seed builds a different script, so players can share a seed and get the same baseline run.
+      With Adaptive Rock off, Dwayne follows a seeded script. With it on, he weighs score state and trends to make adaptive reads.<br />
+      Each seed builds a different script, so players can share a seed and replay the same baseline showdown.
     </div>
   </div>
 
@@ -647,7 +712,7 @@
     const DIGITS_ONLY_REGEX = /^\d+$/;
     const ACHIEVEMENTS_STORAGE_KEY = "beatTheRockAchievementCounts.v2";
     const TUTORIAL_STORAGE_KEY = "beatTheRockTutorialState.v1";
-    const ORIGINAL_SEED_ONE_SEQUENCE = "PPSSRPPSPRRSPSPRPPRP";
+    const ORIGINAL_SEED_ONE_SEQUENCE = "RPSSRPPSPRRSPSPRPPRP";
 
     const achievementCatalog = [
       { id: "opening-pop", name: "Opening Pop", text: "You won round 1.", rank: "bronze", unlocked: s => s.historyLog[0]?.outcome === "win" },
@@ -703,7 +768,11 @@
     }
 
     function generateSeededScriptSequence(seed) {
-      if ((seed >>> 0) === DEFAULT_SEED) return ORIGINAL_SEED_ONE_SEQUENCE.split("");
+      if ((seed >>> 0) === DEFAULT_SEED) {
+        const defaultSequence = ORIGINAL_SEED_ONE_SEQUENCE.split("");
+        defaultSequence[0] = "R";
+        return defaultSequence;
+      }
 
       const normalizedSeed = seed >>> 0;
       const sequence = [];
@@ -721,6 +790,7 @@
         sequence.push(move);
       }
 
+      sequence[0] = "R";
       return sequence;
     }
 
@@ -796,19 +866,19 @@
     const tutorialSteps = [
       {
         id: "moveButtons",
-        title: "Step 1 · Throw your hand",
-        text: "Start here. Tap Rock, Paper, or Scissors to play your first round.",
+        title: "Step 1 · Throw your first hand",
+        text: "Start here. Throw Rock, Paper, or Scissors to open your challenge against The Rock.",
         anchor: () => moveButtonsAnchorEl
       },
       {
         id: "moodDisplay",
-        title: "Step 2 · Read his mood",
-        text: "Watch Rock state here. Calm, Suspicious, and Paranoid each change his read chance.",
+        title: "Step 2 · Read The Rock's mood",
+        text: "Watch his state here. Calm, Suspicious, and Paranoid each change his chance to read your next throw.",
         anchor: () => moodDisplayEl
       },
       {
         id: "adaptiveToggle",
-        title: "Step 3 · Toggle adaptive mode",
+        title: "Step 3 · Toggle Adaptive Rock",
         text: "Flip Adaptive Rock mode once so you know where to enable his trend reads.",
         anchor: () => adaptiveToggle
       },
@@ -820,8 +890,8 @@
       },
       {
         id: "seedShare",
-        title: "Step 5 · Share and replay",
-        text: "Use Copy challenge link or set a seed to share exact runs. Tutorial ends after this step.",
+        title: "Step 5 · Share and rematch",
+        text: "Use Copy Challenge Link or set a seed to share exact showdowns. Walkthrough ends after this step.",
         anchor: () => seedShareAnchorEl
       }
     ];
@@ -1248,7 +1318,7 @@
     }
 
     function updateRoundLabel() { roundLabelEl.textContent = `Round ${Math.min(currentRound + 1, 20)} of 20`; }
-    function updateScoreLabel() { scoreLabelEl.textContent = `Dwayne ${rockScore}  |  You ${youScore}  |  Draws ${draws}`; }
+    function updateScoreLabel() { scoreLabelEl.textContent = `The Rock ${rockScore}  |  You ${youScore}  |  Draws ${draws}`; }
     function updateProgressBar() {
       const pct = (currentRound / 20) * 100;
       progressFillEl.style.width = `${pct}%`;
@@ -1310,13 +1380,13 @@
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(challengeLink);
-          showCopyStatus("Challenge link copied.", false);
+          showCopyStatus("Challenge link copied to clipboard.", false);
           return;
         }
       } catch (err) {}
 
       const copied = fallbackCopyText(challengeLink);
-      if (copied) showCopyStatus("Challenge link copied.", false);
+      if (copied) showCopyStatus("Challenge link copied to clipboard.", false);
       else showCopyStatus("Could not copy. Please copy manually.", true);
     }
 
@@ -1330,6 +1400,7 @@
       let scriptOverride = null;
       if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
         scriptOverride = scriptParam.toUpperCase().split("");
+        scriptOverride[0] = "R";
       }
 
       if (scriptOverride) {
@@ -1359,15 +1430,15 @@
     function updateAdaptiveStats() {
       const adaptPct = Math.round(moodAdaptChance() * 100);
       if (!adaptiveToggle.checked) {
-        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> is off. If he flipped it on in a promo, ${rockMood} would be a ${adaptPct} percent adapt chance.`;
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> is off. If enabled, The Rock in ${rockMood} mood would have a ${adaptPct}% read chance.`;
         return;
       }
       if (adaptiveAttempts === 0) {
-        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> current mood says ${adaptPct} percent adapt chance this round. Attempts will show once he starts taking swings.`;
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> mood projects a ${adaptPct}% read chance this round. Attempts will appear once he starts adapting.`;
         return;
       }
       const acc = Math.round((adaptiveCorrectReads / adaptiveAttempts) * 100);
-      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> chance this round ${adaptPct} percent, attempts ${adaptiveAttempts}, correct reads ${adaptiveCorrectReads}, accuracy ${acc} percent.`;
+      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> this round: ${adaptPct}% read chance · attempts ${adaptiveAttempts} · correct reads ${adaptiveCorrectReads} · accuracy ${acc}%.`;
     }
 
     function updateMoodDisplay() {
@@ -1384,7 +1455,7 @@
       moodDisplayEl.innerHTML = `
         <span class="mood-emoji" aria-hidden="true">${activeMeta.emoji}</span>
         <span class="mood-text">
-          <span class="mood-label">Rock state</span>
+          <span class="mood-label">The Rock's state</span>
           <span class="mood-state">${activeMeta.label}</span>
           <span class="mood-risk">${riskText}</span>
         </span>
@@ -1393,17 +1464,17 @@
 
     function updatePreRoundHint() {
       if (currentRound >= 20) {
-        preRoundHintEl.textContent = "Pre-round scout, full match complete. Check the unified round board for the receipts.";
+        preRoundHintEl.textContent = "Showdown complete. Check the round board for every throw and read.";
         return;
       }
       const adaptPct = Math.round(moodAdaptChance() * 100);
       if (!adaptiveToggle.checked || currentRound === 0 || !lastYourMove) {
-        preRoundHintEl.textContent = `Pre-round scout, ${rockMood.toLowerCase()} energy, script lane likely this beat.`;
+        preRoundHintEl.textContent = `Scout report: ${rockMood.toLowerCase()} energy. Scripted lane is most likely this round.`;
         return;
       }
-      if (rockMood === "Calm") preRoundHintEl.textContent = `Pre-round scout, he's calm but alert, ${adaptPct} percent read chance right now.`;
-      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Pre-round scout, he's reading aggressively right now, ${adaptPct} percent chance he hunts your last hand.`;
-      else preRoundHintEl.textContent = `Pre-round scout, paranoid mode is blazing, ${adaptPct} percent chance he hard-counters your last hand.`;
+      if (rockMood === "Calm") preRoundHintEl.textContent = `Scout report: calm but alert, ${adaptPct}% chance he reads you this round.`;
+      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Scout report: suspicious and aggressive, ${adaptPct}% chance he targets your last hand.`;
+      else preRoundHintEl.textContent = `Scout report: full paranoid mode, ${adaptPct}% chance he hard-counters your last hand.`;
     }
 
     function renderDebugLog() {
@@ -1503,7 +1574,7 @@
 
       if (currentRound === 0) {
         lastDecisionAdaptive = false;
-        return scriptMove;
+        return "R";
       }
 
       const adaptive = adaptiveToggle.checked;
@@ -1576,15 +1647,15 @@
       let outcome;
       if (yourMove === rockMove) {
         outcome = "draw"; draws += 1;
-        resultLineEl.textContent = "Result, draw."; resultLineEl.className = "result-line result-draw";
+        resultLineEl.textContent = "Round result: draw."; resultLineEl.className = "result-line result-draw";
         playBeep("draw");
       } else if (beats[rockMove] === yourMove) {
         outcome = "win"; youScore += 1;
-        resultLineEl.textContent = "Result, you win this round."; resultLineEl.className = "result-line result-win";
+        resultLineEl.textContent = "Round result: you win."; resultLineEl.className = "result-line result-win";
         playBeep("win"); shakeArena();
       } else {
         outcome = "lose"; rockScore += 1;
-        resultLineEl.textContent = "Result, The Rock wins this round."; resultLineEl.className = "result-line result-lose";
+        resultLineEl.textContent = "Round result: The Rock wins."; resultLineEl.className = "result-line result-lose";
         playBeep("lose");
       }
 
@@ -1621,7 +1692,7 @@
       updatePreRoundHint();
       evaluateAchievements();
 
-      const overlayText = outcome === "win" ? "Round result, you win." : outcome === "lose" ? "Round result, The Rock wins." : "Round result, draw.";
+      const overlayText = outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw.";
       showRoundResultOverlay(overlayText);
 
       if (currentRound >= 20) {
@@ -1702,17 +1773,17 @@
       if (youWon) {
         summaryWinnerBannerEl.classList.add("you-win");
         summaryWinnerBannerEl.textContent = "Winner: You";
-        summaryTitleEl.textContent = "You took the main event";
+        summaryTitleEl.textContent = "You beat The Rock";
         summaryFlavorEl.textContent = "You out-read The Rock over 20 rounds. Queue the rematch before he rewrites the script.";
       } else if (rockWon) {
         summaryWinnerBannerEl.classList.add("rock-win");
         summaryWinnerBannerEl.textContent = "Winner: The Rock";
-        summaryTitleEl.textContent = "The Rock keeps the headline";
+        summaryTitleEl.textContent = "The Rock holds the spotlight";
         summaryFlavorEl.textContent = "He held the line this run. New seed, new plan, same arena when you hit Play Again.";
       } else {
         summaryWinnerBannerEl.classList.add("draw-match");
         summaryWinnerBannerEl.textContent = "Result: Draw";
-        summaryTitleEl.textContent = "Dead even at the final bell";
+        summaryTitleEl.textContent = "Even score at the final bell";
         summaryFlavorEl.textContent = "Nobody blinked. One more run decides who owns this timeline.";
       }
 
@@ -1744,10 +1815,10 @@
 
     function showFinalSummary() {
       const summaryLines = [];
-      summaryLines.push(`Final score after 20 rounds, Dwayne ${rockScore}, you ${youScore}, draws ${draws}.`);
+      summaryLines.push(`Final score after 20 rounds: The Rock ${rockScore}, You ${youScore}, Draws ${draws}.`);
       summaryLines.push(`You beat The Rock ${beatRockHits} out of 20 rounds.`);
-      summaryLines.push(`Beat The Rock sequence for this run, ${beatRockAbbrevs.join(" ")}.`);
-      summaryLines.push(`Legend R Rock, P Paper, S Scissors.`);
+      summaryLines.push(`Beat-The-Rock sequence for this showdown: ${beatRockAbbrevs.join(" ")}.`);
+      summaryLines.push(`Legend: R Rock, P Paper, S Scissors.`);
 
       if (adaptiveEverOnThisRun && adaptiveAttempts > 0) {
         const acc = Math.round((adaptiveCorrectReads / adaptiveAttempts) * 100);
@@ -1760,7 +1831,7 @@
         if (replaySeed !== null) {
           seedInputEl.value = String(replaySeed);
           seedFeedbackEl.className = "seed-feedback info";
-          seedFeedbackEl.textContent = `Adaptive run replay seed generated: ${replaySeed}. Reset match to replay this sequence in scripted mode.`;
+          seedFeedbackEl.textContent = `Adaptive replay seed generated: ${replaySeed}. Start a new showdown to replay this sequence in scripted mode.`;
           summaryLines.push(`Replay seed generated for this adaptive sequence, ${replaySeed}.`);
         } else {
           summaryLines.push("Could not generate a scripted replay seed for this adaptive sequence.");
@@ -1823,8 +1894,8 @@
 
       rockHandEl.textContent = "❔";
       yourHandEl.textContent = "❔";
-      rockMoveLabelEl.textContent = "Waiting for bell.";
-      yourMoveLabelEl.textContent = "Pick your opener.";
+      rockMoveLabelEl.textContent = "Awaiting the opening bell.";
+      yourMoveLabelEl.textContent = "Pick your opening throw.";
       resultLineEl.textContent = "";
       resultLineEl.className = "result-line";
       commentaryEl.textContent = "";
@@ -1843,7 +1914,7 @@
 
       if (scriptedSequenceOverride) {
         seedFeedbackEl.className = "seed-feedback info";
-        seedFeedbackEl.textContent = "Scripted challenge loaded from shared adaptive run. Adaptive mode is locked off for exact replay.";
+        seedFeedbackEl.textContent = "Scripted challenge loaded from a shared adaptive showdown. Adaptive mode is locked for exact replay.";
       }
 
       statsPanelEl.open = true;
@@ -1871,7 +1942,7 @@
       if (value === "") {
         newSeed = generateRandomSeed();
         seedFeedbackEl.className = "seed-feedback info";
-        seedFeedbackEl.textContent = `Randomized seed for this run: ${newSeed}.`;
+        seedFeedbackEl.textContent = `Randomized seed for this showdown: ${newSeed}.`;
       } else {
         const normalizedSeed = normalizeSeed(value);
         if (!normalizedSeed.valid) {
@@ -1884,8 +1955,8 @@
         manual = true;
 
         seedFeedbackEl.className = "seed-feedback info";
-        if (normalizedSeed.clamped) seedFeedbackEl.textContent = `Seed clamped to unsigned 32-bit range. Starting run with normalized seed ${newSeed}.`;
-        else seedFeedbackEl.textContent = `Starting run with normalized seed ${newSeed}.`;
+        if (normalizedSeed.clamped) seedFeedbackEl.textContent = `Seed clamped to unsigned 32-bit range. Starting showdown with normalized seed ${newSeed}.`;
+        else seedFeedbackEl.textContent = `Starting showdown with normalized seed ${newSeed}.`;
       }
 
       initFromSeed(newSeed, manual, null);
@@ -1912,7 +1983,7 @@
       const generatedSeed = generateRandomSeed();
       seedInputEl.value = String(generatedSeed);
       seedFeedbackEl.className = "seed-feedback info";
-      seedFeedbackEl.textContent = `Generated seed ${generatedSeed}. Reset match to start this run.`;
+      seedFeedbackEl.textContent = `Generated seed ${generatedSeed}. Start a new showdown to use it.`;
     });
     resetAchievementsBtn.addEventListener("click", () => {
       resetPersistentAchievements();
