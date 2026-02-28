@@ -196,7 +196,7 @@
 
     .round-board { margin-top: 14px; padding: 12px 10px 10px; border-radius: 14px; background: radial-gradient(circle at top, rgba(56,189,248,0.18), rgba(2,6,23,0.94)); border: 1px solid rgba(56,189,248,0.4); box-shadow: inset 0 0 26px rgba(34,211,238,0.1); }
     .round-board-header { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: #bae6fd; font-size: 0.8rem; margin-bottom: 8px; }
-    .round-board-grid { display: grid; grid-template-columns: repeat(20, minmax(16px, 1fr)); gap: 4px; }
+    .round-board-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16px, 1fr)); gap: 4px; }
     .round-box { min-height: 44px; border-radius: 8px; border: 1px solid rgba(100,116,139,0.5); background: #111827; color: #64748b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1; cursor: default; padding: 3px 1px; }
     .round-box .round-num { font-size: 0.55rem; color: #94a3b8; }
     .round-box .round-hands { font-size: 0.68rem; color: #cbd5e1; min-height: 0.72rem; }
@@ -211,6 +211,14 @@
     .round-box:focus-visible { outline: 3px solid #93c5fd; outline-offset: 1px; }
     .round-board-preview { margin-top: 8px; min-height: 1.2rem; font-size: 0.78rem; color: #cbd5e1; }
     .round-board-preview strong { color: #e5e7eb; }
+
+    .map-panel { margin-bottom: 12px; padding: 12px; border-radius: 14px; border: 1px solid rgba(96,165,250,0.45); background: linear-gradient(155deg, rgba(15,23,42,0.92), rgba(8,47,73,0.45)); }
+    .map-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: #bfdbfe; font-size: 0.8rem; margin-bottom: 8px; }
+    .map-path { font-size: 0.76rem; color: #cbd5e1; margin-bottom: 8px; min-height: 1rem; }
+    .map-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+    .map-node-btn { border-radius: 10px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.88); color: #e2e8f0; font-size: 0.76rem; padding: 7px 9px; }
+    .map-node-btn.current { border-color: rgba(34,197,94,0.9); background: rgba(20,83,45,0.75); }
+    .map-node-btn.completed { opacity: 0.65; }
 
     .challenge-row { margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
     .btn-share { background: #2563eb; color: #eff6ff; box-shadow: 0 4px 10px rgba(0,0,0,0.55); }
@@ -366,7 +374,7 @@
   <div id="achievementToasts" class="achievement-toast-stack" aria-live="polite" aria-atomic="false"></div>
   <div class="app">
     <h1>Beat The Rock</h1>
-    <div class="subtitle">20 rounds against a modeled Dwayne "The Rock" Johnson. Read his tendencies, outplay the script, and win the showdown.</div>
+    <div class="subtitle">A seeded branching run against a modeled Dwayne "The Rock" Johnson. Read his tendencies, outplay the script, and win the showdown.</div>
 
     <section id="sceneMetaPanels" class="scene">
       <div class="app-toolbar">
@@ -382,7 +390,7 @@
           <span id="runSummaryMode" class="run-mode-badge">Mode pending</span>
         </div>
       </div>
-      <div id="roundLabel" class="hud-chip">Round 1 of 20</div>
+      <div id="roundLabel" class="hud-chip">Act 1 Node 1</div>
       <div id="scoreLabel" class="hud-chip">The Rock 0  |  You 0  |  Draws 0</div>
       <div id="moodDisplay" class="mood-display severity-low">🧊 The Rock is calm · Read risk 30%</div>
     </div>
@@ -390,7 +398,7 @@
     <section id="sceneLobby" class="scene">
       <div class="title-shell">
         <h2>Welcome to Beat The Rock</h2>
-        <p>He has the script. You have 20 rounds to break it before the bell.</p>
+        <p>He has the script. Follow the branching run map and break it before the bell.</p>
         <button id="startMatchBtn" class="btn-primary" type="button">Start Match</button>
 
         <div class="match-setup">
@@ -419,6 +427,16 @@
     </section>
 
     <section id="sceneGame" class="scene">
+
+      <div id="mapPanel" class="map-panel">
+        <div class="map-header">
+          <span id="mapCurrentLabel">Current node: pending</span>
+          <span id="mapProgressLabel">Path 0/0</span>
+        </div>
+        <div id="mapPath" class="map-path">Completed path: none yet.</div>
+        <div id="mapChoices" class="map-choices" role="group" aria-label="Choose next map node"></div>
+      </div>
+
       <div class="arena-wrap">
         <div id="arena" class="arena">
           <div class="side">
@@ -438,8 +456,8 @@
 
       <div class="progress-wrap">
         <div class="progress-labels">
-          <span>Round progress</span>
-          <span id="progressText">0 of 20 completed</span>
+          <span>Node progress</span>
+          <span id="progressText">0 of 0 completed</span>
         </div>
         <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
       </div>
@@ -468,7 +486,7 @@
           <div class="drawer-panel-body">
             <div class="round-board">
               <div class="round-board-header">
-                <span>20-round fight card (result + hands + order)</span>
+                <span>Run node fight card (result + hands + order)</span>
                 <span>Outcomes use W/L/D</span>
                 <span id="roundBoardStatus">Round 1 is underway</span>
               </div>
@@ -562,7 +580,7 @@
           <summary>How the showdown works</summary>
           <div class="help-box-content">
             <ul>
-              <li>Every showdown is 20 rounds, and each round is logged on the fight card with hands and W/L/D.</li>
+              <li>Every showdown follows a seeded node path, and each node is logged on the fight card with hands and W/L/D.</li>
               <li>Dwayne "The Rock" Johnson starts on a seeded script. In Adaptive mode, after round 1 he uses score state, mood, and your recent trends to choose his next hand.</li>
               <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and each mood changes his read chance.</li>
               <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
@@ -703,6 +721,11 @@
     const tutorialSkipBtn = document.getElementById("tutorialSkipBtn");
     const roundResultOverlayEl = document.getElementById("roundResultOverlay");
     const roundResultOverlayTextEl = document.getElementById("roundResultOverlayText");
+    const mapPanelEl = document.getElementById("mapPanel");
+    const mapCurrentLabelEl = document.getElementById("mapCurrentLabel");
+    const mapProgressLabelEl = document.getElementById("mapProgressLabel");
+    const mapPathEl = document.getElementById("mapPath");
+    const mapChoicesEl = document.getElementById("mapChoices");
 
     const U32_MIN = 0;
     const U32_MAX = 0xFFFFFFFF;
@@ -713,6 +736,15 @@
     const ACHIEVEMENTS_STORAGE_KEY = "beatTheRockAchievementCounts.v2";
     const TUTORIAL_STORAGE_KEY = "beatTheRockTutorialState.v1";
     const ORIGINAL_SEED_ONE_SEQUENCE = "RPSSRPPSPRRSPSPRPPRP";
+    const ENCOUNTER_TYPES = ["normal", "elite", "event", "shop", "campfire", "boss"];
+
+    const runState = {
+      mapNodes: [],
+      selectedPath: [],
+      availableNodeIds: [],
+      activeNodeId: null,
+      completedNodeIds: []
+    };
 
     const achievementCatalog = [
       { id: "opening-pop", name: "Opening Pop", text: "You won round 1.", rank: "bronze", unlocked: s => s.historyLog[0]?.outcome === "win" },
@@ -896,6 +928,87 @@
       }
     ];
 
+
+    function nodeTypeLabel(type) {
+      return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+
+    function generateRunMap(seed) {
+      const rng = mulberry32((seed ^ 0xA5A5A5A5) >>> 0);
+      const totalNodes = 8 + Math.floor(rng() * 5);
+      const nodes = [];
+      for (let i = 0; i < totalNodes; i += 1) {
+        let type = "normal";
+        if (i === totalNodes - 1) type = "boss";
+        else if (i === 0) type = "normal";
+        else if (i === totalNodes - 2) type = "elite";
+        else {
+          const roll = rng();
+          if (roll < 0.16) type = ENCOUNTER_TYPES[2];
+          else if (roll < 0.29) type = ENCOUNTER_TYPES[3];
+          else if (roll < 0.42) type = ENCOUNTER_TYPES[4];
+          else if (roll < 0.58) type = ENCOUNTER_TYPES[1];
+          else type = ENCOUNTER_TYPES[0];
+        }
+        nodes.push({ id: i, act: 1, index: i + 1, type, next: [] });
+      }
+      for (let i = 0; i < totalNodes - 1; i += 1) {
+        const node = nodes[i];
+        const remain = totalNodes - i - 1;
+        const options = remain <= 1 ? 1 : (rng() < 0.5 ? 1 : 2);
+        const set = new Set([i + 1]);
+        if (options === 2) set.add(Math.min(totalNodes - 1, i + 2));
+        node.next = Array.from(set).sort((a, b) => a - b);
+      }
+      return nodes;
+    }
+
+    function getTotalNodes() { return runState.mapNodes.length || 1; }
+    function getActiveNode() { return runState.mapNodes[runState.activeNodeId] || null; }
+    function isRunComplete() { return currentRound >= getTotalNodes(); }
+
+    function selectNextNode(nodeId) {
+      if (!runState.availableNodeIds.includes(nodeId)) return;
+      runState.activeNodeId = nodeId;
+      runState.selectedPath.push(nodeId);
+      runState.availableNodeIds = [];
+      renderMapPanel();
+      setScene("inRound");
+      setButtonsEnabled(true);
+      moveButtons[0].focus();
+    }
+
+    function renderMapPanel() {
+      const total = getTotalNodes();
+      const activeNode = getActiveNode();
+      const completedPath = runState.completedNodeIds.map(id => `N${(id || 0) + 1}`).join(" → ");
+      mapCurrentLabelEl.textContent = activeNode ? `Current node: Act ${activeNode.act} Node ${activeNode.index} · ${nodeTypeLabel(activeNode.type)}` : "Current node: choose next";
+      mapProgressLabelEl.textContent = `Path ${currentRound}/${total}`;
+      mapPathEl.textContent = `Completed path: ${completedPath || "none yet"}`;
+      mapChoicesEl.innerHTML = "";
+      const upcoming = runState.availableNodeIds.length > 0 ? runState.availableNodeIds : (activeNode?.next || []);
+      if (upcoming.length === 0) {
+        const span = document.createElement("span");
+        span.className = "settings-hint";
+        span.textContent = isRunComplete() ? "Run complete." : "No branches available.";
+        mapChoicesEl.appendChild(span);
+        return;
+      }
+      upcoming.forEach((id) => {
+        const node = runState.mapNodes[id];
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "map-node-btn";
+        btn.textContent = `Act ${node.act} Node ${node.index} · ${nodeTypeLabel(node.type)}`;
+        if (runState.completedNodeIds.includes(id)) btn.classList.add("completed");
+        if (runState.activeNodeId === id) btn.classList.add("current");
+        const selectable = runState.availableNodeIds.includes(id);
+        btn.disabled = !selectable;
+        if (selectable) btn.addEventListener("click", () => selectNextNode(id));
+        mapChoicesEl.appendChild(btn);
+      });
+    }
+
     function loadPersistentAchievements() {
       try {
         const raw = localStorage.getItem(ACHIEVEMENTS_STORAGE_KEY);
@@ -1055,12 +1168,12 @@
       const firstThreeUnique = historyLog.length >= 3 && new Set(historyLog.slice(0, 3).map(entry => entry.yourMove)).size === 3;
       const openedNonPaper = historyLog.length >= 1 && historyLog[0].yourMove !== "P";
       const lossMargin = Math.max(0, rockScore - youScore);
-      const onlyRock = historyLog.length === 20 && yourMoves.every(move => move === "R");
-      const onlyPaper = historyLog.length === 20 && yourMoves.every(move => move === "P");
-      const onlyScissors = historyLog.length === 20 && yourMoves.every(move => move === "S");
-      const noConsecutiveSameMove = historyLog.length === 20 && yourMoves.every((move, idx) => idx === 0 || move !== yourMoves[idx - 1]);
+      const onlyRock = historyLog.length === getTotalNodes() && yourMoves.every(move => move === "R");
+      const onlyPaper = historyLog.length === getTotalNodes() && yourMoves.every(move => move === "P");
+      const onlyScissors = historyLog.length === getTotalNodes() && yourMoves.every(move => move === "S");
+      const noConsecutiveSameMove = historyLog.length === getTotalNodes() && yourMoves.every((move, idx) => idx === 0 || move !== yourMoves[idx - 1]);
       const minMoveCount = Math.min(moveCounts.R, moveCounts.P, moveCounts.S);
-      const palindromeShape = historyLog.length === 20 && yourMoves.every((move, idx) => move === yourMoves[yourMoves.length - 1 - idx]);
+      const palindromeShape = historyLog.length === getTotalNodes() && yourMoves.every((move, idx) => move === yourMoves[yourMoves.length - 1 - idx]);
       const firstHalfTransitions = historyLog.length >= 10 ? yourMoves.slice(0, 10).reduce((count, move, idx, arr) => idx === 0 ? 0 : count + (move !== arr[idx - 1] ? 1 : 0), 0) : 0;
       const complexPalindromeMoves = palindromeShape && firstHalfTransitions >= 4;
 
@@ -1094,7 +1207,7 @@
         adaptiveEverOnThisRun,
         adaptiveAttempts,
         adaptiveCorrectReads,
-        matchFinished: historyLog.length === 20
+        matchFinished: historyLog.length === getTotalNodes()
       };
     }
 
@@ -1161,7 +1274,7 @@
     function createRoundBoardCells() {
       roundBoardEl.innerHTML = "";
       roundBoardCells = [];
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < getTotalNodes(); i++) {
         const cell = document.createElement("div");
         cell.className = "round-box";
         cell.tabIndex = 0;
@@ -1199,7 +1312,7 @@
       roundBoardCells.forEach((cell, i) => {
         const entry = historyLog[i];
         cell.className = "round-box";
-        if (i === currentRound && currentRound < 20) cell.classList.add("current");
+        if (i === currentRound && !isRunComplete()) cell.classList.add("current");
 
         if (!entry) {
           cell.innerHTML = `<span class="round-num">R${i + 1}</span><span class="round-hands">·</span><span class="round-outcome">·</span>`;
@@ -1218,8 +1331,8 @@
         cell.setAttribute("aria-label", `Round ${entry.round}, Dwayne ${names[entry.rockMove]}, you ${names[entry.yourMove]}, outcome ${outcomeText}.`);
       });
 
-      if (currentRound >= 20) roundBoardStatusEl.textContent = "All 20 rounds complete";
-      else roundBoardStatusEl.textContent = `Round ${currentRound + 1} is live`;
+      if (isRunComplete()) roundBoardStatusEl.textContent = "All run nodes complete";
+      else roundBoardStatusEl.textContent = `Node ${currentRound + 1} is live`;
 
       if (activeRoundBoardIndex !== null && roundBoardCells[activeRoundBoardIndex]) {
         roundBoardCells[activeRoundBoardIndex].classList.add("current");
@@ -1229,7 +1342,7 @@
     function handleRoundBoardHover(index) {
       advanceTutorialOnAction("roundBoard");
       if (index >= historyLog.length) {
-        roundBoardPreviewEl.innerHTML = `<strong>Round ${index + 1}</strong> not played yet in this run.`;
+        roundBoardPreviewEl.innerHTML = `<strong>Node ${index + 1}</strong> not played yet in this run.`;
         return;
       }
       const entry = historyLog[index];
@@ -1244,7 +1357,7 @@
     function clearRoundBoardHover(index) {
       if (activeRoundBoardIndex === index) activeRoundBoardIndex = null;
       if (historyLog.length === 0) {
-        roundBoardPreviewEl.textContent = "Hover, focus, or tap a played round to preview exact hands, outcome, and mood.";
+        roundBoardPreviewEl.textContent = "Hover, focus, or tap a played node to preview exact hands, outcome, and mood.";
       } else {
         const last = historyLog[historyLog.length - 1];
         const outcomeText = last.outcome === "win" ? "you win" : last.outcome === "lose" ? "The Rock wins" : "draw";
@@ -1265,6 +1378,7 @@
       sceneLobbyEl.classList.toggle("is-hidden", nextScene !== "lobby");
       sceneGameEl.classList.toggle("is-hidden", nextScene === "lobby");
       sceneSummaryEl.classList.toggle("is-hidden", nextScene !== "matchSummary");
+      mapPanelEl.classList.toggle("is-hidden", nextScene === "lobby" || nextScene === "matchSummary");
       document.body.classList.toggle("gameplay-active", nextScene === "inRound" || nextScene === "roundResult");
       if (tutorialActive) renderTutorialStep();
     }
@@ -1279,7 +1393,8 @@
       setScene("roundResult");
       roundResultTimer = setTimeout(() => {
         roundResultOverlayEl.classList.add("is-hidden");
-        if (currentRound >= 20) setScene("matchSummary");
+        if (isRunComplete()) setScene("matchSummary");
+        else if (runState.availableNodeIds.length > 0) setScene("map");
         else setScene("inRound");
       }, 700);
     }
@@ -1317,17 +1432,20 @@
       yourHandEl.classList.remove("reveal-pop");
     }
 
-    function updateRoundLabel() { roundLabelEl.textContent = `Round ${Math.min(currentRound + 1, 20)} of 20`; }
+    function updateRoundLabel() {
+      const activeNode = getActiveNode();
+      roundLabelEl.textContent = activeNode ? `Act ${activeNode.act} Node ${activeNode.index}` : `Act 1 Node ${Math.min(currentRound + 1, getTotalNodes())}`;
+    }
     function updateScoreLabel() { scoreLabelEl.textContent = `The Rock ${rockScore}  |  You ${youScore}  |  Draws ${draws}`; }
     function updateProgressBar() {
-      const pct = (currentRound / 20) * 100;
+      const pct = (currentRound / getTotalNodes()) * 100;
       progressFillEl.style.width = `${pct}%`;
-      progressTextEl.textContent = `${currentRound} of 20 completed`;
+      progressTextEl.textContent = `${currentRound} of ${getTotalNodes()} completed`;
     }
     function updateRunSummary() {
       runSummarySeedEl.textContent = `Seed ${runSeed}`;
       runSummaryModeEl.textContent = adaptiveToggle.checked ? "Adaptive on" : "Scripted";
-      const runStarted = currentRound > 0 || sceneState === "inRound" || sceneState === "roundResult" || sceneState === "matchSummary";
+      const runStarted = currentRound > 0 || runState.selectedPath.length > 0 || sceneState === "inRound" || sceneState === "roundResult" || sceneState === "matchSummary" || sceneState === "map";
       runSummaryPillEl.classList.toggle("is-hidden", !runStarted);
     }
 
@@ -1343,7 +1461,7 @@
 
     function buildChallengeLink() {
       const url = new URL(window.location.href);
-      const adaptiveRunSequence = historyLog.length === 20 && historyLog.some(entry => entry.adaptiveUsed)
+      const adaptiveRunSequence = historyLog.length === getTotalNodes() && historyLog.some(entry => entry.adaptiveUsed)
         ? historyLog.map(entry => entry.rockMove).join("")
         : null;
 
@@ -1463,8 +1581,8 @@
     }
 
     function updatePreRoundHint() {
-      if (currentRound >= 20) {
-        preRoundHintEl.textContent = "Showdown complete. Check the round board for every throw and read.";
+      if (isRunComplete()) {
+        preRoundHintEl.textContent = "Run complete. Check the node board for every throw and read.";
         return;
       }
       const adaptPct = Math.round(moodAdaptChance() * 100);
@@ -1594,10 +1712,10 @@
       return scriptMove;
     }
 
-    function isGameActive() { return currentRound < 20 && !moveButtons[0].disabled; }
+    function isGameActive() { return !isRunComplete() && !moveButtons[0].disabled; }
 
     async function playRound(yourMove) {
-      if (currentRound >= 20) return;
+      if (isRunComplete()) return;
       if (roundPhase !== "idle") return;
       setScene("inRound");
       if (adaptiveToggle.checked) adaptiveEverOnThisRun = true;
@@ -1670,8 +1788,11 @@
 
       commentaryEl.textContent = describeRound(outcome, beatRockThisRound);
 
+      const activeNode = getActiveNode();
       historyLog.push({
         round: currentRound + 1,
+        nodeIndex: activeNode ? activeNode.index : currentRound + 1,
+        nodeType: activeNode ? activeNode.type : "normal",
         rockMove, yourMove, beatRockMove,
         outcome,
         adaptiveUsed: lastDecisionAdaptive,
@@ -1682,7 +1803,15 @@
 
       renderDebugLog();
 
+      const completedNode = getActiveNode();
+      if (completedNode) {
+        runState.completedNodeIds.push(completedNode.id);
+        runState.availableNodeIds = completedNode.next.slice();
+      }
+
       currentRound += 1;
+      if (!isRunComplete() && runState.availableNodeIds.length > 0) runState.activeNodeId = null;
+      renderMapPanel();
       renderRoundBoard();
       updateScoreLabel();
       updateRoundLabel();
@@ -1695,7 +1824,7 @@
       const overlayText = outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw.";
       showRoundResultOverlay(overlayText);
 
-      if (currentRound >= 20) {
+      if (isRunComplete()) {
         setButtonsEnabled(false);
         showFinalSummary();
         resetArenaPhaseClasses();
@@ -1707,7 +1836,12 @@
       if (phaseToken !== roundAnimationToken) return;
       resetArenaPhaseClasses();
       setRoundPhase("idle");
-      setButtonsEnabled(true);
+      if (runState.availableNodeIds.length > 0) {
+        setScene("map");
+        setButtonsEnabled(false);
+      } else {
+        setButtonsEnabled(true);
+      }
     }
 
     function evaluateAchievements() {
@@ -1774,7 +1908,7 @@
         summaryWinnerBannerEl.classList.add("you-win");
         summaryWinnerBannerEl.textContent = "Winner: You";
         summaryTitleEl.textContent = "You beat The Rock";
-        summaryFlavorEl.textContent = "You out-read The Rock over 20 rounds. Queue the rematch before he rewrites the script.";
+        summaryFlavorEl.textContent = "You out-read The Rock across the full node path. Queue the rematch before he rewrites the script.";
       } else if (rockWon) {
         summaryWinnerBannerEl.classList.add("rock-win");
         summaryWinnerBannerEl.textContent = "Winner: The Rock";
@@ -1788,7 +1922,7 @@
       }
 
       summaryBestStreakEl.textContent = `${achievementState.maxWinStreak} win${achievementState.maxWinStreak === 1 ? "" : "s"}`;
-      summaryBeatRockRateEl.textContent = `${beatRockRate}% (${beatRockHits}/${historyLog.length || 20})`;
+      summaryBeatRockRateEl.textContent = `${beatRockRate}% (${beatRockHits}/${historyLog.length || getTotalNodes()})`;
       summaryMoodPressureEl.textContent = `${moodPressureMoments} rounds`;
 
       summaryAchievementsListEl.innerHTML = "";
@@ -1815,8 +1949,8 @@
 
     function showFinalSummary() {
       const summaryLines = [];
-      summaryLines.push(`Final score after 20 rounds: The Rock ${rockScore}, You ${youScore}, Draws ${draws}.`);
-      summaryLines.push(`You beat The Rock ${beatRockHits} out of 20 rounds.`);
+      summaryLines.push(`Final score after ${getTotalNodes()} nodes: The Rock ${rockScore}, You ${youScore}, Draws ${draws}.`);
+      summaryLines.push(`You beat The Rock ${beatRockHits} out of ${getTotalNodes()} nodes.`);
       summaryLines.push(`Beat-The-Rock sequence for this showdown: ${beatRockAbbrevs.join(" ")}.`);
       summaryLines.push(`Legend: R Rock, P Paper, S Scissors.`);
 
@@ -1859,6 +1993,11 @@
       seedWasManual = !!manualFlag;
       scriptedSequenceOverride = scriptOverride || null;
       seededScriptSequence = generateSeededScriptSequence(runSeed);
+      runState.mapNodes = generateRunMap(runSeed);
+      runState.selectedPath = [];
+      runState.availableNodeIds = [0];
+      runState.activeNodeId = null;
+      runState.completedNodeIds = [];
 
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
@@ -1902,7 +2041,7 @@
 
       createRoundBoardCells();
       renderRoundBoard();
-      roundBoardPreviewEl.textContent = "Hover, focus, or tap a played round to preview exact hands, outcome, and mood.";
+      roundBoardPreviewEl.textContent = "Hover, focus, or tap a played node to preview exact hands, outcome, and mood.";
 
       updateScoreLabel();
       updateRoundLabel();
@@ -1931,6 +2070,7 @@
       roundAnimationToken += 1;
       setRoundPhase("idle");
       resetArenaPhaseClasses();
+      renderMapPanel();
       setScene("lobby");
     }
 
@@ -1963,10 +2103,13 @@
     }
 
     startMatchBtn.addEventListener("click", () => {
-      setScene("inRound");
-      setButtonsEnabled(true);
+      if (runState.activeNodeId === null) {
+        runState.availableNodeIds = [0];
+        renderMapPanel();
+      }
+      setScene("map");
+      setButtonsEnabled(false);
       updateRunSummary();
-      moveButtons[0].focus();
     });
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
