@@ -95,6 +95,8 @@
     .settings-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: center; font-size: 0.78rem; color: #9ca3af; margin-bottom: 6px; }
     .settings-row label { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
     .settings-row input[type="checkbox"] { accent-color: #8b5cf6; cursor: pointer; }
+    .settings-row input[type="range"] { width: 110px; accent-color: #22d3ee; }
+    .settings-control { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: rgba(15,23,42,0.85); border: 1px solid rgba(148,163,184,0.6); }
     .settings-hint { font-size: 0.75rem; color: #6b7280; }
     .challenge-mode-row { margin: 8px 0 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .challenge-mode-row button { font-size: 0.76rem; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(96,165,250,0.75); background: rgba(15,23,42,0.92); color: #dbeafe; cursor: pointer; }
@@ -189,12 +191,27 @@
     .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: linear-gradient(155deg, rgba(17,20,31,0.78), rgba(15,23,42,0.95)); border: 1px solid rgba(148,163,184,0.34); border-radius: 18px; padding: 20px 18px; box-shadow: 0 18px 42px rgba(0,0,0,0.52), inset 0 0 30px rgba(139,92,246,0.13); transform-origin: center; position: relative; overflow: hidden; }
     .arena::before { content: ""; position: absolute; inset: -30% 15% auto; height: 60%; background: radial-gradient(circle at center, rgba(34,211,238,0.23), transparent 70%); filter: blur(22px); pointer-events: none; }
     @keyframes shake { 0%{transform:translate(0,0)} 20%{transform:translate(-4px,2px)} 40%{transform:translate(4px,-2px)} 60%{transform:translate(-3px,1px)} 80%{transform:translate(3px,0)} 100%{transform:translate(0,0)} }
+    @keyframes microShake { 0%{transform:translate(0,0)} 25%{transform:translate(-1.5px,0.6px)} 50%{transform:translate(1.5px,-0.6px)} 75%{transform:translate(-1px,0)} 100%{transform:translate(0,0)} }
+    @keyframes anticipationGlow { 0%{filter:brightness(1)} 50%{filter:brightness(1.18)} 100%{filter:brightness(1)} }
+    @keyframes cinematicFlash { 0%{opacity:0} 20%{opacity:0.55} 100%{opacity:0} }
+    @keyframes cameraSwayWin { 0%{transform:translateX(0) scale(1)} 45%{transform:translateX(-8px) scale(1.01)} 100%{transform:translateX(0) scale(1)} }
+    @keyframes cameraSwayLose { 0%{transform:translateX(0) scale(1)} 45%{transform:translateX(9px) scale(0.995)} 100%{transform:translateX(0) scale(1)} }
+    @keyframes cameraSwayDraw { 0%{transform:translateY(0)} 50%{transform:translateY(-5px)} 100%{transform:translateY(0)} }
     .arena.shake { animation: shake 0.35s ease; }
     @keyframes lockPulse { 0%{transform:scale(1)} 50%{transform:scale(1.01)} 100%{transform:scale(1)} }
     @keyframes revealDrop { 0%{transform:translateY(-10px); opacity:0.2} 100%{transform:translateY(0); opacity:1} }
     .arena.phase-lock-in { animation: lockPulse 0.28s ease; }
     .arena.phase-reveal { box-shadow: 0 14px 34px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.28) inset; }
+    .arena.phase-anticipation { animation: microShake 0.2s ease 2, anticipationGlow 0.24s ease 2; }
+    .arena.phase-outcome-win { box-shadow: 0 0 0 1px rgba(74,222,128,0.5) inset, 0 0 45px rgba(16,185,129,0.36); animation: cameraSwayWin 0.35s ease; }
+    .arena.phase-outcome-lose { box-shadow: 0 0 0 1px rgba(248,113,113,0.52) inset, 0 0 45px rgba(239,68,68,0.34); animation: cameraSwayLose 0.36s ease; }
+    .arena.phase-outcome-draw { box-shadow: 0 0 0 1px rgba(250,204,21,0.5) inset, 0 0 45px rgba(234,179,8,0.34); animation: cameraSwayDraw 0.34s ease; }
     .hand.reveal-pop { animation: revealDrop 0.24s ease; }
+    .arena-wash { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+    .arena-wash.flash { animation: cinematicFlash 0.38s ease; }
+    .arena-wash.outcome-win { background: radial-gradient(circle at center, rgba(16,185,129,0.42), transparent 70%); }
+    .arena-wash.outcome-lose { background: radial-gradient(circle at center, rgba(239,68,68,0.4), transparent 72%); }
+    .arena-wash.outcome-draw { background: radial-gradient(circle at center, rgba(234,179,8,0.36), transparent 72%); }
     .side { text-align: center; }
     .side h2 { font-size: 1rem; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.06em; color: #c3c7d1; }
     .side .name-rock { color: #ffcc4d; font-weight: 700; }
@@ -362,6 +379,15 @@
 
     .round-result-overlay { position: fixed; inset: auto 0 26px; display: flex; justify-content: center; z-index: 50; pointer-events: none; }
     .round-result-overlay-card { background: rgba(15,23,42,0.95); border: 1px solid rgba(148,163,184,0.55); border-radius: 999px; padding: 8px 14px; font-size: 0.8rem; color: #e2e8f0; box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
+    .cinematic-card-overlay { position: fixed; inset: 0; z-index: 65; display: flex; align-items: center; justify-content: center; background: rgba(2,6,23,0.68); }
+    .cinematic-card-overlay.is-hidden { display: none; }
+    .cinematic-card { width: min(560px, 90vw); border-radius: 16px; border: 1px solid rgba(148,163,184,0.7); background: linear-gradient(165deg, rgba(15,23,42,0.98), rgba(2,6,23,0.98)); padding: 18px 16px; box-shadow: 0 18px 42px rgba(0,0,0,0.5); text-align: center; }
+    .cinematic-card-tag { font-size: 0.74rem; letter-spacing: 0.18em; text-transform: uppercase; color: #cbd5e1; margin-bottom: 6px; }
+    .cinematic-card-title { margin: 0 0 6px; font-size: 1.35rem; color: #f8fafc; text-transform: uppercase; letter-spacing: 0.05em; }
+    .cinematic-card-body { margin: 0; font-size: 0.85rem; color: #cbd5e1; }
+    .cinematic-card.elite { border-color: rgba(167,139,250,0.78); box-shadow: 0 0 35px rgba(139,92,246,0.38); }
+    .cinematic-card.boss { border-color: rgba(250,204,21,0.8); box-shadow: 0 0 42px rgba(234,179,8,0.36); }
+    .cinematic-card.ko { border-color: rgba(248,113,113,0.84); box-shadow: 0 0 42px rgba(239,68,68,0.34); }
 
     .summary-card { margin-top: 12px; border-radius: 14px; border: 1px solid rgba(125,211,252,0.38); background: linear-gradient(145deg, rgba(15,23,42,0.94), rgba(30,41,59,0.75)); padding: 12px; box-shadow: inset 0 0 18px rgba(34,211,238,0.08); }
     .summary-card h2 { margin: 0 0 6px; font-size: 1rem; color: #f8fafc; }
@@ -403,6 +429,12 @@
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+      .arena.phase-anticipation,
+      .arena.phase-outcome-win,
+      .arena.phase-outcome-lose,
+      .arena.phase-outcome-draw { animation: none !important; }
+      .arena.phase-anticipation { filter: brightness(1.06); }
+      .arena-wash.flash { animation: none !important; opacity: 0.18; }
     }
   </style>
 </head>
@@ -473,6 +505,9 @@
 
           <div class="settings-row">
             <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
+            <label class="settings-control">Ambience <input id="ambientVol" type="range" min="0" max="100" step="1" value="35" /></label>
+            <label class="settings-control">Hit confirm <input id="confirmVol" type="range" min="0" max="100" step="1" value="55" /></label>
+            <label class="settings-control">UI pips <input id="uiVol" type="range" min="0" max="100" step="1" value="45" /></label>
           </div>
         </div>
       </div>
@@ -513,6 +548,7 @@
 
       <div class="arena-wrap">
         <div id="arena" class="arena">
+          <div id="arenaWash" class="arena-wash" aria-hidden="true"></div>
           <div class="side">
             <h2><span id="enemyArenaName" class="name-rock">Dwayne</span> (<span id="enemyArenaTitle">The Rock</span>)</h2>
             <div id="enemyArenaGimmick" class="settings-hint">Arena feed: waiting on opponent intel.</div>
@@ -647,6 +683,14 @@
       <div id="roundResultOverlayText" class="round-result-overlay-card"></div>
     </div>
 
+    <div id="cinematicCardOverlay" class="cinematic-card-overlay is-hidden" aria-live="polite" aria-atomic="true">
+      <div id="cinematicCard" class="cinematic-card">
+        <div id="cinematicCardTag" class="cinematic-card-tag">Main event</div>
+        <h2 id="cinematicCardTitle" class="cinematic-card-title">Fight card</h2>
+        <p id="cinematicCardBody" class="cinematic-card-body">The next clash is stepping through the ropes.</p>
+      </div>
+    </div>
+
     <div id="gameMenuModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="gameMenuTitle">
       <div class="menu-panel">
         <div class="menu-header">
@@ -774,6 +818,9 @@
     const runSummaryModeEl = document.getElementById("runSummaryMode");
     const startMatchBtn = document.getElementById("startMatchBtn");
     const sfxToggle = document.getElementById("sfxToggle");
+    const ambientVolEl = document.getElementById("ambientVol");
+    const confirmVolEl = document.getElementById("confirmVol");
+    const uiVolEl = document.getElementById("uiVol");
     const seedFeedbackEl = document.getElementById("seedFeedback");
     const preRoundHintEl = document.getElementById("preRoundHint");
     const roundBoardEl = document.getElementById("roundBoard");
@@ -810,6 +857,12 @@
     const tutorialSkipBtn = document.getElementById("tutorialSkipBtn");
     const roundResultOverlayEl = document.getElementById("roundResultOverlay");
     const roundResultOverlayTextEl = document.getElementById("roundResultOverlayText");
+    const cinematicCardOverlayEl = document.getElementById("cinematicCardOverlay");
+    const cinematicCardEl = document.getElementById("cinematicCard");
+    const cinematicCardTagEl = document.getElementById("cinematicCardTag");
+    const cinematicCardTitleEl = document.getElementById("cinematicCardTitle");
+    const cinematicCardBodyEl = document.getElementById("cinematicCardBody");
+    const arenaWashEl = document.getElementById("arenaWash");
     const mapPanelEl = document.getElementById("mapPanel");
     const mapCurrentLabelEl = document.getElementById("mapCurrentLabel");
     const mapProgressLabelEl = document.getElementById("mapProgressLabel");
@@ -1179,6 +1232,14 @@
 
     let audioCtx = null;
     let sfxEnabled = true;
+    let ambientVolume = 0.35;
+    let confirmVolume = 0.55;
+    let uiVolume = 0.45;
+    let masterGainNode = null;
+    let ambientGainNode = null;
+    let confirmGainNode = null;
+    let uiGainNode = null;
+    let ambientOscillators = [];
 
     let historyLog = [];
     let roundBoardCells = [];
@@ -1193,9 +1254,12 @@
     let roundResultTimer = null;
     let roundPhase = "idle";
     let roundAnimationToken = 0;
+    let cinematicCardTimer = null;
+    const announcedNodeCards = new Set();
 
     const ROUND_PHASE_DELAYS = {
       lockIn: 280,
+      anticipation: 220,
       revealRock: 260,
       revealYou: 240,
       resolved: 380
@@ -1576,7 +1640,7 @@
       return null;
     }
 
-    function selectNextNode(nodeId) {
+    async function selectNextNode(nodeId) {
       if (!relicChoicePanelEl.classList.contains("is-hidden")) return;
       if (runState.pendingEvent) return;
       if (!runState.availableNodeIds.includes(nodeId)) return;
@@ -1585,6 +1649,7 @@
       runState.availableNodeIds = [];
       runState.activeEnemyId = runState.nodeEnemyAssignments[nodeId] || ENEMY_DEFINITIONS.graniteRookie.id;
       runState.phaseAnnouncement = "";
+      playUiPip("confirm");
       const node = getActiveNode();
       renderEnemyArenaIntel();
       if (node && node.type === "event") {
@@ -1609,6 +1674,17 @@
       }
       renderEventPanel();
       renderMapPanel();
+      const introKey = `${node.id}-${node.type}`;
+      if (!announcedNodeCards.has(introKey) && (node.type === "elite" || node.type === "boss")) {
+        announcedNodeCards.add(introKey);
+        const enemy = getActiveEnemy();
+        await showCinematicCard({
+          tier: node.type,
+          tag: node.type === "boss" ? "Boss encounter" : "Elite encounter",
+          title: `${enemy.portrait} ${enemy.name}`,
+          body: node.type === "boss" ? "Main event. KO this final wall to complete the run." : "High-pressure bout. Expect tighter reads and bigger swings."
+        });
+      }
       setScene("inRound");
       setButtonsEnabled(true);
       moveButtons[0].focus();
@@ -2132,33 +2208,100 @@
     function ensureAudioContext() {
       if (audioCtx) return;
       const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) audioCtx = new AudioContext();
+      if (!AudioContext) return;
+      audioCtx = new AudioContext();
+      masterGainNode = audioCtx.createGain();
+      ambientGainNode = audioCtx.createGain();
+      confirmGainNode = audioCtx.createGain();
+      uiGainNode = audioCtx.createGain();
+
+      masterGainNode.gain.value = 1;
+      ambientGainNode.gain.value = 0;
+      confirmGainNode.gain.value = 0;
+      uiGainNode.gain.value = 0;
+
+      ambientGainNode.connect(masterGainNode);
+      confirmGainNode.connect(masterGainNode);
+      uiGainNode.connect(masterGainNode);
+      masterGainNode.connect(audioCtx.destination);
+      syncAudioMix();
+      ensureAmbientLoop();
     }
 
-    function playBeep(type) {
+    function isReducedEffectsMode() {
+      return prefersReducedMotion();
+    }
+
+    function syncAudioMix() {
+      if (!audioCtx || !ambientGainNode || !confirmGainNode || !uiGainNode) return;
+      const active = sfxEnabled ? 1 : 0;
+      const now = audioCtx.currentTime;
+      ambientGainNode.gain.setTargetAtTime(active * ambientVolume * 0.35, now, 0.08);
+      confirmGainNode.gain.setTargetAtTime(active * confirmVolume * 0.5, now, 0.05);
+      uiGainNode.gain.setTargetAtTime(active * uiVolume * 0.45, now, 0.04);
+    }
+
+    function ensureAmbientLoop() {
+      if (!audioCtx || ambientOscillators.length > 0) return;
+      const tones = [82, 123];
+      ambientOscillators = tones.map((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = idx === 0 ? "sine" : "triangle";
+        osc.frequency.value = freq;
+        gain.gain.value = idx === 0 ? 0.55 : 0.35;
+        osc.connect(gain);
+        gain.connect(ambientGainNode);
+        osc.start();
+        return osc;
+      });
+    }
+
+    function playLayeredTone({ freq = 440, duration = 0.18, layer = "ui", type = "sine", peak = 0.2 }) {
       if (!sfxEnabled) return;
       try {
         ensureAudioContext();
-        if (!audioCtx || audioCtx.state === "suspended") {
-          audioCtx.resume && audioCtx.resume();
-        }
+        if (!audioCtx) return;
+        if (audioCtx.state === "suspended") audioCtx.resume && audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        let freq = 440;
-        if (type === "win") freq = 880;
-        if (type === "lose") freq = 260;
-        if (type === "draw") freq = 380;
-
+        osc.type = type;
         osc.frequency.value = freq;
+        const target = layer === "confirm" ? confirmGainNode : uiGainNode;
         gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
-
+        gain.gain.exponentialRampToValueAtTime(peak, audioCtx.currentTime + Math.min(0.03, duration * 0.3));
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(target || audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.2);
+        osc.stop(audioCtx.currentTime + duration + 0.02);
       } catch (e) {}
+    }
+
+    function playUiPip(type = "hover") {
+      if (type === "anticipation") {
+        playLayeredTone({ freq: 560, duration: 0.09, layer: "ui", type: "triangle", peak: 0.1 });
+        setTimeout(() => playLayeredTone({ freq: 680, duration: 0.1, layer: "ui", type: "triangle", peak: 0.12 }), isReducedEffectsMode() ? 40 : 80);
+        return;
+      }
+      playLayeredTone({ freq: type === "hover" ? 420 : 510, duration: 0.08, layer: "ui", type: "square", peak: 0.08 });
+    }
+
+    function playHitConfirm(outcome) {
+      if (outcome === "win") {
+        playLayeredTone({ freq: 760, duration: 0.16, layer: "confirm", type: "sawtooth", peak: 0.2 });
+        setTimeout(() => playLayeredTone({ freq: 920, duration: 0.14, layer: "confirm", type: "triangle", peak: 0.16 }), isReducedEffectsMode() ? 30 : 70);
+        return;
+      }
+      if (outcome === "lose") {
+        playLayeredTone({ freq: 220, duration: 0.2, layer: "confirm", type: "sawtooth", peak: 0.22 });
+        return;
+      }
+      playLayeredTone({ freq: 360, duration: 0.14, layer: "confirm", type: "triangle", peak: 0.16 });
+    }
+
+    function playBeep(type) {
+      playHitConfirm(type);
     }
 
     function randomFromFlavor(arr) {
@@ -2311,6 +2454,7 @@
       setScene("roundResult");
       roundResultTimer = setTimeout(() => {
         roundResultOverlayEl.classList.add("is-hidden");
+      cinematicCardOverlayEl.classList.add("is-hidden");
         if (isRunComplete()) setScene("matchSummary");
         else if (runState.availableNodeIds.length > 0) setScene("map");
         else setScene("inRound");
@@ -2344,8 +2488,66 @@
       return new Promise(resolve => setTimeout(resolve, duration));
     }
 
+
+    function triggerArenaWash(outcome) {
+      if (!arenaWashEl) return;
+      arenaWashEl.className = `arena-wash outcome-${outcome}`;
+      if (isReducedEffectsMode()) {
+        arenaWashEl.classList.add("flash");
+        setTimeout(() => { arenaWashEl.className = "arena-wash"; }, 120);
+        return;
+      }
+      arenaWashEl.classList.remove("flash");
+      void arenaWashEl.offsetWidth;
+      arenaWashEl.classList.add("flash");
+      setTimeout(() => { arenaWashEl.className = "arena-wash"; }, 420);
+    }
+
+    function applyOutcomeCamera(outcome) {
+      arenaEl.classList.remove("phase-outcome-win", "phase-outcome-lose", "phase-outcome-draw");
+      arenaEl.classList.add(`phase-outcome-${outcome}`);
+      setTimeout(() => arenaEl.classList.remove(`phase-outcome-${outcome}`), isReducedEffectsMode() ? 110 : 380);
+    }
+
+    function getComboCallouts(outcome, relicFeedback) {
+      if (outcome !== "win") return [];
+      let streak = 0;
+      for (let i = historyLog.length - 1; i >= 0; i -= 1) {
+        if (historyLog[i].outcome !== "win") break;
+        streak += 1;
+      }
+      streak += 1;
+      const callouts = [];
+      if (streak === 3) callouts.push("Combo online · Triple streak");
+      if (streak === 5) callouts.push("Combo surge · Five straight");
+      if (streak >= 7 && streak % 2 === 1) callouts.push(`Combo inferno · ${streak} streak`);
+      if (Array.isArray(relicFeedback) && relicFeedback.length >= 2) callouts.push("Relic synergy proc");
+      return callouts;
+    }
+
+    async function showCinematicCard({ tier = "elite", tag, title, body }) {
+      if (!cinematicCardOverlayEl || !cinematicCardEl) return;
+      if (cinematicCardTimer) {
+        clearTimeout(cinematicCardTimer);
+        cinematicCardTimer = null;
+      }
+      cinematicCardEl.className = `cinematic-card ${tier}`;
+      cinematicCardTagEl.textContent = tag;
+      cinematicCardTitleEl.textContent = title;
+      cinematicCardBodyEl.textContent = body;
+      cinematicCardOverlayEl.classList.remove("is-hidden");
+      const duration = isReducedEffectsMode() ? 280 : 980;
+      await new Promise(resolve => {
+        cinematicCardTimer = setTimeout(() => {
+          cinematicCardOverlayEl.classList.add("is-hidden");
+          cinematicCardTimer = null;
+          resolve();
+        }, duration);
+      });
+    }
+
     function resetArenaPhaseClasses() {
-      arenaEl.classList.remove("phase-lock-in", "phase-reveal");
+      arenaEl.classList.remove("phase-lock-in", "phase-reveal", "phase-anticipation", "phase-outcome-win", "phase-outcome-lose", "phase-outcome-draw");
       rockHandEl.classList.remove("reveal-pop");
       yourHandEl.classList.remove("reveal-pop");
     }
@@ -2415,6 +2617,9 @@
       if (curseRunSequence) url.searchParams.set("curses", curseRunSequence);
       else url.searchParams.delete("curses");
       url.searchParams.set("sfx", sfxToggle.checked ? "1" : "0");
+      url.searchParams.set("av", String(Math.round(ambientVolume * 100)));
+      url.searchParams.set("cv", String(Math.round(confirmVolume * 100)));
+      url.searchParams.set("uv", String(Math.round(uiVolume * 100)));
       return url.toString();
     }
 
@@ -2458,6 +2663,9 @@
       const relicsParam = params.get("relics");
       const cursesParam = params.get("curses");
       const modeParam = params.get("mode");
+      const ambientParam = params.get("av");
+      const confirmParam = params.get("cv");
+      const uiParam = params.get("uv");
 
       let scriptOverride = null;
       if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
@@ -2473,7 +2681,19 @@
       if (sfxParam === "1" || sfxParam === "0") {
         sfxToggle.checked = sfxParam === "1";
       }
+      const parseVol = (value, fallback) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return fallback;
+        return Math.max(0, Math.min(100, n));
+      };
+      ambientVolEl.value = String(parseVol(ambientParam, Number(ambientVolEl.value)));
+      confirmVolEl.value = String(parseVol(confirmParam, Number(confirmVolEl.value)));
+      uiVolEl.value = String(parseVol(uiParam, Number(uiVolEl.value)));
+      ambientVolume = Number(ambientVolEl.value) / 100;
+      confirmVolume = Number(confirmVolEl.value) / 100;
+      uiVolume = Number(uiVolEl.value) / 100;
       sfxEnabled = sfxToggle.checked;
+      syncAudioMix();
 
       const initialRelics = relicsParam
         ? relicsParam.split(",").map(id => id.trim()).filter(id => relicCatalog.some(relic => relic.id === id))
@@ -2691,6 +2911,13 @@
       if (phaseToken !== roundAnimationToken) return;
       arenaEl.classList.remove("phase-lock-in");
 
+      setRoundPhase("anticipation");
+      arenaEl.classList.add("phase-anticipation");
+      playUiPip("anticipation");
+      await waitForPhase(ROUND_PHASE_DELAYS.anticipation);
+      if (phaseToken !== roundAnimationToken) return;
+      arenaEl.classList.remove("phase-anticipation");
+
       const moodBefore = rockMood;
       const rockMove = getRockMoveForRound();
       lastYourMove = yourMove;
@@ -2830,6 +3057,8 @@
         resultLineEl.className = "result-line result-lose";
         playBeep("lose");
       }
+      applyOutcomeCamera(outcome);
+      triggerArenaWash(outcome);
 
       if (lastDecisionAdaptive && beats[yourMove] === rockMove) adaptiveCorrectReads += 1;
 
@@ -2841,9 +3070,11 @@
       updateMoodDisplay();
       advanceTutorialOnAction("moodDisplay");
 
+      const comboCallouts = getComboCallouts(outcome, relicFeedback);
       const triggerLine = relicFeedback.length > 0 ? ` Relic trigger: ${relicFeedback.join(" · ")}.` : "";
       const curseLine = curseTriggers.length > 0 ? ` Curse trigger: ${curseTriggers.join(" · ")}.` : "";
-      commentaryEl.textContent = describeRound(outcome, beatRockThisRound) + triggerLine + curseLine;
+      const comboLine = comboCallouts.length > 0 ? ` Combo callout: ${comboCallouts.join(" · ")}.` : "";
+      commentaryEl.textContent = describeRound(outcome, beatRockThisRound) + triggerLine + curseLine + comboLine;
 
       historyLog.push({
         round: currentRound + 1,
@@ -2889,11 +3120,14 @@
       updatePreRoundHint();
       evaluateAchievements();
 
-      const overlayText = `${outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw."}${relicFeedback.length ? ` Relics: ${relicFeedback.join(", ")}.` : ""}${curseTriggers.length ? ` Curses: ${curseTriggers.join(", ")}.` : ""}`;
+      const comboCalloutText = comboCallouts.length ? ` Combos: ${comboCallouts.join(", ")}.` : "";
+      const overlayText = `${outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw."}${relicFeedback.length ? ` Relics: ${relicFeedback.join(", ")}.` : ""}${curseTriggers.length ? ` Curses: ${curseTriggers.join(", ")}.` : ""}${comboCalloutText}`;
       showRoundResultOverlay(overlayText);
 
       if (isRunComplete()) {
         setButtonsEnabled(false);
+        const koTitle = runState.runFailed || rockScore > youScore ? "KO · The Rock stands tall" : youScore > rockScore ? "KO · You steal the spotlight" : "Time limit draw · No KO";
+        await showCinematicCard({ tier: "ko", tag: "End card", title: koTitle, body: `Final score ${youScore}-${rockScore}-${draws}.` });
         showFinalSummary();
         resetArenaPhaseClasses();
         setRoundPhase("idle");
@@ -3173,6 +3407,7 @@
       rockLossStreak = 0;
 
       historyLog = [];
+      announcedNodeCards.clear();
       debugLogEl.innerHTML = "";
       announcedAchievements = new Set();
       achievementToastsEl.innerHTML = "";
@@ -3298,6 +3533,8 @@
         runState.availableNodeIds = [0];
         renderMapPanel();
       }
+      ensureAudioContext();
+      syncAudioMix();
       setScene("map");
       setButtonsEnabled(false);
       updateRunSummary();
@@ -3306,6 +3543,7 @@
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
       if (!isGameActive()) return;
       advanceTutorialOnAction("moveButtons");
+      playUiPip("confirm");
       playRound(btn.getAttribute("data-move"));
     }));
 
@@ -3331,7 +3569,10 @@
     });
     adaptiveToggle.addEventListener("change", () => { advanceTutorialOnAction("adaptiveToggle"); updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); updateRunSummary(); });
     moodDisplayEl.addEventListener("click", () => advanceTutorialOnAction("moodDisplay"));
-    sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
+    sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; ensureAudioContext(); syncAudioMix(); playUiPip("hover"); });
+    ambientVolEl.addEventListener("input", () => { ambientVolume = Number(ambientVolEl.value) / 100; ensureAudioContext(); syncAudioMix(); });
+    confirmVolEl.addEventListener("input", () => { confirmVolume = Number(confirmVolEl.value) / 100; ensureAudioContext(); syncAudioMix(); });
+    uiVolEl.addEventListener("input", () => { uiVolume = Number(uiVolEl.value) / 100; ensureAudioContext(); syncAudioMix(); playUiPip("hover"); });
     copyLinkBtn.addEventListener("click", () => {
       advanceTutorialOnAction("seedShare");
       copyChallengeLink();
