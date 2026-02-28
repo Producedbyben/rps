@@ -169,6 +169,17 @@
       border-color: rgba(248,113,113,0.62);
       box-shadow: 0 0 0 1px rgba(248,113,113,0.2) inset;
     }
+    .curse-hud {
+      grid-column: 1 / -1;
+      border-radius: 12px;
+      border: 1px solid rgba(248,113,113,0.45);
+      background: linear-gradient(135deg, rgba(69,10,10,0.75), rgba(15,23,42,0.95));
+      padding: 8px 10px;
+    }
+    .curse-hud-title { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: #fecaca; margin-bottom: 5px; }
+    .curse-hud-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .curse-pill { border-radius: 999px; border: 1px solid rgba(252,165,165,0.62); padding: 4px 9px; font-size: 0.72rem; color: #fee2e2; background: rgba(127,29,29,0.62); }
+    .curse-empty { font-size: 0.74rem; color: #fecdd3; }
     .pre-round-hint { text-align: center; font-size: 0.8rem; color: #c3c7d1; margin-bottom: 14px; min-height: 1.2rem; }
 
     .arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; background: linear-gradient(155deg, rgba(17,20,31,0.78), rgba(15,23,42,0.95)); border: 1px solid rgba(148,163,184,0.34); border-radius: 18px; padding: 20px 18px; box-shadow: 0 18px 42px rgba(0,0,0,0.52), inset 0 0 30px rgba(139,92,246,0.13); transform-origin: center; position: relative; overflow: hidden; }
@@ -416,6 +427,12 @@
       <div id="resolveLabel" class="hud-chip">Resolve 12/12</div>
       <div id="cashLabel" class="hud-chip">Cash $0</div>
       <div id="moodDisplay" class="mood-display severity-low">🧊 The Rock is calm · Read risk 30%</div>
+      <div id="curseHud" class="curse-hud" aria-live="polite">
+        <div class="curse-hud-title">Active curses</div>
+        <div id="curseHudList" class="curse-hud-list">
+          <span class="curse-empty">No curses active.</span>
+        </div>
+      </div>
     </div>
 
     <div id="relicStrip" class="relic-strip" aria-live="polite">
@@ -718,6 +735,8 @@
     const scoreLabelEl = document.getElementById("scoreLabel");
     const resolveLabelEl = document.getElementById("resolveLabel");
     const cashLabelEl = document.getElementById("cashLabel");
+    const curseHudEl = document.getElementById("curseHud");
+    const curseHudListEl = document.getElementById("curseHudList");
     const resultLineEl = document.getElementById("resultLine");
     const commentaryEl = document.getElementById("commentary");
     const resetBtn = document.getElementById("resetBtn");
@@ -909,7 +928,13 @@
       skipNextLossPenalty: false,
       revealNextNodeReward: false,
       revealedNodeRewards: {},
-      curseStacks: 0,
+      activeCurses: [],
+      curseState: {
+        firstDrawLossUsedNodes: {},
+        lockoutMove: null,
+        lockoutRoundsRemaining: 0,
+        normalRewardPenaltyUsedNodes: {}
+      },
       rareChainStage: 0,
       unlockedBossVariant: null,
       resolve: RUN_BALANCE.startingResolve,
@@ -924,6 +949,12 @@
       currentEnemyProfile: null,
       phaseAnnouncement: ""
     };
+
+    const curseCatalog = [
+      { id: "first-draw-loss", name: "Rigged Opener", text: "First draw in each node is treated as a loss." },
+      { id: "repeated-hand-lock", name: "Hand Lock", text: "Repeating your previous hand forces a lockout for your next round's move." },
+      { id: "normal-reward-drain", name: "Thin Purse", text: "Normal node win cash rewards are reduced by $1." }
+    ];
 
     const relicCatalog = [
       { id: "streak-crown", name: "Streak Crown", text: "+1 score on wins when current win streak is 2+.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.preWinStreak >= 2) { scoreContext.youDelta += 1; feedback.push("Streak Crown +1"); } } },
@@ -954,7 +985,7 @@
         title: "Backroom Promoter",
         text: "A suit offers you a scripted edge, but every deal has weight.",
         choices: [
-          { id: "sign-ink", title: "Sign the ink", text: "Gain a random relic and 1 curse stack.", effect: "gainRelicAndCurse" },
+          { id: "sign-ink", title: "Sign the ink", text: "Gain a random relic and a random persistent curse.", effect: "gainRelicAndCurse" },
           { id: "walk-away", title: "Walk away", text: "No change. Keep your hands clean.", effect: "noop" }
         ]
       },
@@ -1297,11 +1328,11 @@
         return "Bought Smoke Tonic: next resolve loss is prevented once.";
       }
       if (choice === "cleanse") {
-        if (runState.curseStacks <= 0) return "No curses to remove.";
+        if (!runState.activeCurses.length) return "No curses to remove.";
         if (runState.cash < RUN_BALANCE.shopPrices.cleanseCurse) return "Not enough cash for curse removal.";
         runState.cash -= RUN_BALANCE.shopPrices.cleanseCurse;
-        runState.curseStacks = Math.max(0, runState.curseStacks - 1);
-        return "Paid the shrine keeper: removed 1 curse.";
+        const removedCurse = removeRandomCurse(node ? node.id : -1);
+        return removedCurse ? `Paid the shrine keeper: removed curse ${removedCurse.name}.` : "No curses to remove.";
       }
       return "Saved your cash for later.";
     }
@@ -1316,7 +1347,7 @@
             { id: "heal", title: `Buy Patches ($${RUN_BALANCE.shopPrices.heal})`, text: `Heal ${RUN_BALANCE.shopHealAmount} resolve.` },
             { id: "relic", title: `Buy Relic Crate ($${RUN_BALANCE.shopPrices.relic})`, text: "Add one random relic you do not own." },
             { id: "consumable", title: `Buy Smoke Tonic ($${RUN_BALANCE.shopPrices.consumable})`, text: "One-time consumable: negates the next resolve loss." },
-            { id: "cleanse", title: `Cleanse Curse ($${RUN_BALANCE.shopPrices.cleanseCurse})`, text: "Remove one curse stack." },
+            { id: "cleanse", title: `Cleanse Curse ($${RUN_BALANCE.shopPrices.cleanseCurse})`, text: "Remove one random active curse." },
             { id: "leave", title: "Leave", text: "Save your cash for a later node." }
           ],
           resolveChoice: (choice) => applyShopChoice(choice.id, node)
@@ -1493,6 +1524,47 @@
       return feedback;
     }
 
+    function hasCurse(curseId) {
+      return runState.activeCurses.includes(curseId);
+    }
+
+    function gainRandomCurse(nodeId, contextLabel) {
+      const pool = curseCatalog.filter(curse => !runState.activeCurses.includes(curse.id));
+      const curse = pickDeterministic(pool, "curse-gain", nodeId, contextLabel, runState.selectedPath.join("-"));
+      if (!curse) return null;
+      runState.activeCurses.push(curse.id);
+      return curse;
+    }
+
+    function removeRandomCurse(nodeId) {
+      const available = runState.activeCurses.slice();
+      const curseId = pickDeterministic(available, "curse-remove", nodeId, runState.cash, currentRound);
+      if (!curseId) return null;
+      runState.activeCurses = runState.activeCurses.filter(id => id !== curseId);
+      return curseCatalog.find(curse => curse.id === curseId) || { id: curseId, name: curseId, text: "" };
+    }
+
+    function renderCurseHud() {
+      if (!curseHudEl || !curseHudListEl) return;
+      curseHudListEl.innerHTML = "";
+      if (!runState.activeCurses.length) {
+        const empty = document.createElement("span");
+        empty.className = "curse-empty";
+        empty.textContent = "No curses active.";
+        curseHudListEl.appendChild(empty);
+        return;
+      }
+      runState.activeCurses.forEach(curseId => {
+        const curse = curseCatalog.find(entry => entry.id === curseId);
+        if (!curse) return;
+        const pill = document.createElement("span");
+        pill.className = "curse-pill";
+        pill.textContent = curse.name;
+        pill.title = curse.text;
+        curseHudListEl.appendChild(pill);
+      });
+    }
+
     function mixSeed(...parts) {
       let value = runSeed >>> 0;
       parts.forEach((part, index) => {
@@ -1578,6 +1650,7 @@
         runState.pendingEvent = null;
         renderEventPanel();
         renderRelicStrip();
+        renderCurseHud();
         updateScoreLabel();
         updateResourceLabels();
         setScene("inRound");
@@ -1589,13 +1662,17 @@
 
       if (choice.effect === "gainRelicAndCurse") {
         const relic = rollDeterministicRelic(node.id, choice.id);
-        if (relic) {
+        const curse = gainRandomCurse(node.id, choice.id);
+        if (relic && curse) {
           runState.activeRelics.push({ id: relic.id, used: false });
-          runState.curseStacks += 1;
-          effectsText = `Gained relic ${relic.name} and +1 curse`;
+          effectsText = `Gained relic ${relic.name} and curse ${curse.name}`;
+        } else if (relic) {
+          runState.activeRelics.push({ id: relic.id, used: false });
+          effectsText = `Gained relic ${relic.name}; no new curses available`;
+        } else if (curse) {
+          effectsText = `No relic available, gained curse ${curse.name}`;
         } else {
-          runState.curseStacks += 1;
-          effectsText = "No relic available, +1 curse";
+          effectsText = "No relic or new curse available";
         }
       } else if (choice.effect === "skipNextLossPenalty") {
         runState.skipNextLossPenalty = true;
@@ -1625,6 +1702,7 @@
       runState.pendingEvent = null;
       renderEventPanel();
       renderRelicStrip();
+      renderCurseHud();
       updateScoreLabel();
       updateResourceLabels();
       setScene("inRound");
@@ -2081,7 +2159,7 @@
     function updateScoreLabel() {
       const extras = [];
       if (runState.skipNextLossPenalty) extras.push("ward ready");
-      if (runState.curseStacks > 0) extras.push(`curses ${runState.curseStacks}`);
+      if (runState.activeCurses.length > 0) extras.push(`curses ${runState.activeCurses.length}`);
       if (runState.consumableShieldCharges > 0) extras.push(`tonics ${runState.consumableShieldCharges}`);
       const enemy = getActiveEnemy();
       scoreLabelEl.textContent = `${enemy.title} ${rockScore}  |  You ${youScore}  |  Draws ${draws}${extras.length ? `  |  ${extras.join(" · ")}` : ""}`;
@@ -2118,6 +2196,7 @@
         ? historyLog.map(entry => entry.rockMove).join("")
         : null;
       const relicRunSequence = runState.activeRelics.map(relic => relic.id).join(",");
+      const curseRunSequence = runState.activeCurses.join(",");
 
       url.searchParams.set("seed", String(runSeed));
       if (adaptiveRunSequence) {
@@ -2129,6 +2208,8 @@
       }
       if (relicRunSequence) url.searchParams.set("relics", relicRunSequence);
       else url.searchParams.delete("relics");
+      if (curseRunSequence) url.searchParams.set("curses", curseRunSequence);
+      else url.searchParams.delete("curses");
       url.searchParams.set("sfx", sfxToggle.checked ? "1" : "0");
       return url.toString();
     }
@@ -2171,6 +2252,7 @@
       const adaptiveParam = params.get("adaptive");
       const sfxParam = params.get("sfx");
       const relicsParam = params.get("relics");
+      const cursesParam = params.get("curses");
 
       let scriptOverride = null;
       if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
@@ -2191,11 +2273,14 @@
       const initialRelics = relicsParam
         ? relicsParam.split(",").map(id => id.trim()).filter(id => relicCatalog.some(relic => relic.id === id))
         : [];
+      const initialCurses = cursesParam
+        ? cursesParam.split(",").map(id => id.trim()).filter(id => curseCatalog.some(curse => curse.id === id))
+        : [];
 
-      if (seedParam === null) return { seed: null, manual: false, scriptOverride, initialRelics };
+      if (seedParam === null) return { seed: null, manual: false, scriptOverride, initialRelics, initialCurses };
       const normalizedSeed = normalizeSeed(seedParam);
-      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride, initialRelics };
-      return { seed: normalizedSeed.seed, manual: true, scriptOverride, initialRelics };
+      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride, initialRelics, initialCurses };
+      return { seed: normalizedSeed.seed, manual: true, scriptOverride, initialRelics, initialCurses };
     }
 
     function shakeArena() {
@@ -2249,6 +2334,10 @@
       const enemy = getActiveEnemy();
       const profile = runState.currentEnemyProfile || enemy.aiProfile;
       const adaptPct = Math.round(moodAdaptChance() * 100);
+      if (hasCurse("repeated-hand-lock") && runState.curseState.lockoutRoundsRemaining > 0 && runState.curseState.lockoutMove) {
+        preRoundHintEl.textContent = `Curse warning: Hand Lock blocks ${names[runState.curseState.lockoutMove]} this round.`;
+        return;
+      }
       const phase = evaluateEnemyPhase(enemy);
       if (!adaptiveToggle.checked || currentRound === 0 || !lastYourMove) {
         preRoundHintEl.textContent = `Scout report: ${enemy.name} (${profile}) in ${rockMood.toLowerCase()} mode. ${phase ? `Active gimmick: ${phase.name}.` : "Base gimmick online."}`;
@@ -2370,6 +2459,14 @@
     async function playRound(yourMove) {
       if (isRunComplete()) return;
       if (roundPhase !== "idle") return;
+      if (hasCurse("repeated-hand-lock") && runState.curseState.lockoutRoundsRemaining > 0 && runState.curseState.lockoutMove === yourMove) {
+        const lockedName = names[yourMove] || yourMove;
+        commentaryEl.textContent = `Curse trigger: Hand Lock prevents ${lockedName} this round. Choose a different hand.`;
+        resultLineEl.textContent = `Hand Lock blocked ${lockedName}.`;
+        resultLineEl.className = "result-line result-lose";
+        showRoundResultOverlay(`Curse trigger: Hand Lock blocked ${lockedName}.`);
+        return;
+      }
       setScene("inRound");
       if (adaptiveToggle.checked) adaptiveEverOnThisRun = true;
       roundAnimationToken += 1;
@@ -2422,6 +2519,20 @@
       else outcome = "lose";
 
       const activeNode = getActiveNode();
+      const curseTriggers = [];
+      if (hasCurse("first-draw-loss") && outcome === "draw") {
+        const nodeKey = activeNode ? activeNode.id : currentRound;
+        if (!runState.curseState.firstDrawLossUsedNodes[nodeKey]) {
+          runState.curseState.firstDrawLossUsedNodes[nodeKey] = true;
+          outcome = "lose";
+          curseTriggers.push("Rigged Opener triggered: first draw became a loss");
+        }
+      }
+      if (hasCurse("repeated-hand-lock") && historyLog.length > 0 && historyLog[historyLog.length - 1].yourMove === yourMove) {
+        runState.curseState.lockoutMove = yourMove;
+        runState.curseState.lockoutRoundsRemaining = 2;
+        curseTriggers.push(`Hand Lock triggered: ${names[yourMove]} is locked next round`);
+      }
       const previousEntry = historyLog[historyLog.length - 1] || null;
       const preWinStreak = (() => {
         let streak = 0;
@@ -2465,17 +2576,19 @@
         runState.skipNextLossPenalty = false;
         relicFeedback.push("Event ward negated loss penalty");
       }
-      if (runState.curseStacks > 0 && scoreContext.baseOutcome === "win") {
-        const cursePenalty = Math.min(runState.curseStacks, scoreContext.youDelta);
-        scoreContext.youDelta -= cursePenalty;
-        if (cursePenalty > 0) relicFeedback.push(`Curse drag -${cursePenalty}`);
+      if (scoreContext.baseOutcome === "win" && hasCurse("first-draw-loss") && scoreContext.youDelta > 0) {
+        // no direct score penalty; this curse only alters first draw outcomes
       }
       if (scoreContext.baseOutcome === "win" && runState.relicUpgradeLevel > 0 && relicFeedback.length > 0) {
         scoreContext.youDelta += runState.relicUpgradeLevel;
         relicFeedback.push(`Relic aura +${runState.relicUpgradeLevel}`);
       }
 
-      const rewardCash = scoreContext.baseOutcome === "win" ? (RUN_BALANCE.rewardCashOnWin[scoreContext.nodeType] || 0) : 0;
+      let rewardCash = scoreContext.baseOutcome === "win" ? (RUN_BALANCE.rewardCashOnWin[scoreContext.nodeType] || 0) : 0;
+      if (rewardCash > 0 && hasCurse("normal-reward-drain") && scoreContext.nodeType === "normal") {
+        rewardCash = Math.max(0, rewardCash - 1);
+        curseTriggers.push("Thin Purse triggered: normal reward reduced by $1");
+      }
       if (rewardCash > 0) {
         runState.cash += rewardCash;
         relicFeedback.push(`Cash +$${rewardCash}`);
@@ -2523,7 +2636,8 @@
       advanceTutorialOnAction("moodDisplay");
 
       const triggerLine = relicFeedback.length > 0 ? ` Relic trigger: ${relicFeedback.join(" · ")}.` : "";
-      commentaryEl.textContent = describeRound(outcome, beatRockThisRound) + triggerLine;
+      const curseLine = curseTriggers.length > 0 ? ` Curse trigger: ${curseTriggers.join(" · ")}.` : "";
+      commentaryEl.textContent = describeRound(outcome, beatRockThisRound) + triggerLine + curseLine;
 
       historyLog.push({
         round: currentRound + 1,
@@ -2534,6 +2648,7 @@
         baseOutcome: scoreContext.baseOutcome,
         scoreDelta: { you: scoreContext.youDelta, rock: scoreContext.rockDelta, draws: scoreContext.drawDelta },
         relicFeedback,
+        curseTriggers,
         adaptiveUsed: lastDecisionAdaptive,
         adaptiveCorrect: lastDecisionAdaptive && (beats[yourMove] === rockMove),
         mood: moodBefore,
@@ -2554,6 +2669,7 @@
       maybeRevealUpcomingRewards();
 
       currentRound += 1;
+      if (runState.curseState.lockoutRoundsRemaining > 0) runState.curseState.lockoutRoundsRemaining -= 1;
       if (runState.resolve <= 0) runState.runFailed = true;
       if (!isRunComplete() && runState.availableNodeIds.length > 0) runState.activeNodeId = null;
       renderMapPanel();
@@ -2567,7 +2683,7 @@
       updatePreRoundHint();
       evaluateAchievements();
 
-      const overlayText = `${outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw."}${relicFeedback.length ? ` Relics: ${relicFeedback.join(", ")}.` : ""}`;
+      const overlayText = `${outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw."}${relicFeedback.length ? ` Relics: ${relicFeedback.join(", ")}.` : ""}${curseTriggers.length ? ` Curses: ${curseTriggers.join(", ")}.` : ""}`;
       showRoundResultOverlay(overlayText);
 
       if (isRunComplete()) {
@@ -2583,6 +2699,16 @@
       resetArenaPhaseClasses();
       setRoundPhase("idle");
       if (runState.availableNodeIds.length > 0) {
+        if (activeNode && activeNode.type === "elite" && outcome === "win") {
+          const eliteCurseRoll = mixSeed("elite-curse", activeNode.id, currentRound, youScore, rockScore) % 100;
+          if (eliteCurseRoll < 35) {
+            const eliteCurse = gainRandomCurse(activeNode.id, "elite-win");
+            if (eliteCurse) {
+              commentaryEl.textContent = `${commentaryEl.textContent} Elite backlash: gained curse ${eliteCurse.name}.`;
+              showRoundResultOverlay(`Curse gained from elite backlash: ${eliteCurse.name}.`);
+            }
+          }
+        }
         const showedRelicChoice = maybeShowRelicChoice(activeNode ? activeNode.type : "normal", outcome === "win");
         if (!showedRelicChoice) setScene("map");
         setButtonsEnabled(false);
@@ -2717,6 +2843,7 @@
       const summaryLines = [];
       summaryLines.push(`Final score after ${getTotalNodes()} nodes: The Rock ${rockScore}, You ${youScore}, Draws ${draws}.`);
       summaryLines.push(`Resources: Resolve ${runState.resolve}/${runState.maxResolve}, Cash $${runState.cash}.`);
+      summaryLines.push(runState.activeCurses.length ? `Active curses at finish: ${runState.activeCurses.map(id => (curseCatalog.find(c => c.id === id)?.name || id)).join(", ")}.` : "No active curses at finish.");
       if (runState.runFailed) summaryLines.push(`Defeat condition triggered: resolve dropped to zero at node ${currentRound}.`);
       summaryLines.push(`You beat The Rock ${beatRockHits} out of ${getTotalNodes()} nodes.`);
       summaryLines.push(`Beat-The-Rock sequence for this showdown: ${beatRockAbbrevs.join(" ")}.`);
@@ -2771,7 +2898,7 @@
       setScene("matchSummary");
     }
 
-    function initFromSeed(seed, manualFlag, scriptOverride, initialRelics = []) {
+    function initFromSeed(seed, manualFlag, scriptOverride, initialRelics = [], initialCurses = []) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
       scriptedSequenceOverride = scriptOverride || null;
@@ -2792,7 +2919,13 @@
       runState.skipNextLossPenalty = false;
       runState.revealNextNodeReward = false;
       runState.revealedNodeRewards = {};
-      runState.curseStacks = 0;
+      runState.activeCurses = initialCurses.slice();
+      runState.curseState = {
+        firstDrawLossUsedNodes: {},
+        lockoutMove: null,
+        lockoutRoundsRemaining: 0,
+        normalRewardPenaltyUsedNodes: {}
+      };
       runState.rareChainStage = 0;
       runState.resolve = RUN_BALANCE.startingResolve;
       runState.maxResolve = RUN_BALANCE.startingResolve;
@@ -2848,6 +2981,7 @@
       createRoundBoardCells();
       renderRoundBoard();
       renderRelicStrip();
+      renderCurseHud();
       renderEventPanel();
       relicChoicePanelEl.classList.add("is-hidden");
       roundBoardPreviewEl.textContent = "Hover, focus, or tap a played node to preview exact hands, outcome, and mood.";
@@ -2909,7 +3043,7 @@
         else seedFeedbackEl.textContent = `Starting showdown with normalized seed ${newSeed}.`;
       }
 
-      initFromSeed(newSeed, manual, null, []);
+      initFromSeed(newSeed, manual, null, [], []);
     }
 
     startMatchBtn.addEventListener("click", () => {
@@ -2985,8 +3119,8 @@
 
     const initialSettings = readInitialSettingsFromUrl();
     seedInputEl.value = String(DEFAULT_SEED);
-    if (initialSettings.seed === null) initFromSeed(DEFAULT_SEED, false, initialSettings.scriptOverride, initialSettings.initialRelics || []);
-    else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride, initialSettings.initialRelics || []);
+    if (initialSettings.seed === null) initFromSeed(DEFAULT_SEED, false, initialSettings.scriptOverride, initialSettings.initialRelics || [], initialSettings.initialCurses || []);
+    else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride, initialSettings.initialRelics || [], initialSettings.initialCurses || []);
     maybeStartTutorial();
   </script>
 </body>
