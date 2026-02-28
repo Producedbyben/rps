@@ -181,6 +181,27 @@
 
     .footer { margin-top: 18px; font-size: 0.8rem; color: #6b7280; text-align: center; line-height: 1.3; }
 
+    .is-hidden { display: none !important; }
+    .scene { display: block; }
+
+    .app-toolbar { display: flex; justify-content: center; margin: 10px 0 14px; }
+    .menu-btn { font-size: 0.78rem; padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(125,211,252,0.7); background: rgba(15,23,42,0.95); color: #bae6fd; cursor: pointer; }
+    .menu-btn:hover { filter: brightness(1.08); }
+
+    .menu-modal { position: fixed; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding: 20px; background: rgba(2,6,23,0.72); z-index: 60; overflow-y: auto; }
+    .menu-modal:not(.is-active) { display: none; }
+    .menu-panel { width: min(820px, 100%); background: #0f172a; border: 1px solid rgba(148,163,184,0.45); border-radius: 14px; padding: 16px 14px 18px; box-shadow: 0 20px 42px rgba(0,0,0,0.45); }
+    .menu-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .menu-header h2 { margin: 0; font-size: 1rem; color: #e2e8f0; }
+    .menu-close-btn { border: 1px solid rgba(148,163,184,0.65); background: rgba(2,6,23,0.92); color: #e2e8f0; border-radius: 999px; padding: 6px 12px; font-size: 0.75rem; cursor: pointer; }
+
+    .round-result-overlay { position: fixed; inset: auto 0 26px; display: flex; justify-content: center; z-index: 50; pointer-events: none; }
+    .round-result-overlay-card { background: rgba(15,23,42,0.95); border: 1px solid rgba(148,163,184,0.55); border-radius: 999px; padding: 8px 14px; font-size: 0.8rem; color: #e2e8f0; box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
+
+    .summary-card { margin-top: 12px; border-radius: 12px; border: 1px solid rgba(148,163,184,0.45); background: rgba(15,23,42,0.92); padding: 12px; }
+    .summary-card h2 { margin: 0 0 6px; font-size: 1rem; color: #f8fafc; }
+    .summary-card p { margin: 0; font-size: 0.82rem; color: #cbd5e1; line-height: 1.35; }
+
     @media (max-width: 640px) {
       .arena { grid-template-columns: 1fr; text-align: center; }
       .vs { justify-self: center; }
@@ -194,121 +215,154 @@
     <h1>Beat The Rock</h1>
     <div class="subtitle">20 rounds of modelled Dwayne Johnson in progressive Rock Paper Scissors, you try to read the script.</div>
 
-    <div class="run-summary">
-      <div id="runSummaryPill" class="run-summary-pill">
-        <span><strong>Run</strong> pending</span>
-        <span id="runSummaryScores">You 0, Rock 0, draws 0</span>
-        <span id="runSummarySeed">Seed pending</span>
-      </div>
-    </div>
-
-    <div class="seed-row">
-      <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
-      <button id="randomSeedBtn" type="button">Generate random seed</button>
-      <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
-    </div>
-
-    <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
-    <div id="moodDisplay" class="mood-display severity-low">🧊 Rock is calm · Read risk 30%</div>
-    <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
-
-    <div class="arena-wrap">
-      <div id="arena" class="arena">
-        <div class="side">
-          <h2><span class="name-rock">Dwayne</span> (The Rock)</h2>
-          <div id="rockHand" class="hand">❔</div>
-          <div id="rockMoveLabel" class="label-move">Waiting for bell.</div>
-        </div>
-        <div class="vs">R P S</div>
-        <div class="side">
-          <h2><span class="name-you">You</span></h2>
-          <div id="yourHand" class="hand">❔</div>
-          <div id="yourMoveLabel" class="label-move">Pick your opener.</div>
+    <section id="sceneMetaPanels" class="scene">
+      <div class="run-summary">
+        <div id="runSummaryPill" class="run-summary-pill">
+          <span><strong>Run</strong> pending</span>
+          <span id="runSummaryScores">You 0, Rock 0, draws 0</span>
+          <span id="runSummarySeed">Seed pending</span>
         </div>
       </div>
-    </div>
-
-    <div class="round-info">
-      <span id="roundLabel">Round 1 of 20</span>
-      <span id="scoreLabel">Dwayne 0  |  You 0  |  Draws 0</span>
-    </div>
-
-    <div class="progress-wrap">
-      <div class="progress-labels">
-        <span>Round progress</span>
-        <span id="progressText">0 of 20 completed</span>
+      <div class="app-toolbar">
+        <button id="gameMenuBtn" class="menu-btn" type="button" aria-controls="gameMenuModal" aria-expanded="false">Game Menu</button>
       </div>
-      <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-    </div>
+    </section>
 
-    <div class="controls">
-      <button class="btn-rock" data-move="R" aria-label="Play Rock hand"><span class="hand-icon">✊</span> Rock</button>
-      <button class="btn-paper" data-move="P" aria-label="Play Paper hand"><span class="hand-icon">✋</span> Paper</button>
-      <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
-      <button id="resetBtn" class="btn-reset" style="display:none;">Reset match</button>
-    </div>
-
-    <div class="mode-toggle">
-      <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he reads your status, trends, and last move after round 1.</label>
-    </div>
-
-    <div class="settings-row">
-      <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
-      <span class="settings-hint">Keyboard, R P S to play moves.</span>
-    </div>
-
-    <div id="resultLine" class="result-line" role="status" aria-live="polite" aria-atomic="true"></div>
-    <div class="commentary-wrap">
-      <div class="commentary-title">The Rock reaction</div>
-      <div id="commentary" class="commentary" role="status" aria-live="polite" aria-atomic="true"></div>
-    </div>
-
-    <div class="round-board">
-      <div class="round-board-header">
-        <span>20-round unified board (result + hands + order)</span>
-        <span>Outcome uses W/L/D</span>
-        <span id="roundBoardStatus">Round 1 is live</span>
+    <section id="sceneLobby" class="scene">
+      <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
+      <div id="moodDisplay" class="mood-display severity-low">🧊 Rock is calm · Read risk 30%</div>
+      <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
+      <div class="summary-card">
+        <h2>Lobby</h2>
+        <p>Open Game Menu for seed, sound, achievements, help, and debug tools. Then throw your first hand to start the match.</p>
       </div>
-      <div id="roundBoard" class="round-board-grid"></div>
-      <div id="roundBoardPreview" class="round-board-preview">Hover, focus, or tap a played round to preview exact hands, outcome, and mood.</div>
-    </div>
+    </section>
 
-    <div class="challenge-row">
-      <button id="copyLinkBtn" class="btn-share" type="button">Copy challenge link</button>
-      <div id="copyStatus" class="copy-status" aria-live="polite"></div>
-    </div>
-
-    <div class="achievements">
-      <div class="achievements-header">
-        <span>Run achievements</span>
-        <button id="resetAchievementsBtn" class="btn-achievements-reset" type="button">Reset achievements</button>
-      </div>
-      <div id="achievementsList" class="achievements-list"></div>
-    </div>
-
-    <details class="help-box">
-      <summary>How this works</summary>
-      <div class="help-box-content">
-        <ul>
-          <li>Every run is 20 rounds, and each round is logged in the unified board with hands plus W/L/D outcome.</li>
-          <li>Dwayne starts from a fixed base script; in Adaptive mode he uses score state, mood, and your recent move trends to pick his next hand after round 1.</li>
-          <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and mood changes adapt chance.</li>
-          <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
-          <li>Set a seed in the field above to replay exact runs, or leave it blank to randomize next reset.</li>
-          <li>Achievements include clutch, chaos, status, sequence, and consolation badges; unlocks are immediate and each one raises its multiplier for this browser profile.</li>
-        </ul>
-        <div class="help-legend">
-          <span><strong>Calm</strong> 30% adapt chance</span>
-          <span><strong>Suspicious</strong> 60% adapt chance</span>
-          <span><strong>Paranoid</strong> 90% adapt chance</span>
+    <section id="sceneGame" class="scene">
+      <div class="arena-wrap">
+        <div id="arena" class="arena">
+          <div class="side">
+            <h2><span class="name-rock">Dwayne</span> (The Rock)</h2>
+            <div id="rockHand" class="hand">❔</div>
+            <div id="rockMoveLabel" class="label-move">Waiting for bell.</div>
+          </div>
+          <div class="vs">R P S</div>
+          <div class="side">
+            <h2><span class="name-you">You</span></h2>
+            <div id="yourHand" class="hand">❔</div>
+            <div id="yourMoveLabel" class="label-move">Pick your opener.</div>
+          </div>
         </div>
       </div>
-    </details>
 
-    <details class="debug-panel">
-      <summary><span>Round log and debug info</span></summary>
-      <div id="debugLog" class="debug-log"></div>
-    </details>
+      <div class="round-info">
+        <span id="roundLabel">Round 1 of 20</span>
+        <span id="scoreLabel">Dwayne 0  |  You 0  |  Draws 0</span>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-labels">
+          <span>Round progress</span>
+          <span id="progressText">0 of 20 completed</span>
+        </div>
+        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+      </div>
+
+      <div class="controls">
+        <button class="btn-rock" data-move="R" aria-label="Play Rock hand"><span class="hand-icon">✊</span> Rock</button>
+        <button class="btn-paper" data-move="P" aria-label="Play Paper hand"><span class="hand-icon">✋</span> Paper</button>
+        <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
+        <button id="resetBtn" class="btn-reset" style="display:none;">Reset match</button>
+      </div>
+
+      <div class="mode-toggle">
+        <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he reads your status, trends, and last move after round 1.</label>
+      </div>
+
+      <div id="resultLine" class="result-line" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div class="commentary-wrap">
+        <div class="commentary-title">The Rock reaction</div>
+        <div id="commentary" class="commentary" role="status" aria-live="polite" aria-atomic="true"></div>
+      </div>
+
+      <div class="round-board">
+        <div class="round-board-header">
+          <span>20-round unified board (result + hands + order)</span>
+          <span>Outcome uses W/L/D</span>
+          <span id="roundBoardStatus">Round 1 is live</span>
+        </div>
+        <div id="roundBoard" class="round-board-grid"></div>
+        <div id="roundBoardPreview" class="round-board-preview">Hover, focus, or tap a played round to preview exact hands, outcome, and mood.</div>
+      </div>
+
+      <div class="challenge-row">
+        <button id="copyLinkBtn" class="btn-share" type="button">Copy challenge link</button>
+        <div id="copyStatus" class="copy-status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="sceneSummary" class="scene is-hidden">
+      <div class="summary-card">
+        <h2>Match summary</h2>
+        <p>Run complete. Review the final commentary, board preview, and challenge link from this summary scene.</p>
+      </div>
+    </section>
+
+    <div id="roundResultOverlay" class="round-result-overlay is-hidden" aria-live="polite" aria-atomic="true">
+      <div id="roundResultOverlayText" class="round-result-overlay-card"></div>
+    </div>
+
+    <div id="gameMenuModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="gameMenuTitle">
+      <div class="menu-panel">
+        <div class="menu-header">
+          <h2 id="gameMenuTitle">Game Menu</h2>
+          <button id="closeMenuBtn" class="menu-close-btn" type="button">Close</button>
+        </div>
+
+        <div class="seed-row">
+          <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
+          <button id="randomSeedBtn" type="button">Generate random seed</button>
+          <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
+        </div>
+
+        <div class="settings-row">
+          <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
+          <span class="settings-hint">Keyboard, R P S to play moves.</span>
+        </div>
+
+        <div class="achievements">
+          <div class="achievements-header">
+            <span>Run achievements</span>
+            <button id="resetAchievementsBtn" class="btn-achievements-reset" type="button">Reset achievements</button>
+          </div>
+          <div id="achievementsList" class="achievements-list"></div>
+        </div>
+
+        <details class="help-box">
+          <summary>How this works</summary>
+          <div class="help-box-content">
+            <ul>
+              <li>Every run is 20 rounds, and each round is logged in the unified board with hands plus W/L/D outcome.</li>
+              <li>Dwayne starts from a fixed base script; in Adaptive mode he uses score state, mood, and your recent move trends to pick his next hand after round 1.</li>
+              <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and mood changes adapt chance.</li>
+              <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
+              <li>Set a seed in the field above to replay exact runs, or leave it blank to randomize next reset.</li>
+              <li>Achievements include clutch, chaos, status, sequence, and consolation badges; unlocks are immediate and each one raises its multiplier for this browser profile.</li>
+            </ul>
+            <div class="help-legend">
+              <span><strong>Calm</strong> 30% adapt chance</span>
+              <span><strong>Suspicious</strong> 60% adapt chance</span>
+              <span><strong>Paranoid</strong> 90% adapt chance</span>
+            </div>
+          </div>
+        </details>
+
+        <details class="debug-panel">
+          <summary><span>Round log and debug info</span></summary>
+          <div id="debugLog" class="debug-log"></div>
+        </details>
+      </div>
+    </div>
 
     <div class="footer">
       With Adaptive Rock off, Dwayne uses a seeded scripted sequence, with it on he uses status and trends to pick from weighted adaptive plays.<br />
@@ -391,6 +445,14 @@
     const copyStatusEl = document.getElementById("copyStatus");
     const achievementToastsEl = document.getElementById("achievementToasts");
     const resetAchievementsBtn = document.getElementById("resetAchievementsBtn");
+    const sceneLobbyEl = document.getElementById("sceneLobby");
+    const sceneGameEl = document.getElementById("sceneGame");
+    const sceneSummaryEl = document.getElementById("sceneSummary");
+    const gameMenuBtn = document.getElementById("gameMenuBtn");
+    const gameMenuModal = document.getElementById("gameMenuModal");
+    const closeMenuBtn = document.getElementById("closeMenuBtn");
+    const roundResultOverlayEl = document.getElementById("roundResultOverlay");
+    const roundResultOverlayTextEl = document.getElementById("roundResultOverlayText");
 
     const U32_MIN = 0;
     const U32_MAX = 0xFFFFFFFF;
@@ -529,6 +591,8 @@
     let activeRoundBoardIndex = null;
     let announcedAchievements = new Set();
     let achievementUnlockCounts = {};
+    let sceneState = "lobby";
+    let roundResultTimer = null;
 
     function loadPersistentAchievements() {
       try {
@@ -795,6 +859,45 @@
         const outcomeText = last.outcome === "win" ? "you win" : last.outcome === "lose" ? "The Rock wins" : "draw";
         roundBoardPreviewEl.innerHTML = `<strong>Last round</strong> was ${last.round}, outcome ${outcomeText}. Hover any played round for detail.`;
       }
+    }
+
+    function setScene(nextScene) {
+      sceneState = nextScene;
+      sceneLobbyEl.classList.toggle("is-hidden", nextScene !== "lobby");
+      sceneGameEl.classList.remove("is-hidden");
+      sceneSummaryEl.classList.toggle("is-hidden", nextScene !== "matchSummary");
+    }
+
+    function showRoundResultOverlay(text) {
+      if (roundResultTimer) {
+        clearTimeout(roundResultTimer);
+        roundResultTimer = null;
+      }
+      roundResultOverlayTextEl.textContent = text;
+      roundResultOverlayEl.classList.remove("is-hidden");
+      setScene("roundResult");
+      roundResultTimer = setTimeout(() => {
+        roundResultOverlayEl.classList.add("is-hidden");
+        if (currentRound >= 20) setScene("matchSummary");
+        else setScene("inRound");
+      }, 700);
+    }
+
+    function openGameMenu() {
+      gameMenuModal.classList.add("is-active");
+      gameMenuBtn.setAttribute("aria-expanded", "true");
+    }
+
+    function closeGameMenu() {
+      gameMenuModal.classList.remove("is-active");
+      gameMenuBtn.setAttribute("aria-expanded", "false");
+    }
+
+    function isModalInputFocused(target) {
+      if (!target || !(target instanceof Element)) return false;
+      if (!gameMenuModal.contains(target)) return false;
+      const tag = target.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
     }
 
     function setButtonsEnabled(enabled) { moveButtons.forEach(btn => btn.disabled = !enabled); }
@@ -1076,6 +1179,7 @@
 
     function playRound(yourMove) {
       if (currentRound >= 20) return;
+      setScene("inRound");
       if (adaptiveToggle.checked) adaptiveEverOnThisRun = true;
 
       const moodBefore = rockMood;
@@ -1136,6 +1240,9 @@
       updateRunSummary();
       updatePreRoundHint();
       evaluateAchievements();
+
+      const overlayText = outcome === "win" ? "Round result, you win." : outcome === "lose" ? "Round result, The Rock wins." : "Round result, draw.";
+      showRoundResultOverlay(overlayText);
 
       if (currentRound >= 20) {
         setButtonsEnabled(false);
@@ -1223,6 +1330,7 @@
       renderAchievements();
       if (historyLog.length > 0) handleRoundBoardHover(historyLog.length - 1);
       resetBtn.style.display = "inline-flex";
+      setScene("matchSummary");
     }
 
     function initFromSeed(seed, manualFlag, scriptOverride) {
@@ -1290,6 +1398,12 @@
 
       setButtonsEnabled(true);
       resetBtn.style.display = "none";
+      roundResultOverlayEl.classList.add("is-hidden");
+      if (roundResultTimer) {
+        clearTimeout(roundResultTimer);
+        roundResultTimer = null;
+      }
+      setScene("lobby");
     }
 
     function resetGame() {
@@ -1340,10 +1454,21 @@
     adaptiveToggle.addEventListener("change", () => { updateAdaptiveStats(); updateMoodDisplay(); updatePreRoundHint(); });
     sfxToggle.addEventListener("change", () => { sfxEnabled = sfxToggle.checked; });
     copyLinkBtn.addEventListener("click", copyChallengeLink);
+    gameMenuBtn.addEventListener("click", openGameMenu);
+    closeMenuBtn.addEventListener("click", closeGameMenu);
+    gameMenuModal.addEventListener("click", (event) => {
+      if (event.target === gameMenuModal) closeGameMenu();
+    });
 
     document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && gameMenuModal.classList.contains("is-active")) {
+        closeGameMenu();
+        return;
+      }
       if (!isGameActive()) return;
-      if (e.target && e.target.tagName === "INPUT") return;
+      if (isModalInputFocused(e.target)) return;
+      const targetTag = e.target && e.target.tagName ? e.target.tagName : "";
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(targetTag)) return;
       const key = e.key.toLowerCase();
       if (key === "r") playRound("R");
       else if (key === "p") playRound("P");
