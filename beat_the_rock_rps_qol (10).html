@@ -3607,16 +3607,22 @@
       }
     }
 
-    startMatchBtn.addEventListener("click", () => {
+    startMatchBtn.addEventListener("click", async () => {
+      ensureAudioContext();
+      syncAudioMix();
+
       if (runState.activeNodeId === null) {
         runState.availableNodeIds = [0];
         renderMapPanel();
       }
-      ensureAudioContext();
-      syncAudioMix();
+
       setScene("map");
       setButtonsEnabled(false);
       updateRunSummary();
+
+      if (runState.activeNodeId === null && runState.availableNodeIds.length === 1) {
+        await selectNextNode(runState.availableNodeIds[0]);
+      }
     });
 
     moveButtons.forEach(btn => btn.addEventListener("click", () => {
