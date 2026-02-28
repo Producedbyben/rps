@@ -486,7 +486,8 @@
       <div class="arena-wrap">
         <div id="arena" class="arena">
           <div class="side">
-            <h2><span class="name-rock">Dwayne</span> (The Rock)</h2>
+            <h2><span id="enemyArenaName" class="name-rock">Dwayne</span> (<span id="enemyArenaTitle">The Rock</span>)</h2>
+            <div id="enemyArenaGimmick" class="settings-hint">Arena feed: waiting on opponent intel.</div>
             <div id="rockHand" class="hand">❔</div>
             <div id="rockMoveLabel" class="label-move">Awaiting the opening bell.</div>
           </div>
@@ -789,6 +790,9 @@
     const eventChoiceGridEl = document.getElementById("eventChoiceGrid");
     const summaryEventFlavorEl = document.getElementById("summaryEventFlavor");
     const summaryEventListEl = document.getElementById("summaryEventList");
+    const enemyArenaNameEl = document.getElementById("enemyArenaName");
+    const enemyArenaTitleEl = document.getElementById("enemyArenaTitle");
+    const enemyArenaGimmickEl = document.getElementById("enemyArenaGimmick");
 
     const U32_MIN = 0;
     const U32_MAX = 0xFFFFFFFF;
@@ -800,6 +804,89 @@
     const TUTORIAL_STORAGE_KEY = "beatTheRockTutorialState.v1";
     const ORIGINAL_SEED_ONE_SEQUENCE = "RPSSRPPSPRRSPSPRPPRP";
     const ENCOUNTER_TYPES = ["normal", "elite", "event", "shop", "campfire", "boss"];
+    const AI_PROFILES = {
+      random: "random",
+      antiRepeat: "anti-repeat",
+      antiStreak: "anti-streak",
+      delayedCounter: "delayed-counter",
+      fakeOut: "fake-out"
+    };
+    const ENEMY_DEFINITIONS = {
+      graniteRookie: {
+        id: "granite-rookie",
+        name: "Gio Granite",
+        portrait: "🪨",
+        title: "Rookie",
+        aiProfile: AI_PROFILES.random,
+        passives: ["Unscripted swings"],
+        phaseRules: []
+      },
+      tapeWatcher: {
+        id: "tape-watcher",
+        name: "Mina Tapewatch",
+        portrait: "📼",
+        title: "Scout",
+        aiProfile: AI_PROFILES.antiRepeat,
+        passives: ["Punishes repeated hands"],
+        phaseRules: []
+      },
+      streakWarden: {
+        id: "streak-warden",
+        name: "Vox Streakwarden",
+        portrait: "📈",
+        title: "Analyst",
+        aiProfile: AI_PROFILES.antiStreak,
+        passives: ["Targets your streaks"],
+        phaseRules: []
+      },
+      mirrorLag: {
+        id: "mirror-lag",
+        name: "Echo Mirrorlag",
+        portrait: "🪞",
+        title: "Counterfeiter",
+        aiProfile: AI_PROFILES.delayedCounter,
+        passives: ["Counters with a one-round delay"],
+        phaseRules: []
+      },
+      showboat: {
+        id: "showboat",
+        name: "Rico Showboat",
+        portrait: "🎭",
+        title: "Bluffer",
+        aiProfile: AI_PROFILES.fakeOut,
+        passives: ["Baits counters with fake-outs"],
+        phaseRules: []
+      },
+      rockBoss: {
+        id: "the-rock",
+        name: "Dwayne",
+        portrait: "🗿",
+        title: "The Rock",
+        aiProfile: AI_PROFILES.antiRepeat,
+        passives: ["Mood-based adaptive reads"],
+        phaseRules: [
+          { id: "press-conference", name: "Press Conference", trigger: { scoreLeadAtMost: -2 }, aiProfile: AI_PROFILES.fakeOut, passive: "Switches to fake-outs while behind" },
+          { id: "headliner-lock", name: "Headliner Lock-in", trigger: { resolveAtMost: 5 }, aiProfile: AI_PROFILES.antiStreak, passive: "Targets your streaks when resolve is low" }
+        ]
+      },
+      obsidianBoss: {
+        id: "obsidian-headliner",
+        name: "Obsidian Dwayne",
+        portrait: "🌑",
+        title: "Headliner",
+        aiProfile: AI_PROFILES.delayedCounter,
+        passives: ["Bonus pressure on player losses"],
+        phaseRules: [
+          { id: "echo-read", name: "Echo Read", trigger: { scoreLeadAtLeast: 2 }, aiProfile: AI_PROFILES.antiRepeat, passive: "Reads your repeats while ahead" },
+          { id: "finisher-script", name: "Finisher Script", trigger: { resolveAtMost: 4 }, aiProfile: AI_PROFILES.fakeOut, passive: "Late-fight fake-out finisher" }
+        ]
+      }
+    };
+    const NODE_ENEMY_POOLS = {
+      normal: ["graniteRookie", "tapeWatcher"],
+      elite: ["streakWarden", "mirrorLag", "showboat"],
+      boss: ["rockBoss"]
+    };
     const RUN_BALANCE = {
       startingResolve: 12,
       startingCash: 5,
@@ -830,7 +917,12 @@
       cash: RUN_BALANCE.startingCash,
       consumableShieldCharges: 0,
       relicUpgradeLevel: 0,
-      runFailed: false
+      runFailed: false,
+      nodeEnemyAssignments: {},
+      activeEnemyId: null,
+      currentEnemyPhase: null,
+      currentEnemyProfile: null,
+      phaseAnnouncement: ""
     };
 
     const relicCatalog = [
@@ -925,6 +1017,9 @@
       { id: "no-repeat-discipline", name: "No Repeat Discipline", text: "20 rounds without repeating your last hand.", rank: "gold", unlocked: s => s.matchFinished && s.noConsecutiveSameMove },
       { id: "theoretical-maximum", name: "Theoretical Maximum", text: "You beat The Rock in every single round.", rank: "platinum", unlocked: s => s.matchFinished && s.beatRockHits === s.historyLog.length },
       { id: "reverse-sweep", name: "Reverse Sweep", text: "You lost the first 3 rounds but still won the run.", rank: "platinum", unlocked: s => s.matchFinished && s.youScore > s.rockScore && s.lostFirstThree },
+      { id: "archetype-hunter", name: "Archetype Hunter", text: "Beat four distinct opponent archetypes in one run.", rank: "gold", unlocked: s => s.defeatedProfiles.size >= 4 },
+      { id: "boss-phase-breaker", name: "Boss Phase Breaker", text: "Defeat a boss after a phase transition activates.", rank: "gold", unlocked: s => s.bossPhaseWin },
+      { id: "obsidian-topple", name: "Obsidian Topple", text: "Defeat the Obsidian Headliner boss variant.", rank: "platinum", unlocked: s => s.obsidianBossWin },
       { id: "tough-crowd", name: "Tough Crowd", text: "Consolation badge, you lost by 8+ but still finished the run.", rank: "bronze", unlocked: s => s.matchFinished && s.lossMargin >= 8 },
       { id: "main-event-survivor", name: "Main Event Survivor", text: "Consolation badge, you lost but stayed for all 20 rounds.", rank: "bronze", unlocked: s => s.matchFinished && s.rockScore > s.youScore },
       { id: "pacifist-match", name: "Pacifist Match", text: "You somehow avoided winning or losing any round.", rank: "platinum", unlocked: s => s.matchFinished && s.youScore === 0 && s.rockScore === 0 && s.draws === 20 }
@@ -1113,6 +1208,65 @@
       return nodes;
     }
 
+    function assignEnemiesToNodes(nodes, selectedSeed) {
+      const assignments = {};
+      nodes.forEach(node => {
+        if (!["normal", "elite", "boss"].includes(node.type)) return;
+        if (node.type === "boss") {
+          assignments[node.id] = runState.unlockedBossVariant === "obsidian-headliner" ? ENEMY_DEFINITIONS.obsidianBoss.id : ENEMY_DEFINITIONS.rockBoss.id;
+          return;
+        }
+        const pool = NODE_ENEMY_POOLS[node.type] || NODE_ENEMY_POOLS.normal;
+        const pickKey = pickDeterministic(pool, "enemy-node", selectedSeed, node.id, node.index);
+        const enemy = ENEMY_DEFINITIONS[pickKey] || ENEMY_DEFINITIONS.graniteRookie;
+        assignments[node.id] = enemy.id;
+      });
+      return assignments;
+    }
+
+    function getEnemyById(enemyId) {
+      return Object.values(ENEMY_DEFINITIONS).find(enemy => enemy.id === enemyId) || ENEMY_DEFINITIONS.graniteRookie;
+    }
+
+    function getActiveEnemy() {
+      return getEnemyById(runState.activeEnemyId);
+    }
+
+    function evaluateEnemyPhase(enemy) {
+      if (!enemy || !Array.isArray(enemy.phaseRules)) return null;
+      const scoreDiff = youScore - rockScore;
+      for (const phaseRule of enemy.phaseRules) {
+        const trigger = phaseRule.trigger || {};
+        const leadAtMostOk = trigger.scoreLeadAtMost === undefined || scoreDiff <= trigger.scoreLeadAtMost;
+        const leadAtLeastOk = trigger.scoreLeadAtLeast === undefined || scoreDiff >= trigger.scoreLeadAtLeast;
+        const resolveOk = trigger.resolveAtMost === undefined || runState.resolve <= trigger.resolveAtMost;
+        if (leadAtMostOk && leadAtLeastOk && resolveOk) return phaseRule;
+      }
+      return null;
+    }
+
+    function getEnemyProfileForRound(enemy) {
+      if (!enemy) return AI_PROFILES.random;
+      const phase = evaluateEnemyPhase(enemy);
+      runState.currentEnemyPhase = phase ? phase.id : null;
+      if (phase && runState.phaseAnnouncement !== phase.id) {
+        runState.phaseAnnouncement = phase.id;
+        commentaryEl.textContent = `${enemy.portrait} ${enemy.name} enters phase: ${phase.name} — ${phase.passive}.`;
+      }
+      return phase?.aiProfile || enemy.aiProfile || AI_PROFILES.random;
+    }
+
+    function renderEnemyArenaIntel() {
+      const enemy = getActiveEnemy();
+      if (!enemyArenaNameEl || !enemyArenaTitleEl || !enemyArenaGimmickEl) return;
+      enemyArenaNameEl.textContent = `${enemy.portrait} ${enemy.name}`;
+      enemyArenaTitleEl.textContent = enemy.title;
+      const phase = evaluateEnemyPhase(enemy);
+      const phaseText = phase ? `Phase: ${phase.name}` : "Base phase";
+      const passiveText = phase?.passive || enemy.passives.join(" · ");
+      enemyArenaGimmickEl.textContent = `Arena feed: ${phaseText} · ${passiveText}`;
+    }
+
     function getTotalNodes() { return runState.mapNodes.length || 1; }
     function getActiveNode() { return runState.mapNodes[runState.activeNodeId] || null; }
     function isRunComplete() { return runState.runFailed || currentRound >= getTotalNodes(); }
@@ -1200,7 +1354,10 @@
       runState.activeNodeId = nodeId;
       runState.selectedPath.push(nodeId);
       runState.availableNodeIds = [];
+      runState.activeEnemyId = runState.nodeEnemyAssignments[nodeId] || ENEMY_DEFINITIONS.graniteRookie.id;
+      runState.phaseAnnouncement = "";
       const node = getActiveNode();
+      renderEnemyArenaIntel();
       if (node && node.type === "event") {
         const event = getEventForNode(node);
         if (event) {
@@ -1232,7 +1389,8 @@
       const total = getTotalNodes();
       const activeNode = getActiveNode();
       const completedPath = runState.completedNodeIds.map(id => `N${(id || 0) + 1}`).join(" → ");
-      mapCurrentLabelEl.textContent = activeNode ? `Current node: Act ${activeNode.act} Node ${activeNode.index} · ${nodeTypeLabel(activeNode.type)}` : "Current node: choose next";
+      const activeEnemy = activeNode ? getEnemyById(runState.nodeEnemyAssignments[activeNode.id]) : null;
+      mapCurrentLabelEl.textContent = activeNode ? `Current node: Act ${activeNode.act} Node ${activeNode.index} · ${nodeTypeLabel(activeNode.type)} · ${activeEnemy ? activeEnemy.name : "Unknown"}` : "Current node: choose next";
       mapProgressLabelEl.textContent = `Path ${currentRound}/${total}`;
       mapPathEl.textContent = `Completed path: ${completedPath || "none yet"}`;
       mapChoicesEl.innerHTML = "";
@@ -1250,7 +1408,8 @@
         btn.type = "button";
         btn.className = "map-node-btn";
         const preview = runState.revealedNodeRewards[id];
-        btn.textContent = `Act ${node.act} Node ${node.index} · ${nodeTypeLabel(node.type)}${preview ? ` · ${preview}` : ""}`;
+        const enemy = getEnemyById(runState.nodeEnemyAssignments[id]);
+        btn.textContent = `Act ${node.act} Node ${node.index} · ${nodeTypeLabel(node.type)} · ${enemy.name}${preview ? ` · ${preview}` : ""}`;
         if (runState.completedNodeIds.includes(id)) btn.classList.add("completed");
         if (runState.activeNodeId === id) btn.classList.add("current");
         const selectable = runState.availableNodeIds.includes(id);
@@ -1453,6 +1612,7 @@
       } else if (choice.effect === "unlockBossVariant") {
         runState.rareChainStage = 2;
         runState.unlockedBossVariant = "obsidian-headliner";
+        runState.nodeEnemyAssignments = assignEnemiesToNodes(runState.mapNodes, runSeed);
         effectsText = "Unlocked Obsidian Headliner boss variant";
       } else if (choice.effect === "skipNextLossPenaltyAndEndChain") {
         runState.skipNextLossPenalty = true;
@@ -1606,6 +1766,10 @@
       const seenMoods = new Set();
       const yourMoves = historyLog.map(entry => entry.yourMove);
       const moveCounts = { R: 0, P: 0, S: 0 };
+      const defeatedEnemyIds = new Set();
+      const defeatedProfiles = new Set();
+      let bossPhaseWin = false;
+      let obsidianBossWin = false;
 
       historyLog.forEach(entry => {
         if (entry.outcome === "win") { curW += 1; curL = 0; curD = 0; rollingYou += 1; }
@@ -1623,6 +1787,12 @@
         if (moveCounts[entry.yourMove] !== undefined) moveCounts[entry.yourMove] += 1;
 
         maxRockLead = Math.max(maxRockLead, rollingRock - rollingYou);
+        if (entry.outcome === "win" && entry.enemyId) {
+          defeatedEnemyIds.add(entry.enemyId);
+          if (entry.enemyProfile) defeatedProfiles.add(entry.enemyProfile);
+          if (entry.nodeType === "boss" && entry.enemyPhase) bossPhaseWin = true;
+          if (entry.enemyId === "obsidian-headliner") obsidianBossWin = true;
+        }
       });
 
       const noLossesFirstFive = historyLog.slice(0, 5).every(entry => entry.outcome !== "lose");
@@ -1670,6 +1840,10 @@
         adaptiveEverOnThisRun,
         adaptiveAttempts,
         adaptiveCorrectReads,
+        defeatedEnemyIds,
+        defeatedProfiles,
+        bossPhaseWin,
+        obsidianBossWin,
         matchFinished: historyLog.length === getTotalNodes()
       };
     }
@@ -1717,16 +1891,20 @@
     }
 
     function describeRound(outcome, beatRockThisRound) {
+      const enemy = getActiveEnemy();
       let base;
       if (outcome === "win") base = randomFromFlavor(rockLosingQuips);
       else if (outcome === "lose") base = randomFromFlavor(rockWinningQuips);
       else base = randomFromFlavor(drawQuips);
 
+      base = base.replaceAll("The Rock", enemy.title).replaceAll("Dwayne", enemy.name);
+
       let extra = "";
       if (beatRockThisRound && outcome === "win") extra = " " + randomFromFlavor(beatRockQuips);
       else if (!beatRockThisRound && outcome === "win") extra = " " + randomFromFlavor(missedBeatRockQuips);
 
-      return base + extra;
+      const gimmick = runState.currentEnemyPhase ? ` ${enemy.title} gimmick active: ${runState.currentEnemyPhase}.` : "";
+      return base + extra + gimmick;
     }
 
     function moveRoundBoardFocus(index) {
@@ -1905,7 +2083,8 @@
       if (runState.skipNextLossPenalty) extras.push("ward ready");
       if (runState.curseStacks > 0) extras.push(`curses ${runState.curseStacks}`);
       if (runState.consumableShieldCharges > 0) extras.push(`tonics ${runState.consumableShieldCharges}`);
-      scoreLabelEl.textContent = `The Rock ${rockScore}  |  You ${youScore}  |  Draws ${draws}${extras.length ? `  |  ${extras.join(" · ")}` : ""}`;
+      const enemy = getActiveEnemy();
+      scoreLabelEl.textContent = `${enemy.title} ${rockScore}  |  You ${youScore}  |  Draws ${draws}${extras.length ? `  |  ${extras.join(" · ")}` : ""}`;
     }
     function updateResourceLabels() {
       resolveLabelEl.textContent = `Resolve ${runState.resolve}/${runState.maxResolve}`;
@@ -2067,14 +2246,17 @@
         preRoundHintEl.textContent = "Run complete. Check the node board for every throw and read.";
         return;
       }
+      const enemy = getActiveEnemy();
+      const profile = runState.currentEnemyProfile || enemy.aiProfile;
       const adaptPct = Math.round(moodAdaptChance() * 100);
+      const phase = evaluateEnemyPhase(enemy);
       if (!adaptiveToggle.checked || currentRound === 0 || !lastYourMove) {
-        preRoundHintEl.textContent = `Scout report: ${rockMood.toLowerCase()} energy. Scripted lane is most likely this round.`;
+        preRoundHintEl.textContent = `Scout report: ${enemy.name} (${profile}) in ${rockMood.toLowerCase()} mode. ${phase ? `Active gimmick: ${phase.name}.` : "Base gimmick online."}`;
         return;
       }
-      if (rockMood === "Calm") preRoundHintEl.textContent = `Scout report: calm but alert, ${adaptPct}% chance he reads you this round.`;
-      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Scout report: suspicious and aggressive, ${adaptPct}% chance he targets your last hand.`;
-      else preRoundHintEl.textContent = `Scout report: full paranoid mode, ${adaptPct}% chance he hard-counters your last hand.`;
+      if (rockMood === "Calm") preRoundHintEl.textContent = `Scout report: ${enemy.name} calm but alert, ${adaptPct}% read chance. Profile ${profile}.`;
+      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Scout report: ${enemy.name} suspicious and aggressive, ${adaptPct}% read chance. Profile ${profile}.`;
+      else preRoundHintEl.textContent = `Scout report: ${enemy.name} in full paranoid mode, ${adaptPct}% read chance. Profile ${profile}.`;
     }
 
     function renderDebugLog() {
@@ -2116,57 +2298,42 @@
       return { counts, topMove, topCount: counts[topMove] };
     }
 
-    function getAdaptiveMoveFromStatus(scriptMove) {
-      const scoreDiff = youScore - rockScore;
-      const { topMove, topCount } = getRecentPlayerMoveBias();
-      const counterLast = lastYourMove ? beats[lastYourMove] : scriptMove;
-      const counterTrend = beats[topMove];
-      const bluffMove = beats[counterTrend];
-      const antiScriptMove = beats[scriptMove];
-
-      const weights = {
-        [scriptMove]: rockMood === "Calm" ? 1.8 : 1.0,
-        [counterLast]: 2.1,
-        [counterTrend]: 1.7,
-        [bluffMove]: 0.95,
-        [antiScriptMove]: 0.75
-      };
-
-      if (rockMood === "Paranoid") weights[counterLast] += 1.4;
-      if (rockMood === "Suspicious") weights[counterTrend] += 0.8;
-      if (scoreDiff >= 2) {
-        weights[counterLast] += 1.1;
-        weights[counterTrend] += 0.7;
+    function getMoveFromProfile(profileName, scriptMove) {
+      const fallback = scriptMove || "R";
+      const recent = historyLog.slice(-3);
+      if (profileName === AI_PROFILES.random) {
+        return ROCK_MOVES[Math.floor((rngGame ? rngGame() : Math.random()) * ROCK_MOVES.length)] || fallback;
       }
-      if (scoreDiff <= -2) {
-        weights[scriptMove] += 0.7;
-        weights[bluffMove] += 0.8;
+      if (profileName === AI_PROFILES.antiRepeat) {
+        const antiRepeatWeights = { R: 1, P: 1, S: 1 };
+        if (lastYourMove) antiRepeatWeights[beats[lastYourMove]] += 2.4;
+        return weightedRandomMove(antiRepeatWeights);
       }
-      if (topCount >= 3) weights[counterTrend] += 1.3;
-
-      const lastOutcomes = historyLog.slice(-3).map(entry => entry.outcome);
-      const recentLosses = lastOutcomes.filter(outcome => outcome === "win").length;
-      const recentRockWins = lastOutcomes.filter(outcome => outcome === "lose").length;
-      if (recentLosses >= 2) {
-        weights[counterLast] += 0.9;
-        weights[counterTrend] += 0.8;
+      if (profileName === AI_PROFILES.antiStreak) {
+        const streakWeights = { R: 1, P: 1, S: 1, [fallback]: 1.2 };
+        const chain = historyLog.slice(-2);
+        const sameMoveChain = chain.length === 2 && chain.every(entry => entry.yourMove === chain[0].yourMove);
+        if (sameMoveChain) streakWeights[beats[chain[0].yourMove]] += 2.8;
+        const winChain = recent.length >= 2 && recent.every(entry => entry.outcome === "win");
+        if (winChain && lastYourMove) streakWeights[beats[lastYourMove]] += 1.4;
+        return weightedRandomMove(streakWeights);
       }
-      if (recentRockWins >= 2) {
-        weights[scriptMove] += 0.9;
-        weights[bluffMove] += 0.5;
+      if (profileName === AI_PROFILES.delayedCounter) {
+        const delayedWeights = { R: 1, P: 1, S: 1, [fallback]: 0.9 };
+        const lagMove = historyLog.length >= 2 ? historyLog[historyLog.length - 2].yourMove : lastYourMove;
+        if (lagMove) delayedWeights[beats[lagMove]] += 2.5;
+        return weightedRandomMove(delayedWeights);
       }
-
-      return weightedRandomMove(weights);
-    }
-
-    function updateRockMood(outcome) {
-      if (outcome === "win") rockLossStreak += 1;
-      else if (outcome === "lose") rockLossStreak = 0;
-      else rockLossStreak = Math.max(0, rockLossStreak - 1);
-
-      if (rockLossStreak >= 3) rockMood = "Paranoid";
-      else if (rockLossStreak >= 1) rockMood = "Suspicious";
-      else rockMood = "Calm";
+      if (profileName === AI_PROFILES.fakeOut) {
+        const { topMove } = getRecentPlayerMoveBias();
+        const counterTrend = beats[topMove];
+        const fakeCounter = beats[counterTrend];
+        const fakeWeights = { R: 1, P: 1, S: 1, [fallback]: 1.1 };
+        fakeWeights[fakeCounter] += 2.2;
+        if (lastYourMove) fakeWeights[beats[lastYourMove]] += 0.8;
+        return weightedRandomMove(fakeWeights);
+      }
+      return fallback;
     }
 
     function getRockMoveForRound() {
@@ -2177,17 +2344,21 @@
         return "R";
       }
 
+      const enemy = getActiveEnemy();
+      const activeProfile = getEnemyProfileForRound(enemy);
+      runState.currentEnemyProfile = activeProfile;
+
       const adaptive = adaptiveToggle.checked;
       if (!adaptive || !lastYourMove) {
         lastDecisionAdaptive = false;
-        return scriptMove;
+        return getMoveFromProfile(activeProfile, scriptMove);
       }
 
       const r = rngGame ? rngGame() : Math.random();
       if (r < moodAdaptChance()) {
         lastDecisionAdaptive = true;
         adaptiveAttempts += 1;
-        return getAdaptiveMoveFromStatus(scriptMove);
+        return getMoveFromProfile(activeProfile, scriptMove);
       }
 
       lastDecisionAdaptive = false;
@@ -2206,9 +2377,10 @@
 
       setRoundPhase("lockIn");
       setButtonsEnabled(false);
-      resultLineEl.textContent = "The Rock is choosing...";
+      const roundEnemy = getActiveEnemy();
+      resultLineEl.textContent = `${roundEnemy.title} is choosing...`;
       resultLineEl.className = "result-line";
-      commentaryEl.textContent = "The Rock is choosing...";
+      commentaryEl.textContent = `${roundEnemy.name} is choosing...`;
 
       resetArenaPhaseClasses();
       arenaEl.classList.add("phase-lock-in");
@@ -2335,7 +2507,7 @@
         playBeep("win");
         shakeArena();
       } else {
-        resultLineEl.textContent = "Round result: The Rock wins.";
+        resultLineEl.textContent = `Round result: ${getActiveEnemy().title} wins.`;
         resultLineEl.className = "result-line result-lose";
         playBeep("lose");
       }
@@ -2346,6 +2518,7 @@
       if (beatRockThisRound) beatRockHits += 1;
 
       updateRockMood(outcome);
+      renderEnemyArenaIntel();
       updateMoodDisplay();
       advanceTutorialOnAction("moodDisplay");
 
@@ -2364,6 +2537,9 @@
         adaptiveUsed: lastDecisionAdaptive,
         adaptiveCorrect: lastDecisionAdaptive && (beats[yourMove] === rockMove),
         mood: moodBefore,
+        enemyId: runState.activeEnemyId,
+        enemyProfile: runState.currentEnemyProfile,
+        enemyPhase: runState.currentEnemyPhase,
         beatRockThisRound,
         eventDecision: runState.eventLog.find(log => log.nodeId === (activeNode ? activeNode.id : -1)) || null
       });
@@ -2600,7 +2776,13 @@
       seedWasManual = !!manualFlag;
       scriptedSequenceOverride = scriptOverride || null;
       seededScriptSequence = generateSeededScriptSequence(runSeed);
+      runState.unlockedBossVariant = null;
       runState.mapNodes = generateRunMap(runSeed);
+      runState.nodeEnemyAssignments = assignEnemiesToNodes(runState.mapNodes, runSeed);
+      runState.activeEnemyId = ENEMY_DEFINITIONS.graniteRookie.id;
+      runState.currentEnemyPhase = null;
+      runState.currentEnemyProfile = AI_PROFILES.random;
+      runState.phaseAnnouncement = "";
       runState.selectedPath = [];
       runState.availableNodeIds = [0];
       runState.activeNodeId = null;
@@ -2612,7 +2794,6 @@
       runState.revealedNodeRewards = {};
       runState.curseStacks = 0;
       runState.rareChainStage = 0;
-      runState.unlockedBossVariant = null;
       runState.resolve = RUN_BALANCE.startingResolve;
       runState.maxResolve = RUN_BALANCE.startingResolve;
       runState.cash = RUN_BALANCE.startingCash;
@@ -2662,6 +2843,7 @@
       resultLineEl.textContent = "";
       resultLineEl.className = "result-line";
       commentaryEl.textContent = "";
+      renderEnemyArenaIntel();
 
       createRoundBoardCells();
       renderRoundBoard();
