@@ -623,7 +623,7 @@
     const DIGITS_ONLY_REGEX = /^\d+$/;
     const ACHIEVEMENTS_STORAGE_KEY = "beatTheRockAchievementCounts.v2";
     const TUTORIAL_STORAGE_KEY = "beatTheRockTutorialState.v1";
-    const ORIGINAL_SEED_ONE_SEQUENCE = "PPSSRPPSPRRSPSPRPPRP";
+    const ORIGINAL_SEED_ONE_SEQUENCE = "RPSSRPPSPRRSPSPRPPRP";
 
     const achievementCatalog = [
       { id: "opening-pop", name: "Opening Pop", text: "You won round 1.", rank: "bronze", unlocked: s => s.historyLog[0]?.outcome === "win" },
@@ -679,7 +679,11 @@
     }
 
     function generateSeededScriptSequence(seed) {
-      if ((seed >>> 0) === DEFAULT_SEED) return ORIGINAL_SEED_ONE_SEQUENCE.split("");
+      if ((seed >>> 0) === DEFAULT_SEED) {
+        const defaultSequence = ORIGINAL_SEED_ONE_SEQUENCE.split("");
+        defaultSequence[0] = "R";
+        return defaultSequence;
+      }
 
       const normalizedSeed = seed >>> 0;
       const sequence = [];
@@ -697,6 +701,7 @@
         sequence.push(move);
       }
 
+      sequence[0] = "R";
       return sequence;
     }
 
@@ -1304,6 +1309,7 @@
       let scriptOverride = null;
       if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
         scriptOverride = scriptParam.toUpperCase().split("");
+        scriptOverride[0] = "R";
       }
 
       if (scriptOverride) {
@@ -1477,7 +1483,7 @@
 
       if (currentRound === 0) {
         lastDecisionAdaptive = false;
-        return scriptMove;
+        return "R";
       }
 
       const adaptive = adaptiveToggle.checked;
