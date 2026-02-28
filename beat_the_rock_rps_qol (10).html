@@ -237,11 +237,37 @@
     .summary-card h2 { margin: 0 0 6px; font-size: 1rem; color: #f8fafc; }
     .summary-card p { margin: 0; font-size: 0.82rem; color: #cbd5e1; line-height: 1.35; }
 
+    .post-match-overlay { position: fixed; inset: 0; z-index: 70; padding: 20px; background: rgba(2,6,23,0.78); display: flex; align-items: center; justify-content: center; overflow-y: auto; }
+    .post-match-overlay.is-hidden { display: none; }
+    .post-match-card { width: min(760px, 100%); border-radius: 16px; border: 1px solid rgba(148,163,184,0.6); background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(2,6,23,0.98)); box-shadow: 0 22px 48px rgba(0,0,0,0.55); padding: 18px 16px; }
+    .post-match-banner { display: inline-flex; border-radius: 999px; border: 1px solid rgba(148,163,184,0.65); background: rgba(30,41,59,0.8); padding: 6px 12px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: #e2e8f0; margin-bottom: 8px; }
+    .post-match-banner.you-win { border-color: rgba(52,211,153,0.9); color: #bbf7d0; }
+    .post-match-banner.rock-win { border-color: rgba(248,113,113,0.9); color: #fecaca; }
+    .post-match-banner.draw-match { border-color: rgba(250,204,21,0.9); color: #fde68a; }
+    .post-match-title { margin: 0 0 8px; font-size: 1.2rem; color: #f8fafc; }
+    .post-match-flavor { margin: 0 0 12px; font-size: 0.86rem; line-height: 1.4; color: #cbd5e1; }
+    .post-match-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .post-match-stat { border-radius: 10px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.9); padding: 8px 9px; }
+    .post-match-stat-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .post-match-stat-value { font-size: 0.92rem; color: #f1f5f9; font-weight: 600; }
+    .post-match-achievements { border-radius: 10px; border: 1px solid rgba(168,85,247,0.5); background: rgba(46,16,101,0.2); padding: 10px; margin-bottom: 14px; }
+    .post-match-achievements h3 { margin: 0 0 6px; font-size: 0.88rem; color: #f5d0fe; }
+    .post-match-achievements ul { margin: 0; padding-left: 18px; font-size: 0.8rem; color: #e9d5ff; }
+    .post-match-achievements li { margin-bottom: 4px; }
+    .post-match-achievements p { margin: 0; font-size: 0.8rem; color: #d8b4fe; }
+    .post-match-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-primary { background: #22c55e; color: #f0fdf4; }
+    .btn-secondary { background: #2563eb; color: #eff6ff; }
+    .btn-tertiary { background: #1e293b; color: #e2e8f0; border: 1px solid rgba(148,163,184,0.6); }
+
     @media (max-width: 640px) {
       .arena { grid-template-columns: 1fr; text-align: center; }
       .vs { justify-self: center; }
       button { padding: 12px 20px; }
       .hud-row { grid-template-columns: 1fr; position: static; }
+      .post-match-stats { grid-template-columns: 1fr; }
+      .post-match-actions { flex-direction: column; }
+      .post-match-actions button { width: 100%; justify-content: center; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -381,10 +407,38 @@
       </section>
     </section>
 
-    <section id="sceneSummary" class="scene is-hidden">
-      <div class="summary-card">
-        <h2>Match summary</h2>
-        <p>Run complete. Review the final commentary, board preview, and challenge link from this summary scene.</p>
+    <section id="sceneSummary" class="post-match-overlay is-hidden" aria-live="polite" aria-atomic="true">
+      <div class="post-match-card">
+        <div id="summaryWinnerBanner" class="post-match-banner">Match complete</div>
+        <h2 id="summaryTitle" class="post-match-title">Run complete</h2>
+        <p id="summaryFlavor" class="post-match-flavor">Review your post-match stats and jump right back into another run.</p>
+
+        <div class="post-match-stats">
+          <div class="post-match-stat">
+            <div class="post-match-stat-label">Best streak</div>
+            <div id="summaryBestStreak" class="post-match-stat-value">0 rounds</div>
+          </div>
+          <div class="post-match-stat">
+            <div class="post-match-stat-label">Beat-Rock hit rate</div>
+            <div id="summaryBeatRockRate" class="post-match-stat-value">0%</div>
+          </div>
+          <div class="post-match-stat">
+            <div class="post-match-stat-label">Mood pressure moments</div>
+            <div id="summaryMoodPressure" class="post-match-stat-value">0 rounds</div>
+          </div>
+        </div>
+
+        <div class="post-match-achievements">
+          <h3>Achievements unlocked this run</h3>
+          <ul id="summaryAchievementsList"></ul>
+          <p id="summaryAchievementsEmpty">No achievements this run. Try a new seed or strategy and run it back.</p>
+        </div>
+
+        <div class="post-match-actions">
+          <button id="summaryPlayAgainBtn" class="btn-primary" type="button">Play Again</button>
+          <button id="summaryCopyLinkBtn" class="btn-secondary" type="button">Copy Challenge Link</button>
+          <button id="summaryViewBoardBtn" class="btn-tertiary" type="button">View Full Round Board</button>
+        </div>
       </div>
     </section>
 
@@ -514,6 +568,17 @@
     const sceneLobbyEl = document.getElementById("sceneLobby");
     const sceneGameEl = document.getElementById("sceneGame");
     const sceneSummaryEl = document.getElementById("sceneSummary");
+    const summaryWinnerBannerEl = document.getElementById("summaryWinnerBanner");
+    const summaryTitleEl = document.getElementById("summaryTitle");
+    const summaryFlavorEl = document.getElementById("summaryFlavor");
+    const summaryBestStreakEl = document.getElementById("summaryBestStreak");
+    const summaryBeatRockRateEl = document.getElementById("summaryBeatRockRate");
+    const summaryMoodPressureEl = document.getElementById("summaryMoodPressure");
+    const summaryAchievementsListEl = document.getElementById("summaryAchievementsList");
+    const summaryAchievementsEmptyEl = document.getElementById("summaryAchievementsEmpty");
+    const summaryPlayAgainBtn = document.getElementById("summaryPlayAgainBtn");
+    const summaryCopyLinkBtn = document.getElementById("summaryCopyLinkBtn");
+    const summaryViewBoardBtn = document.getElementById("summaryViewBoardBtn");
     const gameMenuBtn = document.getElementById("gameMenuBtn");
     const gameMenuModal = document.getElementById("gameMenuModal");
     const closeMenuBtn = document.getElementById("closeMenuBtn");
@@ -1435,6 +1500,63 @@
       });
     }
 
+    function calculateRunHighlights() {
+      const achievementState = buildAchievementState();
+      const moodPressureMoments = historyLog.filter(entry => entry.mood === "Suspicious" || entry.mood === "Paranoid").length;
+      const beatRockRate = historyLog.length > 0 ? Math.round((beatRockHits / historyLog.length) * 100) : 0;
+      return { achievementState, moodPressureMoments, beatRockRate };
+    }
+
+    function renderPostMatchSummary() {
+      const { achievementState, moodPressureMoments, beatRockRate } = calculateRunHighlights();
+      const runAchievements = getUnlockedAchievementDefs();
+      const youWon = youScore > rockScore;
+      const rockWon = rockScore > youScore;
+
+      summaryWinnerBannerEl.className = "post-match-banner";
+      if (youWon) {
+        summaryWinnerBannerEl.classList.add("you-win");
+        summaryWinnerBannerEl.textContent = "Winner: You";
+        summaryTitleEl.textContent = "You took the main event";
+        summaryFlavorEl.textContent = "You out-read The Rock over 20 rounds. Queue the rematch before he rewrites the script.";
+      } else if (rockWon) {
+        summaryWinnerBannerEl.classList.add("rock-win");
+        summaryWinnerBannerEl.textContent = "Winner: The Rock";
+        summaryTitleEl.textContent = "The Rock keeps the headline";
+        summaryFlavorEl.textContent = "He held the line this run. New seed, new plan, same arena when you hit Play Again.";
+      } else {
+        summaryWinnerBannerEl.classList.add("draw-match");
+        summaryWinnerBannerEl.textContent = "Result: Draw";
+        summaryTitleEl.textContent = "Dead even at the final bell";
+        summaryFlavorEl.textContent = "Nobody blinked. One more run decides who owns this timeline.";
+      }
+
+      summaryBestStreakEl.textContent = `${achievementState.maxWinStreak} win${achievementState.maxWinStreak === 1 ? "" : "s"}`;
+      summaryBeatRockRateEl.textContent = `${beatRockRate}% (${beatRockHits}/${historyLog.length || 20})`;
+      summaryMoodPressureEl.textContent = `${moodPressureMoments} rounds`;
+
+      summaryAchievementsListEl.innerHTML = "";
+      if (runAchievements.length === 0) {
+        summaryAchievementsListEl.classList.add("is-hidden");
+        summaryAchievementsEmptyEl.classList.remove("is-hidden");
+      } else {
+        summaryAchievementsListEl.classList.remove("is-hidden");
+        summaryAchievementsEmptyEl.classList.add("is-hidden");
+        runAchievements.forEach(achievement => {
+          const li = document.createElement("li");
+          li.textContent = achievement.name;
+          summaryAchievementsListEl.appendChild(li);
+        });
+      }
+    }
+
+    function jumpToRoundBoardFromSummary() {
+      setScene("inRound");
+      openDrawerPanel(statsPanelEl, { highlight: true });
+      if (historyLog.length > 0) handleRoundBoardHover(historyLog.length - 1);
+      roundBoardEl.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" });
+    }
+
     function showFinalSummary() {
       const summaryLines = [];
       summaryLines.push(`Final score after 20 rounds, Dwayne ${rockScore}, you ${youScore}, draws ${draws}.`);
@@ -1471,7 +1593,8 @@
       openDrawerPanel(statsPanelEl);
       openDrawerPanel(achievementsPanelEl, { highlight: true });
       if (historyLog.length > 0) handleRoundBoardHover(historyLog.length - 1);
-      resetBtn.style.display = "inline-flex";
+      resetBtn.style.display = "none";
+      renderPostMatchSummary();
       setScene("matchSummary");
     }
 
@@ -1589,6 +1712,9 @@
     }));
 
     resetBtn.addEventListener("click", resetGame);
+    summaryPlayAgainBtn.addEventListener("click", resetGame);
+    summaryCopyLinkBtn.addEventListener("click", copyChallengeLink);
+    summaryViewBoardBtn.addEventListener("click", jumpToRoundBoardFromSummary);
     randomSeedBtn.addEventListener("click", () => {
       const generatedSeed = generateRandomSeed();
       seedInputEl.value = String(generatedSeed);
