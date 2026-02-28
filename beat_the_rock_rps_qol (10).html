@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Beat The Rock - Progressive Rock Paper Scissors</title>
+  <title>Beat The Rock: Challenge Dwayne Johnson at Rock Paper Scissors</title>
   <style>
     body {
       margin: 0;
@@ -291,33 +291,33 @@
   <div id="achievementToasts" class="achievement-toast-stack" aria-live="polite" aria-atomic="false"></div>
   <div class="app">
     <h1>Beat The Rock</h1>
-    <div class="subtitle">20 rounds of modelled Dwayne Johnson in progressive Rock Paper Scissors, you try to read the script.</div>
+    <div class="subtitle">20 rounds against a modeled Dwayne "The Rock" Johnson. Read his tendencies, outplay the script, and win the showdown.</div>
 
     <section id="sceneMetaPanels" class="scene">
       <div class="run-summary">
         <div id="runSummaryPill" class="run-summary-pill">
           <span><strong>Run</strong> pending</span>
-          <span id="runSummaryScores">You 0, Rock 0, draws 0</span>
+          <span id="runSummaryScores">You 0, The Rock 0, Draws 0</span>
           <span id="runSummarySeed">Seed pending</span>
         </div>
       </div>
       <div class="app-toolbar">
-        <button id="gameMenuBtn" class="menu-btn" type="button" aria-controls="gameMenuModal" aria-expanded="false">Game Menu</button>
+        <button id="gameMenuBtn" class="menu-btn" type="button" aria-controls="gameMenuModal" aria-expanded="false">Fight Menu</button>
       </div>
     </section>
 
     <div class="hud-row" aria-label="Match HUD">
       <div id="roundLabel" class="hud-chip">Round 1 of 20</div>
-      <div id="scoreLabel" class="hud-chip">Dwayne 0  |  You 0  |  Draws 0</div>
-      <div id="moodDisplay" class="mood-display severity-low">🧊 Rock is calm · Read risk 30%</div>
+      <div id="scoreLabel" class="hud-chip">The Rock 0  |  You 0  |  Draws 0</div>
+      <div id="moodDisplay" class="mood-display severity-low">🧊 The Rock is calm · Read risk 30%</div>
     </div>
 
     <section id="sceneLobby" class="scene">
-      <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Flip the switch to let him try and read you.</div>
-      <div id="preRoundHint" class="pre-round-hint">Pre-round scout, he's waiting for your opener.</div>
+      <div id="adaptiveStats" class="adaptive-stats"><strong>Adaptive Rock</strong> is off. Turn it on to let The Rock adjust to your patterns.</div>
+      <div id="preRoundHint" class="pre-round-hint">Opening bell: The Rock is waiting for your first throw.</div>
       <div class="summary-card">
-        <h2>Lobby</h2>
-        <p>Use Match panels for Stats, Achievements, Replay/Seed, and Debug. Open Game Menu for sound/help, then throw your first hand to start the match.</p>
+        <h2>Locker Room</h2>
+        <p>Use the Match Panels for Stats, Achievements, Replay/Seed, and Debug. Open the Fight Menu for sound/help, then throw your first hand to start the showdown.</p>
       </div>
     </section>
 
@@ -327,13 +327,13 @@
           <div class="side">
             <h2><span class="name-rock">Dwayne</span> (The Rock)</h2>
             <div id="rockHand" class="hand">❔</div>
-            <div id="rockMoveLabel" class="label-move">Waiting for bell.</div>
+            <div id="rockMoveLabel" class="label-move">Awaiting the opening bell.</div>
           </div>
           <div class="vs">R P S</div>
           <div class="side">
             <h2><span class="name-you">You</span></h2>
             <div id="yourHand" class="hand">❔</div>
-            <div id="yourMoveLabel" class="label-move">Pick your opener.</div>
+            <div id="yourMoveLabel" class="label-move">Pick your opening throw.</div>
           </div>
         </div>
       </div>
@@ -351,16 +351,16 @@
         <button class="btn-rock" data-move="R" aria-label="Play Rock hand"><span class="hand-icon">✊</span> Rock</button>
         <button class="btn-paper" data-move="P" aria-label="Play Paper hand"><span class="hand-icon">✋</span> Paper</button>
         <button class="btn-scissors" data-move="S" aria-label="Play Scissors hand"><span class="hand-icon">✌️</span> Scissors</button>
-        <button id="resetBtn" class="btn-reset" style="display:none;">Reset match</button>
+        <button id="resetBtn" class="btn-reset" style="display:none;">Start new showdown</button>
       </div>
 
       <div class="mode-toggle">
-        <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode, he reads your status, trends, and last move after round 1.</label>
+        <label><input type="checkbox" id="adaptiveToggle" /> Adaptive Rock mode: after round 1, he reads score state, trends, and your last move.</label>
       </div>
 
       <div id="resultLine" class="result-line" role="status" aria-live="polite" aria-atomic="true"></div>
       <div class="commentary-wrap">
-        <div class="commentary-title">The Rock reaction</div>
+        <div class="commentary-title">Commentary desk</div>
         <div id="commentary" class="commentary" role="status" aria-live="polite" aria-atomic="true"></div>
       </div>
 
@@ -376,9 +376,9 @@
           <div class="drawer-panel-body">
             <div class="round-board">
               <div class="round-board-header">
-                <span>20-round unified board (result + hands + order)</span>
-                <span>Outcome uses W/L/D</span>
-                <span id="roundBoardStatus">Round 1 is live</span>
+                <span>20-round fight card (result + hands + order)</span>
+                <span>Outcomes use W/L/D</span>
+                <span id="roundBoardStatus">Round 1 is underway</span>
               </div>
               <div id="roundBoard" class="round-board-grid"></div>
               <div id="roundBoardPreview" class="round-board-preview">Hover, focus, or tap a played round to preview exact hands, outcome, and mood.</div>
@@ -400,10 +400,10 @@
         </details>
 
         <details id="replaySeedPanel" class="drawer-panel">
-          <summary>Replay/Seed</summary>
+          <summary>Replay & Seed</summary>
           <div class="drawer-panel-body">
             <div class="seed-row">
-              <label>Next run seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
+              <label>Next showdown seed <input id="seedInput" type="text" placeholder="blank = random" /></label>
               <button id="randomSeedBtn" type="button">Generate random seed</button>
               <div id="seedFeedback" class="seed-feedback" aria-live="polite"></div>
             </div>
@@ -461,26 +461,26 @@
     <div id="gameMenuModal" class="menu-modal" role="dialog" aria-modal="true" aria-labelledby="gameMenuTitle">
       <div class="menu-panel">
         <div class="menu-header">
-          <h2 id="gameMenuTitle">Game Menu</h2>
+          <h2 id="gameMenuTitle">Fight Menu</h2>
           <button id="closeMenuBtn" class="menu-close-btn" type="button">Close</button>
         </div>
 
         <div class="settings-row">
           <label><input type="checkbox" id="sfxToggle" checked /> Sound effects on</label>
-          <button id="replayTutorialBtn" class="menu-btn" type="button">Replay Tutorial</button>
-          <span class="settings-hint">Keyboard, R P S to play moves.</span>
+          <button id="replayTutorialBtn" class="menu-btn" type="button">Replay Walkthrough</button>
+          <span class="settings-hint">Keyboard shortcut: press R, P, or S to throw hands.</span>
         </div>
 
         <details class="help-box">
-          <summary>How this works</summary>
+          <summary>How the showdown works</summary>
           <div class="help-box-content">
             <ul>
-              <li>Every run is 20 rounds, and each round is logged in the unified board with hands plus W/L/D outcome.</li>
-              <li>Dwayne starts from a fixed base script; in Adaptive mode he uses score state, mood, and your recent move trends to pick his next hand after round 1.</li>
-              <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and mood changes adapt chance.</li>
+              <li>Every showdown is 20 rounds, and each round is logged on the fight card with hands and W/L/D.</li>
+              <li>Dwayne "The Rock" Johnson starts on a seeded script. In Adaptive mode, after round 1 he uses score state, mood, and your recent trends to choose his next hand.</li>
+              <li>His mood shifts from Calm to Suspicious to Paranoid based on recent losses, and each mood changes his read chance.</li>
               <li>Use the round board hover/focus preview to inspect exact hands, state, and whether the adaptive path was used.</li>
-              <li>Set a seed in the Replay/Seed panel to replay exact runs, or leave it blank to randomize next reset.</li>
-              <li>Achievements include clutch, chaos, status, sequence, and consolation badges; unlocks are immediate and each one raises its multiplier for this browser profile.</li>
+              <li>Set a seed in Replay & Seed to replay exact showdowns, or leave it blank to randomize the next reset.</li>
+              <li>Achievements cover clutch, chaos, mood, sequence, and consolation badges. Unlocks are instant and increase their multiplier for this browser profile.</li>
             </ul>
             <div class="help-legend">
               <span><strong>Calm</strong> 30% adapt chance</span>
@@ -499,13 +499,13 @@
       <div id="tutorialTooltipTitle" class="tutorial-tooltip-title"></div>
       <p id="tutorialTooltipText" class="tutorial-tooltip-text"></p>
       <div class="tutorial-tooltip-actions">
-        <button id="tutorialSkipBtn" class="tutorial-skip-btn" type="button">Skip tutorial</button>
+        <button id="tutorialSkipBtn" class="tutorial-skip-btn" type="button">Skip walkthrough</button>
       </div>
     </div>
 
     <div class="footer">
-      With Adaptive Rock off, Dwayne uses a seeded scripted sequence, with it on he uses status and trends to pick from weighted adaptive plays.<br />
-      Every seed builds a different script, so players can share a seed and get the same baseline run.
+      With Adaptive Rock off, Dwayne follows a seeded script. With it on, he weighs score state and trends to make adaptive reads.<br />
+      Each seed builds a different script, so players can share a seed and replay the same baseline showdown.
     </div>
   </div>
 
@@ -772,19 +772,19 @@
     const tutorialSteps = [
       {
         id: "moveButtons",
-        title: "Step 1 · Throw your hand",
-        text: "Start here. Tap Rock, Paper, or Scissors to play your first round.",
+        title: "Step 1 · Throw your first hand",
+        text: "Start here. Throw Rock, Paper, or Scissors to open your challenge against The Rock.",
         anchor: () => moveButtonsAnchorEl
       },
       {
         id: "moodDisplay",
-        title: "Step 2 · Read his mood",
-        text: "Watch Rock state here. Calm, Suspicious, and Paranoid each change his read chance.",
+        title: "Step 2 · Read The Rock's mood",
+        text: "Watch his state here. Calm, Suspicious, and Paranoid each change his chance to read your next throw.",
         anchor: () => moodDisplayEl
       },
       {
         id: "adaptiveToggle",
-        title: "Step 3 · Toggle adaptive mode",
+        title: "Step 3 · Toggle Adaptive Rock",
         text: "Flip Adaptive Rock mode once so you know where to enable his trend reads.",
         anchor: () => adaptiveToggle
       },
@@ -796,8 +796,8 @@
       },
       {
         id: "seedShare",
-        title: "Step 5 · Share and replay",
-        text: "Use Copy challenge link or set a seed to share exact runs. Tutorial ends after this step.",
+        title: "Step 5 · Share and rematch",
+        text: "Use Copy Challenge Link or set a seed to share exact showdowns. Walkthrough ends after this step.",
         anchor: () => seedShareAnchorEl
       }
     ];
@@ -1224,14 +1224,14 @@
     }
 
     function updateRoundLabel() { roundLabelEl.textContent = `Round ${Math.min(currentRound + 1, 20)} of 20`; }
-    function updateScoreLabel() { scoreLabelEl.textContent = `Dwayne ${rockScore}  |  You ${youScore}  |  Draws ${draws}`; }
+    function updateScoreLabel() { scoreLabelEl.textContent = `The Rock ${rockScore}  |  You ${youScore}  |  Draws ${draws}`; }
     function updateProgressBar() {
       const pct = (currentRound / 20) * 100;
       progressFillEl.style.width = `${pct}%`;
       progressTextEl.textContent = `${currentRound} of 20 completed`;
     }
     function updateRunSummary() {
-      runSummaryScoresEl.textContent = `You ${youScore}, Rock ${rockScore}, draws ${draws}`;
+      runSummaryScoresEl.textContent = `You ${youScore}, The Rock ${rockScore}, Draws ${draws}`;
       runSummarySeedEl.textContent = `Seed ${runSeed}`;
     }
 
@@ -1284,13 +1284,13 @@
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(challengeLink);
-          showCopyStatus("Challenge link copied.", false);
+          showCopyStatus("Challenge link copied to clipboard.", false);
           return;
         }
       } catch (err) {}
 
       const copied = fallbackCopyText(challengeLink);
-      if (copied) showCopyStatus("Challenge link copied.", false);
+      if (copied) showCopyStatus("Challenge link copied to clipboard.", false);
       else showCopyStatus("Could not copy. Please copy manually.", true);
     }
 
@@ -1333,15 +1333,15 @@
     function updateAdaptiveStats() {
       const adaptPct = Math.round(moodAdaptChance() * 100);
       if (!adaptiveToggle.checked) {
-        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> is off. If he flipped it on in a promo, ${rockMood} would be a ${adaptPct} percent adapt chance.`;
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> is off. If enabled, The Rock in ${rockMood} mood would have a ${adaptPct}% read chance.`;
         return;
       }
       if (adaptiveAttempts === 0) {
-        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> current mood says ${adaptPct} percent adapt chance this round. Attempts will show once he starts taking swings.`;
+        adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> mood projects a ${adaptPct}% read chance this round. Attempts will appear once he starts adapting.`;
         return;
       }
       const acc = Math.round((adaptiveCorrectReads / adaptiveAttempts) * 100);
-      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> chance this round ${adaptPct} percent, attempts ${adaptiveAttempts}, correct reads ${adaptiveCorrectReads}, accuracy ${acc} percent.`;
+      adaptiveStatsEl.innerHTML = `<strong>Adaptive Rock</strong> this round: ${adaptPct}% read chance · attempts ${adaptiveAttempts} · correct reads ${adaptiveCorrectReads} · accuracy ${acc}%.`;
     }
 
     function updateMoodDisplay() {
@@ -1358,7 +1358,7 @@
       moodDisplayEl.innerHTML = `
         <span class="mood-emoji" aria-hidden="true">${activeMeta.emoji}</span>
         <span class="mood-text">
-          <span class="mood-label">Rock state</span>
+          <span class="mood-label">The Rock's state</span>
           <span class="mood-state">${activeMeta.label}</span>
           <span class="mood-risk">${riskText}</span>
         </span>
@@ -1367,17 +1367,17 @@
 
     function updatePreRoundHint() {
       if (currentRound >= 20) {
-        preRoundHintEl.textContent = "Pre-round scout, full match complete. Check the unified round board for the receipts.";
+        preRoundHintEl.textContent = "Showdown complete. Check the round board for every throw and read.";
         return;
       }
       const adaptPct = Math.round(moodAdaptChance() * 100);
       if (!adaptiveToggle.checked || currentRound === 0 || !lastYourMove) {
-        preRoundHintEl.textContent = `Pre-round scout, ${rockMood.toLowerCase()} energy, script lane likely this beat.`;
+        preRoundHintEl.textContent = `Scout report: ${rockMood.toLowerCase()} energy. Scripted lane is most likely this round.`;
         return;
       }
-      if (rockMood === "Calm") preRoundHintEl.textContent = `Pre-round scout, he's calm but alert, ${adaptPct} percent read chance right now.`;
-      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Pre-round scout, he's reading aggressively right now, ${adaptPct} percent chance he hunts your last hand.`;
-      else preRoundHintEl.textContent = `Pre-round scout, paranoid mode is blazing, ${adaptPct} percent chance he hard-counters your last hand.`;
+      if (rockMood === "Calm") preRoundHintEl.textContent = `Scout report: calm but alert, ${adaptPct}% chance he reads you this round.`;
+      else if (rockMood === "Suspicious") preRoundHintEl.textContent = `Scout report: suspicious and aggressive, ${adaptPct}% chance he targets your last hand.`;
+      else preRoundHintEl.textContent = `Scout report: full paranoid mode, ${adaptPct}% chance he hard-counters your last hand.`;
     }
 
     function renderDebugLog() {
@@ -1550,15 +1550,15 @@
       let outcome;
       if (yourMove === rockMove) {
         outcome = "draw"; draws += 1;
-        resultLineEl.textContent = "Result, draw."; resultLineEl.className = "result-line result-draw";
+        resultLineEl.textContent = "Round result: draw."; resultLineEl.className = "result-line result-draw";
         playBeep("draw");
       } else if (beats[rockMove] === yourMove) {
         outcome = "win"; youScore += 1;
-        resultLineEl.textContent = "Result, you win this round."; resultLineEl.className = "result-line result-win";
+        resultLineEl.textContent = "Round result: you win."; resultLineEl.className = "result-line result-win";
         playBeep("win"); shakeArena();
       } else {
         outcome = "lose"; rockScore += 1;
-        resultLineEl.textContent = "Result, The Rock wins this round."; resultLineEl.className = "result-line result-lose";
+        resultLineEl.textContent = "Round result: The Rock wins."; resultLineEl.className = "result-line result-lose";
         playBeep("lose");
       }
 
@@ -1595,7 +1595,7 @@
       updatePreRoundHint();
       evaluateAchievements();
 
-      const overlayText = outcome === "win" ? "Round result, you win." : outcome === "lose" ? "Round result, The Rock wins." : "Round result, draw.";
+      const overlayText = outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw.";
       showRoundResultOverlay(overlayText);
 
       if (currentRound >= 20) {
@@ -1676,17 +1676,17 @@
       if (youWon) {
         summaryWinnerBannerEl.classList.add("you-win");
         summaryWinnerBannerEl.textContent = "Winner: You";
-        summaryTitleEl.textContent = "You took the main event";
+        summaryTitleEl.textContent = "You beat The Rock";
         summaryFlavorEl.textContent = "You out-read The Rock over 20 rounds. Queue the rematch before he rewrites the script.";
       } else if (rockWon) {
         summaryWinnerBannerEl.classList.add("rock-win");
         summaryWinnerBannerEl.textContent = "Winner: The Rock";
-        summaryTitleEl.textContent = "The Rock keeps the headline";
+        summaryTitleEl.textContent = "The Rock holds the spotlight";
         summaryFlavorEl.textContent = "He held the line this run. New seed, new plan, same arena when you hit Play Again.";
       } else {
         summaryWinnerBannerEl.classList.add("draw-match");
         summaryWinnerBannerEl.textContent = "Result: Draw";
-        summaryTitleEl.textContent = "Dead even at the final bell";
+        summaryTitleEl.textContent = "Even score at the final bell";
         summaryFlavorEl.textContent = "Nobody blinked. One more run decides who owns this timeline.";
       }
 
@@ -1718,10 +1718,10 @@
 
     function showFinalSummary() {
       const summaryLines = [];
-      summaryLines.push(`Final score after 20 rounds, Dwayne ${rockScore}, you ${youScore}, draws ${draws}.`);
+      summaryLines.push(`Final score after 20 rounds: The Rock ${rockScore}, You ${youScore}, Draws ${draws}.`);
       summaryLines.push(`You beat The Rock ${beatRockHits} out of 20 rounds.`);
-      summaryLines.push(`Beat The Rock sequence for this run, ${beatRockAbbrevs.join(" ")}.`);
-      summaryLines.push(`Legend R Rock, P Paper, S Scissors.`);
+      summaryLines.push(`Beat-The-Rock sequence for this showdown: ${beatRockAbbrevs.join(" ")}.`);
+      summaryLines.push(`Legend: R Rock, P Paper, S Scissors.`);
 
       if (adaptiveEverOnThisRun && adaptiveAttempts > 0) {
         const acc = Math.round((adaptiveCorrectReads / adaptiveAttempts) * 100);
@@ -1734,7 +1734,7 @@
         if (replaySeed !== null) {
           seedInputEl.value = String(replaySeed);
           seedFeedbackEl.className = "seed-feedback info";
-          seedFeedbackEl.textContent = `Adaptive run replay seed generated: ${replaySeed}. Reset match to replay this sequence in scripted mode.`;
+          seedFeedbackEl.textContent = `Adaptive replay seed generated: ${replaySeed}. Start a new showdown to replay this sequence in scripted mode.`;
           summaryLines.push(`Replay seed generated for this adaptive sequence, ${replaySeed}.`);
         } else {
           summaryLines.push("Could not generate a scripted replay seed for this adaptive sequence.");
@@ -1797,8 +1797,8 @@
 
       rockHandEl.textContent = "❔";
       yourHandEl.textContent = "❔";
-      rockMoveLabelEl.textContent = "Waiting for bell.";
-      yourMoveLabelEl.textContent = "Pick your opener.";
+      rockMoveLabelEl.textContent = "Awaiting the opening bell.";
+      yourMoveLabelEl.textContent = "Pick your opening throw.";
       resultLineEl.textContent = "";
       resultLineEl.className = "result-line";
       commentaryEl.textContent = "";
@@ -1817,7 +1817,7 @@
 
       if (scriptedSequenceOverride) {
         seedFeedbackEl.className = "seed-feedback info";
-        seedFeedbackEl.textContent = "Scripted challenge loaded from shared adaptive run. Adaptive mode is locked off for exact replay.";
+        seedFeedbackEl.textContent = "Scripted challenge loaded from a shared adaptive showdown. Adaptive mode is locked for exact replay.";
       }
 
       statsPanelEl.open = true;
@@ -1845,7 +1845,7 @@
       if (value === "") {
         newSeed = generateRandomSeed();
         seedFeedbackEl.className = "seed-feedback info";
-        seedFeedbackEl.textContent = `Randomized seed for this run: ${newSeed}.`;
+        seedFeedbackEl.textContent = `Randomized seed for this showdown: ${newSeed}.`;
       } else {
         const normalizedSeed = normalizeSeed(value);
         if (!normalizedSeed.valid) {
@@ -1858,8 +1858,8 @@
         manual = true;
 
         seedFeedbackEl.className = "seed-feedback info";
-        if (normalizedSeed.clamped) seedFeedbackEl.textContent = `Seed clamped to unsigned 32-bit range. Starting run with normalized seed ${newSeed}.`;
-        else seedFeedbackEl.textContent = `Starting run with normalized seed ${newSeed}.`;
+        if (normalizedSeed.clamped) seedFeedbackEl.textContent = `Seed clamped to unsigned 32-bit range. Starting showdown with normalized seed ${newSeed}.`;
+        else seedFeedbackEl.textContent = `Starting showdown with normalized seed ${newSeed}.`;
       }
 
       initFromSeed(newSeed, manual, null);
@@ -1879,7 +1879,7 @@
       const generatedSeed = generateRandomSeed();
       seedInputEl.value = String(generatedSeed);
       seedFeedbackEl.className = "seed-feedback info";
-      seedFeedbackEl.textContent = `Generated seed ${generatedSeed}. Reset match to start this run.`;
+      seedFeedbackEl.textContent = `Generated seed ${generatedSeed}. Start a new showdown to use it.`;
     });
     resetAchievementsBtn.addEventListener("click", () => {
       resetPersistentAchievements();
