@@ -1572,6 +1572,15 @@
       moveButtons[0].focus();
     }
 
+    async function maybeAutoEnterSoloNode() {
+      if (!relicChoicePanelEl.classList.contains("is-hidden")) return false;
+      if (runState.pendingEvent) return false;
+      if (runState.activeNodeId !== null) return false;
+      if (!Array.isArray(runState.availableNodeIds) || runState.availableNodeIds.length !== 1) return false;
+      await selectNextNode(runState.availableNodeIds[0]);
+      return runState.activeNodeId !== null;
+    }
+
     function renderMapPanel() {
       const total = getTotalNodes();
       const activeNode = getActiveNode();
@@ -1661,7 +1670,10 @@
           relicChoicePanelEl.classList.add("is-hidden");
           renderRelicStrip();
           commentaryEl.textContent = `${commentaryEl.textContent} Relic drafted: ${relic.name}.`;
-          if (!isRunComplete() && runState.availableNodeIds.length > 0) setScene("map");
+          if (!isRunComplete() && runState.availableNodeIds.length > 0) {
+            setScene("map");
+            maybeAutoEnterSoloNode();
+          }
         });
         relicChoiceGridEl.appendChild(btn);
       });
@@ -3206,8 +3218,13 @@
           }
         }
         const showedRelicChoice = maybeShowRelicChoice(activeNode ? activeNode.type : "normal", outcome === "win");
-        if (!showedRelicChoice) setScene("map");
-        setButtonsEnabled(false);
+        if (!showedRelicChoice) {
+          setScene("map");
+          setButtonsEnabled(false);
+          await maybeAutoEnterSoloNode();
+        } else {
+          setButtonsEnabled(false);
+        }
       } else {
         setButtonsEnabled(true);
       }
@@ -3620,8 +3637,8 @@
       setButtonsEnabled(false);
       updateRunSummary();
 
-      if (runState.activeNodeId === null && runState.availableNodeIds.length === 1) {
-        await selectNextNode(runState.availableNodeIds[0]);
+      if (runState.activeNodeId === null) {
+        await maybeAutoEnterSoloNode();
       }
     });
 
@@ -3684,11 +3701,12 @@
       if (event.target === gameMenuModal) closeGameMenu();
     });
 
-    document.addEventListener("keydown", e => {
+    document.addEventListener("keydown", async e => {
       if (e.key === "Escape" && gameMenuModal.classList.contains("is-active")) {
         closeGameMenu();
         return;
       }
+      if (!isGameActive()) await maybeAutoEnterSoloNode();
       if (!isGameActive()) return;
       if (isModalInputFocused(e.target)) return;
       const targetTag = e.target && e.target.tagName ? e.target.tagName : "";
