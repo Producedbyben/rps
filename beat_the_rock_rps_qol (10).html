@@ -218,6 +218,19 @@
     .map-choices { display: flex; flex-wrap: wrap; gap: 8px; }
     .map-node-btn { border-radius: 10px; border: 1px solid rgba(148,163,184,0.5); background: rgba(15,23,42,0.88); color: #e2e8f0; font-size: 0.76rem; padding: 7px 9px; }
     .map-node-btn.current { border-color: rgba(34,197,94,0.9); background: rgba(20,83,45,0.75); }
+
+    .relic-strip { margin-top: 8px; padding: 10px; border-radius: 12px; border: 1px solid rgba(196,181,253,0.48); background: linear-gradient(145deg, rgba(30,27,75,0.7), rgba(15,23,42,0.95)); }
+    .relic-strip-title { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: #ddd6fe; margin-bottom: 6px; }
+    .relic-strip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .relic-pill { border-radius: 999px; border: 1px solid rgba(196,181,253,0.65); background: rgba(76,29,149,0.55); color: #ede9fe; font-size: 0.72rem; padding: 4px 8px; }
+    .relic-empty { font-size: 0.76rem; color: #c4b5fd; }
+
+    .relic-choice-panel { margin: 10px 0 2px; padding: 10px; border-radius: 12px; border: 1px solid rgba(250,204,21,0.6); background: linear-gradient(145deg, rgba(113,63,18,0.56), rgba(15,23,42,0.95)); }
+    .relic-choice-panel h3 { margin: 0 0 4px; font-size: 0.88rem; color: #fef3c7; }
+    .relic-choice-panel p { margin: 0 0 8px; font-size: 0.76rem; color: #fde68a; }
+    .relic-choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+    .relic-choice-btn { text-align: left; border-radius: 10px; border: 1px solid rgba(253,224,71,0.55); background: rgba(30,41,59,0.92); color: #fef9c3; font-size: 0.76rem; padding: 8px; }
+    .relic-choice-btn strong { display: block; font-size: 0.78rem; color: #fff7ed; margin-bottom: 3px; }
     .map-node-btn.completed { opacity: 0.65; }
 
     .challenge-row { margin-top: 12px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -395,6 +408,13 @@
       <div id="moodDisplay" class="mood-display severity-low">🧊 The Rock is calm · Read risk 30%</div>
     </div>
 
+    <div id="relicStrip" class="relic-strip" aria-live="polite">
+      <div class="relic-strip-title">Active relics</div>
+      <div id="relicStripList" class="relic-strip-list">
+        <span class="relic-empty">No relics yet. Win encounters to draft perks.</span>
+      </div>
+    </div>
+
     <section id="sceneLobby" class="scene">
       <div class="title-shell">
         <h2>Welcome to Beat The Rock</h2>
@@ -435,6 +455,12 @@
         </div>
         <div id="mapPath" class="map-path">Completed path: none yet.</div>
         <div id="mapChoices" class="map-choices" role="group" aria-label="Choose next map node"></div>
+      </div>
+
+      <div id="relicChoicePanel" class="relic-choice-panel is-hidden" aria-live="polite">
+        <h3>Pick one relic</h3>
+        <p>Choose your perk before moving to the next node.</p>
+        <div id="relicChoiceGrid" class="relic-choice-grid"></div>
       </div>
 
       <div class="arena-wrap">
@@ -726,6 +752,9 @@
     const mapProgressLabelEl = document.getElementById("mapProgressLabel");
     const mapPathEl = document.getElementById("mapPath");
     const mapChoicesEl = document.getElementById("mapChoices");
+    const relicStripListEl = document.getElementById("relicStripList");
+    const relicChoicePanelEl = document.getElementById("relicChoicePanel");
+    const relicChoiceGridEl = document.getElementById("relicChoiceGrid");
 
     const U32_MIN = 0;
     const U32_MAX = 0xFFFFFFFF;
@@ -743,8 +772,32 @@
       selectedPath: [],
       availableNodeIds: [],
       activeNodeId: null,
-      completedNodeIds: []
+      completedNodeIds: [],
+      activeRelics: []
     };
+
+    const relicCatalog = [
+      { id: "streak-crown", name: "Streak Crown", text: "+1 score on wins when current win streak is 2+.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.preWinStreak >= 2) { scoreContext.youDelta += 1; feedback.push("Streak Crown +1"); } } },
+      { id: "drawbreaker", name: "Drawbreaker", text: "Once per run, convert a draw into a win.", oneUse: true, apply: ({ scoreContext, relicState, feedback }) => { if (!relicState.used && scoreContext.baseOutcome === "draw") { scoreContext.baseOutcome = "win"; scoreContext.outcome = "win"; feedback.push("Drawbreaker converted draw → win"); relicState.used = true; } } },
+      { id: "anti-read-shield", name: "Anti-Adaptive Shield", text: "If adaptive read was correct, cancel it to a draw.", oneUse: false, apply: ({ scoreContext, feedback }) => { if (scoreContext.lastDecisionAdaptive && scoreContext.adaptiveReadCorrect && scoreContext.baseOutcome === "lose") { scoreContext.outcome = "draw"; feedback.push("Anti-Adaptive Shield forced draw"); } } },
+      { id: "switchblade-rhythm", name: "Switchblade Rhythm", text: "+1 score when you alternate hands from last round.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.alternatedHand) { scoreContext.youDelta += 1; feedback.push("Switchblade Rhythm +1"); } } },
+      { id: "campfire-focus", name: "Campfire Focus", text: "+1 score on win after elite/boss fights.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.prevNodeWasHighTier) { scoreContext.youDelta += 1; feedback.push("Campfire Focus +1"); } } },
+      { id: "momentum-punch", name: "Momentum Punch", text: "First win after a loss gives +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.previousOutcome === "lose") { scoreContext.youDelta += 1; feedback.push("Momentum Punch +1"); } } },
+      { id: "parry-gloves", name: "Parry Gloves", text: "On losses, gain +1 pity score once every 2 rounds.", apply: ({ scoreContext, relicState, feedback }) => { if (scoreContext.baseOutcome === "lose" && (scoreContext.round % 2 === 0 || relicState.lastRoundApplied === scoreContext.round - 1)) { scoreContext.youDelta += 1; feedback.push("Parry Gloves pity +1"); relicState.lastRoundApplied = scoreContext.round; } } },
+      { id: "clean-finishers", name: "Clean Finishers", text: "+1 score on wins while The Rock is Calm.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.moodBefore === "Calm") { scoreContext.youDelta += 1; feedback.push("Clean Finishers +1"); } } },
+      { id: "crowd-noise", name: "Crowd Noise", text: "If you and Rock repeat same moves as last round, gain +1 draw point.", apply: ({ scoreContext, feedback }) => { if (scoreContext.repeatedPairFromLastRound) { scoreContext.drawDelta += 1; feedback.push("Crowd Noise +1 draw"); } } },
+      { id: "paper-trainer", name: "Paper Trainer", text: "Paper wins grant +1 extra score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.yourMove === "P") { scoreContext.youDelta += 1; feedback.push("Paper Trainer +1"); } } },
+      { id: "scissor-kick", name: "Scissor Kick", text: "Scissors wins grant +1 extra score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.yourMove === "S") { scoreContext.youDelta += 1; feedback.push("Scissor Kick +1"); } } },
+      { id: "rock-stance", name: "Rock Stance", text: "Rock wins grant +1 extra score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.yourMove === "R") { scoreContext.youDelta += 1; feedback.push("Rock Stance +1"); } } },
+      { id: "equalizer", name: "Equalizer", text: "When trailing by 2+, wins grant +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.preScoreDiff <= -2) { scoreContext.youDelta += 1; feedback.push("Equalizer +1"); } } },
+      { id: "front-runner", name: "Front Runner", text: "When leading by 2+, wins grant +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.preScoreDiff >= 2) { scoreContext.youDelta += 1; feedback.push("Front Runner +1"); } } },
+      { id: "icewater", name: "Icewater", text: "First draw each encounter grants +1 draw.", apply: ({ scoreContext, relicState, feedback }) => { if (scoreContext.baseOutcome === "draw" && relicState.lastEncounter !== scoreContext.nodeIndex) { scoreContext.drawDelta += 1; relicState.lastEncounter = scoreContext.nodeIndex; feedback.push("Icewater +1 draw"); } } },
+      { id: "boss-hunter", name: "Boss Hunter", text: "Boss node win grants +2 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.nodeType === "boss") { scoreContext.youDelta += 2; feedback.push("Boss Hunter +2"); } } },
+      { id: "elite-bounty", name: "Elite Bounty", text: "Elite node win grants +1 score.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.nodeType === "elite") { scoreContext.youDelta += 1; feedback.push("Elite Bounty +1"); } } },
+      { id: "stonewall", name: "Stonewall", text: "On draw, The Rock loses 1 point if he leads.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "draw" && scoreContext.preScoreDiff < 0) { scoreContext.rockDelta -= 1; feedback.push("Stonewall -1 Rock"); } } },
+      { id: "last-breath", name: "Last Breath", text: "If final node is a loss, turn it into draw once.", oneUse: true, apply: ({ scoreContext, relicState, feedback }) => { if (!relicState.used && scoreContext.isFinalNode && scoreContext.baseOutcome === "lose") { scoreContext.outcome = "draw"; relicState.used = true; feedback.push("Last Breath saved final node"); } } },
+      { id: "pattern-seer", name: "Pattern Seer", text: "+1 score if your move beats your own previous move.", apply: ({ scoreContext, feedback }) => { if (scoreContext.baseOutcome === "win" && scoreContext.beatsOwnLastMove) { scoreContext.youDelta += 1; feedback.push("Pattern Seer +1"); } } }
+    ];
 
     const achievementCatalog = [
       { id: "opening-pop", name: "Opening Pop", text: "You won round 1.", rank: "bronze", unlocked: s => s.historyLog[0]?.outcome === "win" },
@@ -968,6 +1021,7 @@
     function isRunComplete() { return currentRound >= getTotalNodes(); }
 
     function selectNextNode(nodeId) {
+      if (!relicChoicePanelEl.classList.contains("is-hidden")) return;
       if (!runState.availableNodeIds.includes(nodeId)) return;
       runState.activeNodeId = nodeId;
       runState.selectedPath.push(nodeId);
@@ -1007,6 +1061,80 @@
         if (selectable) btn.addEventListener("click", () => selectNextNode(id));
         mapChoicesEl.appendChild(btn);
       });
+    }
+
+    function renderRelicStrip() {
+      relicStripListEl.innerHTML = "";
+      if (!runState.activeRelics.length) {
+        const empty = document.createElement("span");
+        empty.className = "relic-empty";
+        empty.textContent = "No relics yet. Win encounters to draft perks.";
+        relicStripListEl.appendChild(empty);
+        return;
+      }
+      runState.activeRelics.forEach(relicState => {
+        const relic = relicCatalog.find(entry => entry.id === relicState.id);
+        if (!relic) return;
+        const pill = document.createElement("span");
+        const usedTag = relicState.used ? " (used)" : "";
+        pill.className = "relic-pill";
+        pill.textContent = `${relic.name}${usedTag}`;
+        pill.title = relic.text;
+        relicStripListEl.appendChild(pill);
+      });
+    }
+
+    function rollRelicChoices() {
+      const ownedIds = new Set(runState.activeRelics.map(relic => relic.id));
+      const pool = relicCatalog.filter(relic => !ownedIds.has(relic.id));
+      if (pool.length <= 3) return pool.slice();
+      const picks = [];
+      while (picks.length < 3 && pool.length > 0) {
+        const roll = Math.floor((rngGame ? rngGame() : Math.random()) * pool.length);
+        picks.push(pool.splice(roll, 1)[0]);
+      }
+      return picks;
+    }
+
+    function maybeShowRelicChoice(nodeType, didWin) {
+      if (!didWin) return false;
+      const rewardsByType = { normal: 0.4, elite: 1, boss: 1 };
+      const chance = rewardsByType[nodeType] || 0;
+      if (chance <= 0) return false;
+      const roll = rngGame ? rngGame() : Math.random();
+      if (roll > chance) return false;
+      const relicChoices = rollRelicChoices();
+      if (!relicChoices.length) return false;
+
+      relicChoiceGridEl.innerHTML = "";
+      relicChoices.forEach(relic => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "relic-choice-btn";
+        btn.innerHTML = `<strong>${relic.name}</strong>${relic.text}`;
+        btn.addEventListener("click", () => {
+          runState.activeRelics.push({ id: relic.id, used: false });
+          relicChoicePanelEl.classList.add("is-hidden");
+          renderRelicStrip();
+          commentaryEl.textContent = `${commentaryEl.textContent} Relic drafted: ${relic.name}.`;
+          if (!isRunComplete() && runState.availableNodeIds.length > 0) setScene("map");
+        });
+        relicChoiceGridEl.appendChild(btn);
+      });
+      relicChoicePanelEl.classList.remove("is-hidden");
+      setScene("map");
+      return true;
+    }
+
+    function applyRelicEffects(scoreContext) {
+      const feedback = [];
+      runState.activeRelics.forEach(relicState => {
+        const relicDef = relicCatalog.find(entry => entry.id === relicState.id);
+        if (!relicDef || typeof relicDef.apply !== "function") return;
+        if (relicDef.oneUse && relicState.used) return;
+        relicDef.apply({ scoreContext, relicState, feedback });
+      });
+      return feedback;
     }
 
     function loadPersistentAchievements() {
@@ -1464,6 +1592,7 @@
       const adaptiveRunSequence = historyLog.length === getTotalNodes() && historyLog.some(entry => entry.adaptiveUsed)
         ? historyLog.map(entry => entry.rockMove).join("")
         : null;
+      const relicRunSequence = runState.activeRelics.map(relic => relic.id).join(",");
 
       url.searchParams.set("seed", String(runSeed));
       if (adaptiveRunSequence) {
@@ -1473,6 +1602,8 @@
         url.searchParams.delete("script");
         url.searchParams.set("adaptive", adaptiveToggle.checked ? "1" : "0");
       }
+      if (relicRunSequence) url.searchParams.set("relics", relicRunSequence);
+      else url.searchParams.delete("relics");
       url.searchParams.set("sfx", sfxToggle.checked ? "1" : "0");
       return url.toString();
     }
@@ -1514,6 +1645,7 @@
       const scriptParam = params.get("script");
       const adaptiveParam = params.get("adaptive");
       const sfxParam = params.get("sfx");
+      const relicsParam = params.get("relics");
 
       let scriptOverride = null;
       if (scriptParam && SCRIPT_SEQUENCE_REGEX.test(scriptParam)) {
@@ -1531,10 +1663,14 @@
       }
       sfxEnabled = sfxToggle.checked;
 
-      if (seedParam === null) return { seed: null, manual: false, scriptOverride };
+      const initialRelics = relicsParam
+        ? relicsParam.split(",").map(id => id.trim()).filter(id => relicCatalog.some(relic => relic.id === id))
+        : [];
+
+      if (seedParam === null) return { seed: null, manual: false, scriptOverride, initialRelics };
       const normalizedSeed = normalizeSeed(seedParam);
-      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride };
-      return { seed: normalizedSeed.seed, manual: true, scriptOverride };
+      if (!normalizedSeed.valid) return { seed: null, manual: false, scriptOverride, initialRelics };
+      return { seed: normalizedSeed.seed, manual: true, scriptOverride, initialRelics };
     }
 
     function shakeArena() {
@@ -1763,17 +1899,62 @@
       beatRockAbbrevs.push(names[beatRockMove][0]);
 
       let outcome;
-      if (yourMove === rockMove) {
-        outcome = "draw"; draws += 1;
-        resultLineEl.textContent = "Round result: draw."; resultLineEl.className = "result-line result-draw";
+      if (yourMove === rockMove) outcome = "draw";
+      else if (beats[rockMove] === yourMove) outcome = "win";
+      else outcome = "lose";
+
+      const activeNode = getActiveNode();
+      const previousEntry = historyLog[historyLog.length - 1] || null;
+      const preWinStreak = (() => {
+        let streak = 0;
+        for (let i = historyLog.length - 1; i >= 0; i -= 1) {
+          if (historyLog[i].outcome !== "win") break;
+          streak += 1;
+        }
+        return streak;
+      })();
+      const scoreContext = {
+        round: currentRound + 1,
+        nodeIndex: activeNode ? activeNode.index : currentRound + 1,
+        nodeType: activeNode ? activeNode.type : "normal",
+        isFinalNode: currentRound + 1 >= getTotalNodes(),
+        moodBefore,
+        yourMove,
+        rockMove,
+        outcome,
+        baseOutcome: outcome,
+        previousOutcome: previousEntry ? previousEntry.outcome : null,
+        preWinStreak,
+        preScoreDiff: youScore - rockScore,
+        prevNodeWasHighTier: previousEntry ? (previousEntry.nodeType === "elite" || previousEntry.nodeType === "boss") : false,
+        alternatedHand: !!(previousEntry && previousEntry.yourMove !== yourMove),
+        beatsOwnLastMove: !!(previousEntry && beats[previousEntry.yourMove] === yourMove),
+        repeatedPairFromLastRound: !!(previousEntry && previousEntry.yourMove === yourMove && previousEntry.rockMove === rockMove),
+        lastDecisionAdaptive,
+        adaptiveReadCorrect: lastDecisionAdaptive && (beats[yourMove] === rockMove),
+        youDelta: outcome === "win" ? 1 : 0,
+        rockDelta: outcome === "lose" ? 1 : 0,
+        drawDelta: outcome === "draw" ? 1 : 0
+      };
+
+      const relicFeedback = applyRelicEffects(scoreContext);
+      outcome = scoreContext.outcome;
+      youScore += scoreContext.youDelta;
+      rockScore += scoreContext.rockDelta;
+      draws += scoreContext.drawDelta;
+
+      if (outcome === "draw") {
+        resultLineEl.textContent = "Round result: draw.";
+        resultLineEl.className = "result-line result-draw";
         playBeep("draw");
-      } else if (beats[rockMove] === yourMove) {
-        outcome = "win"; youScore += 1;
-        resultLineEl.textContent = "Round result: you win."; resultLineEl.className = "result-line result-win";
-        playBeep("win"); shakeArena();
+      } else if (outcome === "win") {
+        resultLineEl.textContent = "Round result: you win.";
+        resultLineEl.className = "result-line result-win";
+        playBeep("win");
+        shakeArena();
       } else {
-        outcome = "lose"; rockScore += 1;
-        resultLineEl.textContent = "Round result: The Rock wins."; resultLineEl.className = "result-line result-lose";
+        resultLineEl.textContent = "Round result: The Rock wins.";
+        resultLineEl.className = "result-line result-lose";
         playBeep("lose");
       }
 
@@ -1786,15 +1967,18 @@
       updateMoodDisplay();
       advanceTutorialOnAction("moodDisplay");
 
-      commentaryEl.textContent = describeRound(outcome, beatRockThisRound);
+      const triggerLine = relicFeedback.length > 0 ? ` Relic trigger: ${relicFeedback.join(" · ")}.` : "";
+      commentaryEl.textContent = describeRound(outcome, beatRockThisRound) + triggerLine;
 
-      const activeNode = getActiveNode();
       historyLog.push({
         round: currentRound + 1,
         nodeIndex: activeNode ? activeNode.index : currentRound + 1,
         nodeType: activeNode ? activeNode.type : "normal",
         rockMove, yourMove, beatRockMove,
         outcome,
+        baseOutcome: scoreContext.baseOutcome,
+        scoreDelta: { you: scoreContext.youDelta, rock: scoreContext.rockDelta, draws: scoreContext.drawDelta },
+        relicFeedback,
         adaptiveUsed: lastDecisionAdaptive,
         adaptiveCorrect: lastDecisionAdaptive && (beats[yourMove] === rockMove),
         mood: moodBefore,
@@ -1821,7 +2005,7 @@
       updatePreRoundHint();
       evaluateAchievements();
 
-      const overlayText = outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw.";
+      const overlayText = `${outcome === "win" ? "Round result: you win." : outcome === "lose" ? "Round result: The Rock wins." : "Round result: draw."}${relicFeedback.length ? ` Relics: ${relicFeedback.join(", ")}.` : ""}`;
       showRoundResultOverlay(overlayText);
 
       if (isRunComplete()) {
@@ -1837,7 +2021,8 @@
       resetArenaPhaseClasses();
       setRoundPhase("idle");
       if (runState.availableNodeIds.length > 0) {
-        setScene("map");
+        const showedRelicChoice = maybeShowRelicChoice(activeNode ? activeNode.type : "normal", outcome === "win");
+        if (!showedRelicChoice) setScene("map");
         setButtonsEnabled(false);
       } else {
         setButtonsEnabled(true);
@@ -1975,6 +2160,15 @@
       const runAchievements = getUnlockedAchievementDefs();
       if (runAchievements.length > 0) summaryLines.push(`Achievements unlocked this run, ${runAchievements.map(a => a.name).join(", ")}.`);
       else summaryLines.push("No achievements this time, try different seeds or adaptive settings.");
+      if (runState.activeRelics.length > 0) {
+        const relicNames = runState.activeRelics.map(relicState => {
+          const relic = relicCatalog.find(entry => entry.id === relicState.id);
+          return relic ? relic.name : relicState.id;
+        });
+        summaryLines.push(`Relics drafted this run, ${relicNames.join(", ")}.`);
+      } else {
+        summaryLines.push("No relics were drafted this run.");
+      }
 
       summaryLines.push("Use the unified round board or round log to review every move and state.");
       commentaryEl.textContent = summaryLines.join(" ");
@@ -1988,7 +2182,7 @@
       setScene("matchSummary");
     }
 
-    function initFromSeed(seed, manualFlag, scriptOverride) {
+    function initFromSeed(seed, manualFlag, scriptOverride, initialRelics = []) {
       runSeed = seed >>> 0;
       seedWasManual = !!manualFlag;
       scriptedSequenceOverride = scriptOverride || null;
@@ -1998,6 +2192,9 @@
       runState.availableNodeIds = [0];
       runState.activeNodeId = null;
       runState.completedNodeIds = [];
+      runState.activeRelics = initialRelics
+        .filter(id => relicCatalog.some(relic => relic.id === id))
+        .map(id => ({ id, used: false }));
 
       rngGame = mulberry32(runSeed);
       rngFlavor = mulberry32(runSeed ^ 0x9E3779B9);
@@ -2041,6 +2238,8 @@
 
       createRoundBoardCells();
       renderRoundBoard();
+      renderRelicStrip();
+      relicChoicePanelEl.classList.add("is-hidden");
       roundBoardPreviewEl.textContent = "Hover, focus, or tap a played node to preview exact hands, outcome, and mood.";
 
       updateScoreLabel();
@@ -2099,7 +2298,7 @@
         else seedFeedbackEl.textContent = `Starting showdown with normalized seed ${newSeed}.`;
       }
 
-      initFromSeed(newSeed, manual, null);
+      initFromSeed(newSeed, manual, null, []);
     }
 
     startMatchBtn.addEventListener("click", () => {
@@ -2175,8 +2374,8 @@
 
     const initialSettings = readInitialSettingsFromUrl();
     seedInputEl.value = String(DEFAULT_SEED);
-    if (initialSettings.seed === null) initFromSeed(DEFAULT_SEED, false, initialSettings.scriptOverride);
-    else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride);
+    if (initialSettings.seed === null) initFromSeed(DEFAULT_SEED, false, initialSettings.scriptOverride, initialSettings.initialRelics || []);
+    else initFromSeed(initialSettings.seed, initialSettings.manual, initialSettings.scriptOverride, initialSettings.initialRelics || []);
     maybeStartTutorial();
   </script>
 </body>
